@@ -626,7 +626,7 @@ function newGame(net) {
   G = { t: 0, ot: 0, res: undefined, n: 0, ents: [], projs: [], fx: [], elixir: CFG.startElixir, cur: CFG.elixir[0],
         q: [...CFG.playerDeck].sort(() => Math.random() - 0.5), hand: [], nxt: null, net: net || null, vfx: [], shake: 0, cyc: [{}, {}], later: [] };
   G.hand = G.q.splice(0, 4); G.nxt = G.q.shift();
-  if (!net) G.ai = newAI();
+  if (!net) { G.ai = newAI(); G.bots = [G.ai]; }
   else if (net.role === 'host') { const q = [...net.oppDeck].sort(() => Math.random() - 0.5); G.o = { el: CFG.startElixir, hand: q.splice(0, 4), nxt: q.shift(), q }; net.ack = 0; net.seen = new Set(); net.sc = 0; net.seq = 0; }
   else { G.gm = new Map(); net.snapAt = performance.now(); net.snapDt = 100; net.pending = []; net.lastS = -1; net.buf = null; net.lastSnap = Date.now(); net.pq = 0; }
   if (!net || net.role === 'host') for (const team of [0, 1])
@@ -670,13 +670,13 @@ function play(i, x, y, fromPend) {
   return true;
 }
 // (x,y) 에서 가장 가까운, 내가 소환할 수 있는 칸 중앙. 살아있는 타워 위 칸은 제외.
-function snapSpot(x, y, c) {
+function snapSpot(x, y, c, t = 0) {
   x = Math.min(W, Math.max(0, x)); y = Math.min(H, Math.max(0, y));
   const tw = G.ents.filter(e => e.kind === 'tower' && e.hp > 0);
   let best = null, bd = 1e9;
   for (let gy = 0; gy < H; gy++) for (let gx = 0; gx < W; gx++) {
     const cx_ = gx + 0.5, cy_ = gy + 0.5, d = (cx_ - x) ** 2 + (cy_ - y) ** 2;
-    if (d >= bd || !okSpotC(c, 0, cx_, cy_) || tw.some(t => Math.abs(t.x - cx_) < t.r && Math.abs(t.y - cy_) < t.r)) continue;
+    if (d >= bd || !okSpotC(c, t, cx_, cy_) || tw.some(t => Math.abs(t.x - cx_) < t.r && Math.abs(t.y - cy_) < t.r)) continue;
     bd = d; best = [cx_, cy_];
   }
   return best;
@@ -867,7 +867,12 @@ const starters = () => [[...DEFDECK], ['goblins', 'skeleton_army', 'hog_rider', 
   ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'giant', 'bomber', 'rocket', 'arrows']];
 const AIDECKS = () => [...starters().slice(0, 4), ['pekka', 'dart_goblin', 'bats', 'fire_spirit', 'mega_minion', 'spear_goblins', 'fireball', 'arrows'], ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'royal_giant', 'bomber', 'rocket', 'arrows'],
   ['golem', 'witch', 'electro_wizard', 'zap', 'mega_knight', 'ice_wizard', 'poison', 'flying_machine'], ['balloon', 'inferno_dragon', 'princess', 'dark_prince', 'bandit', 'zap', 'giant_snowball', 'executioner'],
-  ['giant_skeleton', 'night_witch', 'elite_barbarians', 'ice_spirit', 'bomb_tower', 'the_log', 'arrows', 'royal_recruits'], ['lava_hound', 'skeleton_dragons', 'firecracker', 'tombstone', 'ice_golem', 'electro_spirit', 'tornado', 'inferno_tower']];
+  ['giant_skeleton', 'night_witch', 'elite_barbarians', 'ice_spirit', 'bomb_tower', 'the_log', 'arrows', 'royal_recruits'], ['lava_hound', 'skeleton_dragons', 'firecracker', 'tombstone', 'ice_golem', 'electro_spirit', 'tornado', 'inferno_tower'],
+  ['miner', 'poison', 'knight', 'bats', 'ice_spirit', 'princess', 'the_log', 'bomb_tower'], ['x_bow', 'tesla', 'knight', 'archers', 'ice_spirit', 'fireball', 'the_log', 'ice_golem'],
+  ['battle_ram', 'night_witch', 'bandit', 'magic_archer', 'mega_minion', 'zap', 'fireball', 'tombstone'], ['electro_giant', 'lumberjack', 'mother_witch', 'tornado', 'zappies', 'heal_spirit', 'phoenix', 'zap'],
+  ['archer_queen', 'giant', 'wizard', 'valkyrie', 'ice_spirit', 'zap', 'fireball', 'cannon_cart'], ['golden_knight', 'hog_rider', 'musketeer', 'ice_golem', 'the_log', 'fireball', 'cannon', 'skeleton_barrel'],
+  ['skeleton_king', 'goblin_giant', 'dark_prince', 'magic_archer', 'guards', 'zap', 'arrows', 'furnace'], ['goblin_barrel', 'princess', 'knight', 'goblins', 'ice_spirit', 'bomb_tower', 'the_log', 'rocket'],
+  ['mighty_miner', 'elixir_golem', 'battle_healer', 'electro_dragon', 'rascals', 'earthquake', 'vines', 'goblin_hut']];
 function loadDecks() { // 덱 프리셋 5개 (자동 저장)
   const st = starters(), v = LS.get('cf_decks', null); DK = { cur: 0, list: st };
   if (v && Array.isArray(v.list) && v.list.length >= 1) {   // 프리셋은 1~10개, 덱은 빈 칸(null)이 있어도 저장돼요
@@ -1267,9 +1272,9 @@ function menu() { pubSoon(); $('res').style.display = 'none'; $('fin').style.dis
 
 // ---------- 3단계: AI 상대 ----------
 const AIP = [
-  { n: '쉬움', d: '반응이 느리고 자주 실수해요 · 골드 ×0.6', gold: 0.6, think: [3, 4.6], react: 2.4, off: 10, err: 0.4, spells: 0, jit: 2.5, zone: 13.5 },
-  { n: '보통', d: '적당히 방어하고 공격해요 · 골드 ×1', gold: 1, think: [1.6, 2.6], react: 1.1, off: 9, err: 0.15, spells: 1, jit: 1.2, zone: 16 },
-  { n: '어려움', d: '빠르게 반응하고 스펠도 써요 · 골드 ×1.5', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, jit: 0.3, zone: 19 }
+  { n: '쉬움', d: '반응이 느리고 자주 실수해요 · 골드 ×0.6', gold: 0.6, think: [3, 4.6], react: 2.4, off: 10, err: 0.4, spells: 1, spm: 2.6, jit: 2.5, zone: 13.5, smart: 0, ab: 0, evo: 0, sup: 0 },
+  { n: '보통', d: '적당히 방어하고 공격해요 · 골드 ×1', gold: 1, think: [1.6, 2.6], react: 1.1, off: 9, err: 0.15, spells: 1, spm: 1.5, jit: 1.2, zone: 16, smart: 0.4, ab: 1, evo: 0.5, sup: 1 },
+  { n: '어려움', d: '빠르게 반응하고 스펠·능력도 영리하게 써요 · 골드 ×1.5', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, spm: 0.8, jit: 0.3, zone: 19, smart: 0.9, ab: 2, evo: 1, sup: 1 }
 ];
 let DIFF = 1;
 const rnd = a => a[Math.random() * a.length | 0];
@@ -1279,82 +1284,172 @@ function drawMode() {
   $('md-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:96px" onclick="setDiff(${i})">${p.n}</button>`).join('');
   $('md-sub').textContent = AIP[DIFF].d;
 }
-function newAI() { // AI 덱 (프리셋 4개 중 하나) · 손패 4장 + 다음 카드
-  const q = [...rnd(AIDECKS())].sort(() => Math.random() - 0.5), hand = q.splice(0, 4), nxt = q.shift();
-  return { hand, nxt, q, el: CFG.startElixir, wait: 2 + Math.random() * 2, threatT: -1, push: null, p: AIP[DIFF] };
+// ---------- 3단계: AI 상대 (v2: 좌석·팀 기준 봇 — 1대1 상대와 2대2 아군/적군이 같은 코드를 써요) ----------
+const bfy = (a, y) => a.team ? y : H - y;                    // 봇 기준 세로: 0 = 자기 진영 맨 뒤 · 커질수록 앞(상대 쪽). 자기 자신의 역함수
+const uval = u => (u.card.cost || 0.5) / (u.card.count || 1);  // 유닛 하나의 엘릭서 가치
+function botDeck(p) {
+  const all = AIDECKS(), d = [...rnd(p === AIP[0] ? all.slice(0, 6) : all)];
+  if (Math.random() < p.evo) { const k = d.findIndex(id => EVO[id] && CARDS['evo_' + id]); if (k >= 0) d[k] = 'evo_' + d[k]; }                 // 진화 카드 한 장
+  if (Math.random() < p.evo * 0.7) { const k = d.findIndex(id => HERO[id] && CARDS['hero_' + id] && !CARDS[id].evoOf); if (k >= 0) d[k] = 'hero_' + d[k]; }   // 영웅 카드 한 장
+  return d;
 }
-function aiTick(dt) {
-  const a = G.ai; if (!a || G.noAI) return;
+function newBot(team, seat, p, deck) {   // 손패 4장 + 다음 카드 · 엘릭서는 플레이어와 같은 규칙
+  const q = [...(deck || botDeck(p))].sort(() => Math.random() - 0.5), hand = q.splice(0, 4), nxt = q.shift();
+  return { team, seat, hand, nxt, q, el: CFG.startElixir, wait: 2 + Math.random() * 2, abW: 1, threatT: -1, push: null, p, last: 0, defL: -1, defT: -9 };
+}
+const newAI = () => newBot(1, 1, AIP[DIFF]);
+function aiTick(dt) { for (const a of G.bots || []) botTick(a, dt); }
+function botTick(a, dt) {
   a.el = Math.min(10, a.el + dt / G.cur.sec);               // 플레이어와 같은 엘릭서 속도 (속임수 없음)
-  a.wait -= dt; if (a.wait > 0) return;
+  if (G.noAI) return;
+  if ((a.abW -= dt) <= 0) { a.abW = 0.35; if (a.p.ab) botAbility(a); }
+  if ((a.wait -= dt) > 0) return;
   a.wait = a.p.think[0] + Math.random() * (a.p.think[1] - a.p.think[0]);
-  const foes = G.ents.filter(e => e.team === 0 && e.kind === 'unit' && e.hp > 0 && e.dep <= 0 && e.y < a.p.zone).sort((m, n) => m.y - n.y);
-  if (foes.length) { if (a.threatT < 0) a.threatT = G.t; if (G.t - a.threatT >= a.p.react) aiDefend(a, foes); return; }
-  a.threatT = -1; aiAttack(a);
-}
-function aiSafe(x, y) { // 아군 타워 위에 소환하지 않도록 비켜 놓기
-  for (const t of G.ents) if (t.team === 1 && t.kind === 'tower' && t.hp > 0 && hyp(t.x - x, t.y - y) < t.r + 0.8) y = t.y + t.r + 0.9;
-  return [Math.min(17.3, Math.max(0.7, x)), Math.min(14.3, Math.max(1.5, y))];
-}
-function aiPlay(a, i, x, y) {
-  const id = a.hand[i], c = CARDS[id]; if (a.el < c.cost) return false;
-  a.el -= c.cost;
-  if (c.type === 'spell') spawn(id, 1, x + (Math.random() - 0.5), y + (Math.random() - 0.5));
-  else { const [sx, sy] = aiSafe(x + (Math.random() - 0.5) * 2 * a.p.jit, y); spawn(id, 1, sx, sy); }
-  a.q.push(id); a.hand[i] = a.nxt; a.nxt = a.q.shift(); return true;
-}
-function aiScore(c, T, cl, p) { // 위협에 대한 카드 점수 (0이면 쓰지 않음)
-  const n = cl.length, hp = cl.reduce((s, e) => s + e.hp, 0), tank = T.card.targets === 'buildings' || T.max >= 1500, swarm = n >= 4 && T.max < 400;
-  if (c.type === 'spell') {
-    if (!p.spells) return 0;
-    if (c.id === 'arrows') return swarm ? 12 : 0;
-    if (c.id === 'zap' || c.id === 'giant_snowball') return swarm ? 10 : n >= 3 ? 5 : 0;
-    if (c.id === 'the_log' || c.id === 'barbarian_barrel') return swarm ? 10 : n >= 3 ? 4 : 0;
-    if (c.id === 'tornado') return n >= 3 ? 6 : 0;
-    if (c.id === 'poison') return n >= 3 ? 8 : 0;
-    if (c.id === 'freeze') return hp > 2200 ? 7 : 0;
-    if (c.id === 'lightning') return hp > 2500 ? 8 : 0;
-    if (c.id === 'fireball' || c.id === 'rocket') { const big = c.id === 'rocket' ? 2600 : 1800; return hp > big ? 9 : n >= 3 && c.id === 'fireball' ? 7 : 0; }
-    return 0;
+  if (botSpell(a)) return;
+  const foes = G.ents.filter(e => e.team !== a.team && e.kind === 'unit' && e.hp > 0 && e.dep <= 0 && bfy(a, e.y) < a.p.zone).sort((m, n) => bfy(a, m.y) - bfy(a, n.y));
+  if (foes.length) {
+    if (a.threatT < 0) a.threatT = G.t;
+    if (G.t - a.threatT >= a.p.react) { if (!botDefend(a, foes) && a.el >= a.p.off) botAttack(a); }
+    return;
   }
-  if (T.fly && c.targets !== 'air_ground') return 0;        // 공중 유닛은 공중을 칠 수 있는 카드만
-  let s = 3 - c.cost * 0.25;
+  a.threatT = -1; botAttack(a, a.el >= 9.8);
+}
+function botPlay(a, i, x, y) {   // x, y 는 실제 좌표. 못 두는 곳이면 가장 가까운 가능한 칸으로
+  const id = a.hand[i], c = CARDS[id]; if (!c || a.el < c.cost) return false;
+  if (c.type === 'spell') { x = Math.min(W - 0.3, Math.max(0.3, x)); y = Math.min(H - 0.3, Math.max(0.3, y)); }
+  else { const q = snapSpot(x, y, c, a.team); if (!q) return false; x = q[0]; y = q[1]; }
+  a.el -= c.cost; spawn(id, a.team, x, y, a.seat);
+  a.q.push(id); a.hand[i] = a.nxt; a.nxt = a.q.shift(); a.last = G.t; return true;
+}
+const botJ = (a, x) => Math.min(17.3, Math.max(0.7, x + (Math.random() - 0.5) * 2 * a.p.jit));
+const botY = (a, fy) => a.team ? fy : H - fy;                 // 봇 기준 세로 → 실제 y
+// ── 스펠: 맞출 유닛·타워의 엘릭서 가치가 비용보다 충분히 클 때만
+function spellVal(a, c, x, y) {
+  const m = lv(a.team ? CFG.enemyLevel : CFG.playerLevel), n = c.waves || 1, eff = c.damage * n * m, list = [];
+  let v = 0;
+  for (const e of G.ents) {
+    if (e.hp <= 0) continue; const d = hyp(e.x - x, e.y - y) - e.r; if (d > c.radius) continue;
+    if (e.team === a.team) { if (c.buff && e.kind === 'unit' && e.dep <= 0) v += uval(e) * 0.45; continue; }   // 분노: 아군 가치
+    if (c.targets === 'ground' && e.fly) continue; if (hid(e)) continue;
+    if (e.kind === 'tower') {
+      if (e.tk === 'king' && !e.active) continue;
+      const td = (c.towerDamage || c.damage) * n * m; let tv = Math.min(td, e.hp) / 260; if (e.hp <= td) tv += e.tk === 'king' ? 9 : 3.5;
+      list.push({ v: tv, hp: e.hp }); continue;
+    }
+    const hp = e.hp + (e.shield || 0), dm = eff * (e.kind === 'building' && c.bmult ? c.bmult : 1);
+    let uv = uval(e) * (dm >= hp ? 1 : 0.4 * Math.min(1, dm / hp));
+    if (c.stun) uv += uval(e) * (c.stun >= 2 ? 0.25 : 0.08); if (c.slow || c.push || c.drag) uv += uval(e) * 0.1;
+    list.push({ v: uv, hp });
+  }
+  if (c.strikes) list.sort((p, q) => q.hp - p.hp).length = Math.min(list.length, c.strikes);
+  for (const o of list) v += o.v;
+  if (c.spawn && c.damage) v += 1.2;
+  if (c.buff && v < 1.3) return 0;                              // 분노: 아군 3기 정도는 있어야
+  return v;
+}
+function botSpell(a) {
+  const p = a.p; if (!p.spells || G.t - (a.spT || -9) < 2.5) return false;
+  const S = a.hand.map((id, i) => ({ i, c: CARDS[id] })).filter(o => o.c && o.c.type === 'spell' && o.c.damage && o.c.cost <= a.el);
+  if (!S.length) return false;
+  const tg = G.ents.filter(e => e.team !== a.team && e.hp > 0 && (e.kind !== 'tower' || e.tk === 'princess' || e.active));
+  const pts = tg.map(e => [e.x, e.y]);
+  for (let i = 0; i < tg.length && pts.length < 70; i++) for (let j = i + 1; j < tg.length && pts.length < 70; j++) if (hyp(tg[i].x - tg[j].x, tg[i].y - tg[j].y) < 4) pts.push([(tg[i].x + tg[j].x) / 2, (tg[i].y + tg[j].y) / 2]);
+  let best = null, bs = 0;
+  for (const o of S) {
+    const need = o.c.cost + p.spm + (a.el - o.c.cost < 1.5 ? 1 : 0);
+    for (const [x, y] of pts) { const v = spellVal(a, o.c, x, y); if (v >= need && v - o.c.cost > bs) { bs = v - o.c.cost; best = [o.i, x, y]; } }
+  }
+  if (!best || Math.random() < p.err) return false;
+  a.spT = G.t; return botPlay(a, best[0], best[1] + (Math.random() - 0.5) * 0.4, best[2] + (Math.random() - 0.5) * 0.4);
+}
+// ── 방어: 가장 위험한 한 덩어리를 찾아 가성비 좋은 카드로 막아요
+function botCounter(c, I) {
   const dps = c.damage * (c.count || 1) / c.hitSpeed;
-  if (c.type === 'building') s += tank ? 7 : 2;
-  if (c.targets === 'buildings') s -= 4;                    // 건물 전용 유닛은 방어에 부적합
-  if (tank) s += dps / 120 + (c.count >= 3 ? 2 : 0);
-  if (swarm && c.splash) s += 6;
-  if (T.fly && c.range >= 3) s += 3;
+  if (I.allFly && c.targets !== 'air_ground') return 0;        // 공중 유닛은 공중을 칠 수 있는 카드만
+  let s = 3 - c.cost * 0.25 + (I.cv - c.cost) * 0.3;
+  if (I.anyFly && c.targets !== 'air_ground') s -= 2.5;
+  if (c.type === 'building') s += c.id === 'x_bow' || c.id === 'mortar' ? -5 : /hut|furnace|collector|drill/.test(c.id) ? -1.5 : I.tank ? 7 : 2;
+  if (c.targets === 'buildings') s -= 4;                        // 건물 전용 유닛은 방어에 부적합
+  if (c.anywhere) s -= 3;
+  if (c.suicide) s -= 2;
+  if (I.tank) s += dps / 120 + (c.count >= 3 ? 2 : 0);
+  if (I.swarm && c.splash) s += 6;
+  if (I.anyFly && c.range >= 3 && c.targets === 'air_ground') s += 3;
   return s;
 }
-function aiDefend(a, thr) {
-  const p = a.p, T = thr[0], cl = thr.filter(e => hyp(e.x - T.x, e.y - T.y) < 2.5), power = cl.reduce((s, e) => s + e.hp, 0);
-  if (Math.random() < p.err) return;                         // 실수: 못 본 척
-  if (power < 450 && a.el < 9) return;                       // 약한 적은 타워에게 맡김
-  let best = -1, bs = 0;
-  a.hand.forEach((id, i) => { const c = CARDS[id]; if (c.cost > a.el) return; const s = aiScore(c, T, cl, p) + Math.random() * 0.5; if (s > bs) { bs = s; best = i; } });
-  if (best < 0) return;
-  const c = CARDS[a.hand[best]];
-  if (c.type === 'spell') aiPlay(a, best, cl.reduce((s, e) => s + e.x, 0) / cl.length, cl.reduce((s, e) => s + e.y, 0) / cl.length);
-  else if (c.type === 'building') aiPlay(a, best, T.x, Math.max(8, Math.min(11, T.y - 4)));
-  else if (c.range >= 3) aiPlay(a, best, T.x, Math.max(5, Math.min(11, T.y - 5)));
-  else aiPlay(a, best, T.x, Math.max(4.5, Math.min(13, T.y - 2.5)));
+function botDefend(a, thr) {
+  const p = a.p, T = thr[0], tl = T.x < 9 ? 0 : 1, fy = bfy(a, T.y);
+  const cl = thr.filter(e => hyp(e.x - T.x, e.y - T.y) < 3.2), hp = cl.reduce((s, e) => s + e.hp, 0), cv = cl.reduce((s, e) => s + uval(e), 0);
+  if (Math.random() < p.err) return false;                       // 실수: 못 본 척
+  if (hp < 450 && a.el < 9) return false;                       // 약한 적은 타워에게 맡김
+  const mine = G.ents.filter(e => e.team === a.team && e.kind !== 'tower' && e.hp > 0 && hyp(e.x - T.x, e.y - T.y) < 5.5).reduce((s, e) => s + e.hp, 0);
+  if (mine >= hp * 0.8) return false;                            // 이미 아군이 막고 있어요
+  if ((G.bots || []).some(b => b !== a && b.team === a.team && b.defL === tl && G.t - b.defT < 2.2)) return false;   // 같은 편 봇이 막는 중
+  const I = { T, fy, n: cl.length, hp, cv, tank: T.card.targets === 'buildings' || T.max >= 1500, win: T.card.targets === 'buildings', swarm: cl.length >= 4 && T.max < 400, anyFly: cl.some(e => e.fly), allFly: cl.every(e => e.fly) };
+  let best = -1, bs = 0.5;
+  a.hand.forEach((id, i) => { const c = CARDS[id]; if (!c || c.type === 'spell' || c.cost > a.el) return; const s = botCounter(c, I) + Math.random() * 0.5; if (s > bs) { bs = s; best = i; } });
+  if (best < 0) return false;
+  const c = CARDS[a.hand[best]]; let y;
+  if (c.type === 'building') y = I.win || I.tank ? 9.5 : 8.5;
+  else if (c.range >= 3 || c.minR) y = Math.max(4, Math.min(11, fy - 5));
+  else y = Math.max(4.5, Math.min(13, fy - (I.swarm && c.splash ? 3.2 : 2.5)));
+  const x = c.type === 'building' ? 9 + (T.x - 9) * 0.4 : T.x;
+  const ok = botPlay(a, best, botJ(a, x), botY(a, y));
+  if (ok) { a.defL = tl; a.defT = G.t; } return ok;
 }
-function aiAttack(a) {
-  const p = a.p, A = a.hand.map((id, i) => ({ i, c: CARDS[id] })).filter(o => o.c.cost <= a.el && o.c.type !== 'spell' && o.c.type !== 'building');
-  if (!A.length) return;
-  if (Math.random() < p.err && a.el >= 5) { const o = rnd(A); aiPlay(a, o.i, 1 + Math.random() * 16, 6 + Math.random() * 7); return; } // 실수: 엉뚱한 소환
-  if (a.push && !a.push.sup && G.t - a.push.t > 2.5 && G.t - a.push.t < 9) {  // 탱커 뒤에 지원 유닛
-    const sup = A.filter(o => o.c.targets !== 'buildings' && !o.c.charge);
-    if (sup.length && a.el >= 3) { a.push.sup = 1; aiPlay(a, rnd(sup).i, a.push.x, 7.5); return; }
+// ── 공격: 레인 선택 → 승리 카드(탱커 뒤 지원 · 빠른 카드는 다리 앞) · 광부류 · 포켓
+const botSup = c => (c.range >= 3 ? 2 : 0) + (c.targets === 'air_ground' ? 1 : 0) + (c.splash ? 1.5 : 0) - c.cost * 0.2;
+function botAttack(a, force) {
+  const p = a.p, t = a.team, fw = t ? 1 : -1, mult = G.cur.mult || 1, off = force ? 0 : Math.max(5, p.off - (mult - 1) * 1.3);
+  const A = a.hand.map((id, i) => ({ i, c: CARDS[id] })).filter(o => o.c && o.c.cost <= a.el), U = A.filter(o => o.c.type !== 'spell');
+  const pr = G.ents.filter(e => e.team !== t && e.tk === 'princess' && e.hp > 0).sort((m, n) => m.hp - n.hp);
+  if (p.sup && U.length && a.el >= 3 && G.t - (a.supT || -9) > 2.2) {   // 앞서가는 아군 탱커 뒤에 지원
+    const lead = G.ents.filter(e => e.team === t && e.kind === 'unit' && e.hp > 0 && e.dep <= 0 && (e.card.targets === 'buildings' || e.max >= 1500) && bfy(a, e.y) > 5 && bfy(a, e.y) < 21).sort((m, n) => n.hp - m.hp)[0];
+    const S = U.filter(o => o.c.type === 'troop' && o.c.targets !== 'buildings' && !o.c.charge && !o.c.anywhere && !o.c.suicide);
+    if (lead && S.length && Math.random() >= p.err) {
+      const o = S.sort((m, n) => botSup(n.c) - botSup(m.c) + (Math.random() - 0.5))[0]; a.supT = G.t;
+      if (botPlay(a, o.i, botJ(a, lead.x), botY(a, Math.min(14.3, Math.max(3, bfy(a, lead.y) - 3))))) return true;
+    }
   }
-  if (a.el < p.off) return;
-  const pr = G.ents.filter(e => e.team === 0 && e.tk === 'princess' && e.hp > 0);
-  const lane = DIFF === 2 && pr.length ? pr.sort((m, n) => m.hp - n.hp)[0].x : rnd([3.5, 14.5]);
-  const wins = A.filter(o => o.c.targets === 'buildings' || o.c.charge);
-  if (wins.length) { const o = rnd(wins); a.push = { t: G.t, x: lane, sup: 0 }; aiPlay(a, o.i, lane, o.c.speed >= 120 ? 12.5 : 7.5); return; }
-  const fill = A.filter(o => o.c.type === 'troop');
-  if (fill.length && a.el >= p.off + 1) aiPlay(a, rnd(fill).i, lane, 9);
+  if (a.el < off) return false;
+  if (Math.random() < p.err && a.el >= 5 && U.length) { const o = rnd(U); if (o.c.type === 'troop') return botPlay(a, o.i, 1 + Math.random() * 16, botY(a, 6 + Math.random() * 7)); }   // 실수: 엉뚱한 소환
+  // 레인: 보통은 무작위, 똑똑한 AI는 약한 타워 · 적은 수비 · 포켓 쪽
+  const dead = [0, 1].filter(L => pkT(t, L)), rec = a.push && G.t - a.push.t < 9 ? a.push.L : -1; let L = Math.random() < 0.5 ? 0 : 1;
+  if (dead.length && p.sup) L = rnd(dead);
+  else if (rec >= 0 && Math.random() < 0.65) L = rec;
+  else if (Math.random() < p.smart) {
+    const sc = [0, 1].map(l => { const tw = pr.find(e => (e.x < 9 ? 0 : 1) === l), dg = G.ents.filter(e => e.team !== t && e.kind !== 'tower' && e.hp > 0 && (e.x < 9 ? 0 : 1) === l && bfy(a, e.y) > 17).reduce((s, e) => s + e.hp, 0); return (tw ? tw.hp / 3052 * 3 : 0) + dg / 2000; });
+    L = sc[0] <= sc[1] ? 0 : 1;
+  }
+  const lx = L ? 14.5 : 3.5, front = pkT(t, L) ? 18 : 12.8, mk = () => { a.push = { t: G.t, L }; };
+  const any = U.find(o => o.c.anywhere);                         // 광부 · 고블린 드릴: 약한 프린세스 타워 바로 옆
+  if (any && pr.length && Math.random() < 0.8) { mk(); return botPlay(a, any.i, pr[0].x, pr[0].y - fw * 2.2); }
+  const brl = A.find(o => o.c.type === 'spell' && o.c.spawn && !o.c.damage);   // 고블린 통
+  if (brl && p.spells && pr.length && a.el >= brl.c.cost + 2 && G.t - (a.bbT || -9) > 10) { a.bbT = G.t; return botPlay(a, brl.i, pr[0].x, pr[0].y - fw * 2); }
+  const sg = U.find(o => o.c.id === 'x_bow' || o.c.id === 'mortar');          // 공성 건물: 다리 앞에 한 개만
+  if (sg && !G.ents.some(e => e.team === t && e.kind === 'building' && e.hp > 0 && (e.card.id === 'x_bow' || e.card.id === 'mortar'))) return botPlay(a, sg.i, botJ(a, lx * 0.5 + 4.5), botY(a, 13.5));
+  const col = U.find(o => o.c.id === 'elixir_collector');
+  if (col && G.t < 200 && !G.ents.some(e => e.team === t && e.card && e.card.id === 'elixir_collector' && e.hp > 0)) return botPlay(a, col.i, 9 + (Math.random() < 0.5 ? -3 : 3), botY(a, 4));
+  const slow = U.filter(o => o.c.type === 'troop' && o.c.targets === 'buildings' && o.c.speed < 100 && !o.c.suicide && !o.c.charge);   // 자이언트 · 골렘 · 벌룬 …
+  const fast = U.filter(o => o.c.type === 'troop' && (o.c.charge || o.c.suicide || (o.c.targets === 'buildings' && o.c.speed >= 100)));   // 호그 · 배틀 램 …
+  if (slow.length && (!fast.length || Math.random() < 0.6)) { const o = rnd(slow); mk(); return botPlay(a, o.i, botJ(a, lx), botY(a, o.c.flying ? 5 : 3.5)); }   // 탱커는 맨 뒤에서 출발 → 지원이 따라붙어요
+  if (fast.length) { const o = rnd(fast); mk(); return botPlay(a, o.i, botJ(a, lx), botY(a, front)); }
+  const fill = U.filter(o => o.c.type === 'troop' && o.c.targets !== 'buildings' && !o.c.anywhere);
+  if (fill.length && a.el >= off + 1) { const o = rnd(fill); return botPlay(a, o.i, botJ(a, lx), botY(a, o.c.charge ? 9 : o.c.range >= 3 ? 7.5 : 9)); }
+  return false;
+}
+// ── 챔피언·영웅 능력: 상황이 맞을 때만
+function botAbility(a) {
+  const e = myHero(a.seat); if (!e) return; const h = abOf(e.card); if (abLeft(e) <= 0 || a.el < h.cost + 1) return;
+  const fo = G.ents.filter(u => u.team !== e.team && u.hp > 0 && !hid(u)), nr = r => fo.filter(u => hyp(u.x - e.x, u.y - e.y) - u.r <= r), un = r => nr(r).filter(u => u.kind === 'unit'), low = e.hp < e.max * 0.45;
+  const go = {
+    taunt: () => un(4).length >= 1 && e.hp < e.max * 0.85 || un(3).length >= 2, guard: () => un(4).length >= 1 && e.hp < e.max * 0.9, meditate: () => un(4).length >= 1 && e.hp < e.max * 0.7,
+    turret: () => nr(5.5).length >= 1, nova: () => un(3.2).length >= 2 || (un(3.2).length >= 1 && nr(3.2).length >= 2), frost: () => un(3.2).length >= 2, blizzard: () => un(3).length >= 2,
+    swish: () => un(4.5).length >= 2, pancake: () => nr(3).length >= 1 && e.hp < e.max * 0.75, golemites: () => nr(4).length >= 1, decoy: () => nr(7).length >= 1,
+    souls: () => (e.souls | 0) >= 8 && nr(8).length >= 1, dash: () => un(7).length >= 2, escape: () => low && nr(3).length >= 1, getaway: () => low && nr(3).length >= 1,
+    cloak: () => nr(6).some(u => u.kind === 'tower'), guardienne: () => nr(5).length >= 1
+  }[h.ab];
+  if ((go ? go() : nr(4).length >= 1) && heroDo(a.seat)) a.last = G.t;
 }
 
 // ---------- 4단계: 1대1 온라인 (호스트가 계산 → 게스트는 화면만 받음) ----------
