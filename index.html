@@ -348,7 +348,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
       <div class="pg" id="pg-pass">
         <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>로얄패스</h2></div>
         <p id="ps-info"></p><div class="pbar"><div id="ps-bar"></div></div><div id="ps-list" style="display:flex;flex-direction:column;gap:8px"></div>
-        <p style="font-size:12px">대전 완료 +10 XP, 승리 +30 XP · 티어마다 100 XP</p>
+        <p style="font-size:12px">전투에서 승리할 때마다 1단계씩 올라가요 (AI 대전 포함) · 5단계와 10단계는 해금권</p>
       </div>
 
       <div class="pg" id="pg-set">
@@ -570,7 +570,7 @@ function judge() {
   if (G.t >= 300) { const L = G.ents.filter(e => e.kind === 'tower' && e.hp > 0).sort((p, q) => p.hp - q.hp); end(L[0].team === 0 ? 1 : 0); } // 5:00 최저 체력 타워 쪽 패배
 }
 // ---------- 저장 데이터 / 메인 화면 ----------
-let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }, PASS = { xp: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
+let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }, PASS = { w: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
 const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
 const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
 
@@ -682,8 +682,11 @@ function authGate() {
 const ACCT = ['cf_prof', 'cf_pass', 'cf_decks', 'cf_deck', 'cf_ts'], nk = k => AUTH && ACCT.includes(k) ? k + ':' + AUTH.uid : k;   // 계정 데이터는 계정별 키로 분리
 const LS = { get(k, d) { try { return JSON.parse(localStorage.getItem(nk(k))) ?? d; } catch (e) { return d; } },
   set(k, v, quiet) { try { localStorage.setItem(nk(k), JSON.stringify(v)); } catch (e) {} if (!quiet && k !== 'cf_ts' && ACCT.includes(k)) cloudDirty(); } };
-const REW = [{ t: '골드 300', g: 300 }, { t: '보석 10', m: 10 }, { t: '골드 500', g: 500 }, { t: '보석 20', m: 20 }, { t: '골드 1,000', g: 1000 },
-  { t: '보석 30', m: 30 }, { t: '골드 1,500', g: 1500 }, { t: '보석 40', m: 40 }, { t: '골드 2,000', g: 2000 }, { t: '보석 100', m: 100 }];
+const REW = [{ t: '골드 300', g: 300 }, { t: '보석 10', m: 10 }, { t: '골드 500', g: 500 }, { t: '보석 20', m: 20 },
+  { t: '🎟 카드 해금권', sub: '없는 카드 1장 해금 · 다 있으면 골드 1,000', k: 'card' },
+  { t: '보석 30', m: 30 }, { t: '골드 1,500', g: 1500 }, { t: '보석 40', m: 40 }, { t: '골드 2,000', g: 2000 },
+  { t: '🎟 진화·영웅 해금권', sub: '없는 진화·영웅 1개 해금 · 다 있으면 보석 50', k: 'evh' }];
+const passTier = () => Math.min(10, PASS.w | 0);   // 전투에서 승리할 때마다 1단계씩 (최대 10)
 const SKINS = [{ id: 'blue', n: '기본 파랑', c: '#3b82f6' }, { id: 'green', n: '에메랄드', c: '#10b981', gold: 1500 }, { id: 'purple', n: '보라', c: '#a855f7', gold: 1500 }, { id: 'gold', n: '황금', c: '#f5b301', gems: 50 }];
 const SHOP = [{ n: '골드 주머니', sub: '골드 1,000', m: 20, g: 1000 }, { n: '골드 상자', sub: '골드 5,000', m: 90, g: 5000 }, { n: '골드 금고', sub: '골드 10,000', m: 160, g: 10000 }];
 const fmt = n => n.toLocaleString('ko-KR');
@@ -691,7 +694,7 @@ const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.ge
 const title = () => P.exp < 450 ? '신입 지휘관' : P.exp < 1200 ? '숙련 지휘관' : '왕국 수호자';
 
 function loadStore() {
-  DEFDECK = [...CFG.playerDeck]; ST = { ...ST, ...LS.get('cf_st', {}) }; PASS = { ...PASS, ...LS.get('cf_pass', {}) };
+  DEFDECK = [...CFG.playerDeck]; ST = { ...ST, ...LS.get('cf_st', {}) }; { const sp = LS.get('cf_pass', {}) || {}; PASS = { ...PASS, ...sp }; if (sp.w == null) PASS.w = Math.min(10, Math.floor((sp.xp || 0) / 100)); }   // 예전 XP 방식 → 승리 횟수 방식
   P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(2, Math.max(0, LS.get('cf_diff', 1) | 0));
   loadDecks();
 }
@@ -739,8 +742,8 @@ function showMenu(p) {
 function drawHome() {
   evSync();
   $('h-name').textContent = P.name; $('h-title').textContent = title() + ' · 🏆 ' + (P.tr | 0);
-  const t = Math.floor(PASS.xp / 100), n = REW.reduce((s, r, i) => s + (i < t && !PASS.claimed.includes(i) ? 1 : 0), 0);
-  $('h-pass').textContent = '티어 ' + t + '/10'; setBadge('h-pb', n);
+  const t = passTier(), n = REW.reduce((s, r, i) => s + (i < t && !PASS.claimed.includes(i) ? 1 : 0), 0);
+  $('h-pass').textContent = '단계 ' + t + '/10'; setBadge('h-pb', n);
   const can = P.daily !== today(); $('h-daily').textContent = can ? '골드 +300' : '내일 다시'; setBadge('h-db', can ? '!' : 0);
   $('h-rec').textContent = P.w + '승 ' + P.l + '패'; $('h-fsub').textContent = 'AI 대전 · ' + AIP[DIFF].n;
   $('h-evt').textContent = P.evDone ? '오늘의 이벤트 완료!' : '오늘의 이벤트 · 3승하면 보석 +20';
@@ -888,16 +891,29 @@ function claimDaily() { if (P.daily === today()) return; P.daily = today(); earn
 const curIs = p => { const e = $('pg-' + p); return e && e.style.display === 'flex'; };
 
 // 로얄패스
-function addXp(n) { PASS.xp = Math.min(1000, PASS.xp + n); LS.set('cf_pass', PASS); }
+function passWin() { PASS.w = Math.min(10, (PASS.w | 0) + 1); LS.set('cf_pass', PASS); }
 function drawPass() {
-  const t = Math.floor(PASS.xp / 100);
-  $('ps-bar').style.width = PASS.xp / 10 + '%'; $('ps-info').textContent = '티어 ' + t + '/10 · ' + PASS.xp + '/1000 XP';
+  const t = passTier();
+  $('ps-bar').style.width = t * 10 + '%'; $('ps-info').textContent = '단계 ' + t + '/10 · ' + (t >= 10 ? '모든 단계 완료!' : '다음 단계까지 승리 1번');
   $('ps-list').innerHTML = REW.map((r, i) => { const open = t > i, got = PASS.claimed.includes(i);
-    return `<div class="item${open ? '' : ' dim'}"><b style="width:24px">${i + 1}</b><em>${r.t}</em><button class="btn${open && !got ? ' gold' : ''}" ${open && !got ? '' : 'disabled'} onclick="claim(${i})">${got ? '받음' : open ? '받기' : '잠김'}</button></div>`; }).join('');
+    return `<div class="item${open ? '' : ' dim'}"><b style="width:24px">${i + 1}</b><em>${r.t}${r.sub ? `<small>${r.sub}</small>` : ''}</em><button class="btn${open && !got ? ' gold' : ''}" ${open && !got ? '' : 'disabled'} onclick="claim(${i})">${got ? '받음' : open ? '받기' : '잠김'}</button></div>`; }).join('');
 }
+function passDone(i, r, txt) { PASS.claimed.push(i); LS.set('cf_pass', PASS); earn(r.g || 0, r.m || 0, '로얄패스 ' + (i + 1) + '단계'); toast(txt + ' 획득'); if (CURP === 'pass') drawPass(); }
 function claim(i) {
-  if (i >= Math.floor(PASS.xp / 100) || PASS.claimed.includes(i)) return;
-  PASS.claimed.push(i); LS.set('cf_pass', PASS); const r = REW[i]; earn(r.g || 0, r.m || 0, '로얄패스 티어 ' + (i + 1)); toast(r.t + ' 획득'); drawPass();
+  if (i >= passTier() || PASS.claimed.includes(i)) return;
+  const r = REW[i];
+  if (r.k === 'card') { const pool = Object.keys(LOCK).filter(id => CARDS[id] && !have(id)); return pool.length ? passPickModal(i, pool) : passDone(i, { g: 1000 }, '골드 1,000 (모든 카드 보유)'); }
+  if (r.k === 'evh') { const pool = [...Object.keys(EVO).map(b => 'evo_' + b), ...Object.keys(HERO).map(b => 'hero_' + b)].filter(id => CARDS[id] && !have(id)); return pool.length ? passPickModal(i, pool) : passDone(i, { m: 50 }, '보석 50 (모든 진화·영웅 보유)'); }
+  passDone(i, r, r.t);
+}
+function passPickModal(i, pool) {
+  if (pool.length === 1) return passPick(i, pool[0]);
+  smOpen(`<h3>${REW[i].t}</h3><p>해금할 것을 골라 주세요</p>` + pool.map(id => `<button class="btn gold" onclick="passPick(${i},'${id}')">${CARDS[id].name}</button>`).join('') + '<button class="btn" onclick="smClose()">나중에</button>');
+}
+function passPick(i, id) {
+  if (PASS.claimed.includes(i) || !CARDS[id] || have(id)) return smClose();
+  const c = CARDS[id]; (c.evoOf ? P.evo : c.heroOf ? P.hero : P.buy).push(c.evoOf || c.heroOf || id); saveP(); if (DK) refreshPlay();
+  smClose(); passDone(i, {}, c.name + ' 해금');
 }
 
 // 설정 / 전적 / 프로필
@@ -918,7 +934,7 @@ function drawSet() {
 function resetAll(btn) {
   if (!rsArm) { rsArm = 1; btn.textContent = '한 번 더 누르면 모두 초기화돼요'; setTimeout(() => { rsArm = 0; btn.textContent = '저장 데이터 초기화'; }, 3000); return; }
   rsArm = 0; try { ['cf_st', 'cf_pass', 'cf_deck', 'cf_decks', 'cf_prof', 'cf_diff'].forEach(k => localStorage.removeItem(nk(k))); } catch (e) {}
-  ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }; PASS = { xp: 0, claimed: [] }; P = DEFP(); DIFF = 1; saveP(); loadDecks(); applySkin(); refreshTop(); drawSet(); btn.textContent = '저장 데이터 초기화'; toast('초기화했어요');
+  ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }; PASS = { w: 0, claimed: [] }; P = DEFP(); DIFF = 1; saveP(); loadDecks(); applySkin(); refreshTop(); drawSet(); btn.textContent = '저장 데이터 초기화'; toast('초기화했어요');
 }
 function drawStats() {
   $('s-w').textContent = P.w; $('s-l').textContent = P.l; $('s-d').textContent = P.d;
@@ -959,7 +975,7 @@ function end(w) {
   G.res = w; evSync(); const g = Math.round((w === 0 ? 100 : w === 1 ? 30 : 50) * (G.net ? 1 : AIP[DIFF].gold)); let m = 0, ex = '';
   if (w === 0) { P.w++; P.evWins++; if (P.evWins >= 3 && !P.evDone) { P.evDone = 1; m = 20; ex = ' · 이벤트 보석 +20'; } } else if (w === 1) P.l++; else P.d++;
   P.exp += w === 0 ? 30 : 10; P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
-  const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); addXp(w === 0 ? 30 : 10);
+  const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); if (w === 0) passWin();
   const rw = [{ i: '<span class="dot g"></span>', t: '+' + fmt(g) }]; if (m) rw.push({ i: '<span class="dot m"></span>', t: '+' + m });
   rw.push({ i: '<i>★</i>', t: '+' + (w === 0 ? 30 : 10) + ' XP' }, ...trRw(td)); showFinal(w, rw, false);
 }
