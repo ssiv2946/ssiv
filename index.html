@@ -227,16 +227,29 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .dc .lv{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);font-size:11px;font-weight:800;text-align:center;padding:2px 0}
 .dc.used{opacity:.4}.dc.used::after{content:'\2713';position:absolute;right:5px;top:2px;color:#38d46a;font-weight:900;font-size:18px}
 .dc.lk{filter:grayscale(.85) brightness(.75)}
-.dc.evo{border-color:#5ad7ff}.dc.hero{border-color:#ffd24d}
-.dc.evo .lv{color:#7fe3ff}.dc.hero .lv{color:#ffd24d}
-.card .tg{position:absolute;right:2px;top:-7px;font-size:10px;font-style:normal;font-weight:800;padding:1px 6px;border-radius:9px;background:#2a8fb5;color:#fff;white-space:nowrap}
-.card.hero .tg{background:#c99a14;color:#2b1f00}.card .tg.rd{background:#5ad7ff;color:#04223a}
+.dc.evo{border-color:#c38bff}.dc.hero{border-color:#ffd24d}
+.dc.evo .lv{color:#dcb8ff}.dc.hero .lv{color:#ffd24d}
+/* 진화=보라, 영웅=황금: 테두리 빛 + 흐르는 광택 + 반짝이는 별 */
+.card.evo,.dc.evo{border-color:#c38bff!important;animation:evg 1.8s ease-in-out infinite}
+.card.hero,.dc.hero{border-color:#ffd24d!important;animation:hrg 1.8s ease-in-out infinite}
+@keyframes evg{0%,100%{box-shadow:0 0 6px #9b4dff,inset 0 0 8px rgba(170,100,255,.35)}50%{box-shadow:0 0 16px #c38bff,inset 0 0 16px rgba(190,120,255,.6)}}
+@keyframes hrg{0%,100%{box-shadow:0 0 6px #ffb800,inset 0 0 8px rgba(255,200,60,.35)}50%{box-shadow:0 0 16px #ffd84d,inset 0 0 16px rgba(255,220,90,.6)}}
+.card.evo::before,.card.hero::before,.dc.evo::before,.dc.hero::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.6) 50%,transparent 62%);background-size:260% 100%;animation:shn 2.4s linear infinite}
+.card.evo::before,.dc.evo::before{background-image:linear-gradient(115deg,transparent 38%,rgba(235,205,255,.7) 50%,transparent 62%)}
+.card.hero::before,.dc.hero::before{background-image:linear-gradient(115deg,transparent 38%,rgba(255,244,190,.75) 50%,transparent 62%)}
+@keyframes shn{0%{background-position:160% 0}100%{background-position:-60% 0}}
+.card.evo::after,.card.hero::after,.dc.evo:not(.used)::after,.dc.hero:not(.used)::after{content:'✦';position:absolute;right:6px;bottom:5px;font-size:13px;pointer-events:none;animation:twk 1.2s ease-in-out infinite}
+.card.evo::after,.dc.evo::after{color:#ecd4ff;text-shadow:0 0 6px #b86bff}.card.hero::after,.dc.hero::after{color:#fff3b0;text-shadow:0 0 6px #ffc21a}
+@keyframes twk{0%,100%{opacity:.25;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.25) rotate(40deg)}}
+.card.evo.rdy{animation-duration:1s}
+.card .tg{position:absolute;right:2px;top:-7px;font-size:10px;font-style:normal;font-weight:800;padding:1px 6px;border-radius:9px;background:#7b3fd1;color:#fff;white-space:nowrap;z-index:1}
+.card.hero .tg{background:#c99a14;color:#2b1f00}.card .tg.rd{background:#d9b3ff;color:#2a0a52}
 #bottom{position:relative}
 #hab{position:absolute;left:50%;transform:translateX(-50%);top:-46px;z-index:5;padding:9px 16px;border-radius:22px;border:2px solid #fff;background:linear-gradient(#ffd24d,#d9a21a);color:#2b1f00;font-weight:900;font-size:14px;box-shadow:0 3px 0 #7a5a05,0 4px 10px rgba(0,0,0,.5);touch-action:manipulation}
 #hab.off{filter:grayscale(.7) brightness(.8)}
 #app.land #hab{position:static;transform:none;margin:0 0 6px;width:100%}
-.dc.sl-evo{border-color:rgba(90,215,255,.55)}.dc.sl-hero{border-color:rgba(255,210,77,.55)}
-.dc.empty.sl-evo{border:2px dashed #5ad7ff;color:#7fe3ff}.dc.empty.sl-hero{border:2px dashed #ffd24d;color:#ffd24d}
+.dc.sl-evo{border-color:rgba(195,139,255,.6)}.dc.sl-hero{border-color:rgba(255,210,77,.55)}
+.dc.empty.sl-evo{border:2px dashed #c38bff;color:#dcb8ff}.dc.empty.sl-hero{border:2px dashed #ffd24d;color:#ffd24d}
 .dc.empty{font-size:12px;font-weight:800;text-align:center;padding-bottom:0}
 #ci-acts{display:flex;flex-direction:column;gap:6px;margin:8px 0 6px}
 .slrow{display:flex;gap:6px}.slrow .btn{flex:1;padding-left:4px;padding-right:4px}
@@ -519,9 +532,12 @@ function newGame(net) {
 }
 
 // ---------- 소환 / 카드 ----------
+function cycNext(team, id) {   // 이번 사용이 진화로 나오면 true. 진화 후에는 주기를 처음부터 다시 채워야 해요
+  const n = G.cyc[team][id] | 0, ready = n >= CARDS[id].cycles; G.cyc[team][id] = ready ? 0 : n + 1; return ready;
+}
 function spawn(id, team, x, y) {
   let c = CARDS[id]; const m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
-  if (c.evoOf) { const n = G.cyc[team][id] | 0; G.cyc[team][id] = n + 1; if (n < c.cycles) { id = c.evoOf; c = CARDS[id]; } }   // 사이클이 차기 전에는 기본 카드로 소환
+  if (c.evoOf) { if (cycNext(team, id)) { /* 진화! */ } else { id = c.evoOf; c = CARDS[id]; } }   // 사이클이 차기 전에는 기본 카드로 소환 (진화로 나오면 주기가 다시 0부터)
   if (c.type === 'spell') { G.fx.push({ x, y, r: c.radius, t: c.delay, max: c.delay, c, team, m, left: c.waves || 1 }); return; }
   const n = c.count || 1;
   for (let i = 0; i < n; i++) {
@@ -1345,7 +1361,7 @@ function sendSnap(n) {
 }
 function guestPlay(n, i, id, c, x, y) {
   x = Math.min(W, Math.max(0, x)); y = Math.min(H, Math.max(0, y));
-  sfx('deploy'); if (c.evoOf) G.cyc[0][id] = (G.cyc[0][id] | 0) + 1; const q = ++n.pq; n.pending.push({ seq: q, cost: c.cost }); G.elixir = Math.max(0, G.elixir - c.cost);
+  sfx('deploy'); if (c.evoOf) cycNext(0, id); const q = ++n.pq; n.pending.push({ seq: q, cost: c.cost }); G.elixir = Math.max(0, G.elixir - c.cost);
   const d = { q, i, id: CIDS.indexOf(id), x: r1(W - x), y: r1(H - y) };   // 호스트 좌표계로 변환
   const send = () => { if (G.net === n) n.room.emit('play', d).catch(() => {}); };
   send(); setTimeout(send, 120); setTimeout(send, 320);                   // 유실 대비 재전송 (호스트가 번호로 중복 제거)
@@ -1938,7 +1954,7 @@ function buildHand() {
   G.hand.forEach((id, i) => {
     const c = CARDS[id], d = document.createElement('div');
     d.className = 'card' + (i === sel ? ' sel' : '') + (c.evoOf ? ' evo' : c.heroOf ? ' hero' : ''); d.innerHTML = `<div class="c">${c.cost}</div><div class="i">${c.initial}</div><small>${c.name}</small>${c.evoOf || c.heroOf ? '<em class="tg"></em>' : ''}`;
-    d.style.borderColor = c.evoOf ? '#5ad7ff' : c.heroOf ? '#ffd24d' : c.color;
+    d.style.borderColor = c.evoOf ? '#c38bff' : c.heroOf ? '#ffd24d' : c.color;
     d.onpointerdown = e => { drag = { i, x: null, y: null, card: 1, lift: 1 }; d.classList.add('sel'); e.preventDefault(); };
     h.appendChild(d);
   });
@@ -1977,7 +1993,7 @@ function ui() {
   $('crown').textContent = '👑 ' + crowns(0) + ' : ' + crowns(1);
   $('ef').style.width = G.elixir * 10 + '%'; $('en').textContent = Math.floor(G.elixir);
   [...$('hand').children].forEach((el, i) => { const c = CARDS[G.hand[i]]; el.classList.toggle('off', c.cost > G.elixir);
-    const tg = el.querySelector('.tg'); if (tg) { if (c.evoOf) { const l = Math.max(0, c.cycles - (G.cyc[0][c.id] | 0)); tg.textContent = l ? '진화 ' + l + '회 후' : '진화!'; tg.classList.toggle('rd', !l); } else tg.textContent = '영웅'; } });
+    const tg = el.querySelector('.tg'); if (tg) { if (c.evoOf) { const l = Math.max(0, c.cycles - (G.cyc[0][c.id] | 0)); tg.textContent = l ? '진화 ' + l + '회 후' : '진화!'; tg.classList.toggle('rd', !l); el.classList.toggle('rdy', !l); } else tg.textContent = '영웅'; } });
   const hb = $('hab'), he = myHero(0);
   if (he && abLeft(he) > 0) { const h = HERO[he.card.heroOf]; hb.style.display = 'block'; hb.textContent = h.name + ' · 💧' + h.cost + (h.uses > 1 ? ' (' + abLeft(he) + ')' : ''); hb.classList.toggle('off', G.elixir < h.cost); } else hb.style.display = 'none';
 }
@@ -2104,7 +2120,11 @@ function render(a) {
         cx.fillStyle = c.color; cx.fill(); cx.lineWidth = 0.12; cx.strokeStyle = TC[e.team]; cx.stroke();
         cx.fillStyle = '#111'; cx.font = `bold ${Math.max(0.5, r * 1.1)}px sans-serif`; cx.fillText(c.initial, x, dy);
       }
-      if (c.evoOf || c.heroOf) { cx.lineWidth = 0.14; cx.strokeStyle = c.evoOf ? '#5ad7ff' : '#ffd24d'; cx.beginPath(); cx.arc(x, dy, r + 0.14, 0, 7); cx.stroke(); }
+      if (c.evoOf || c.heroOf) {   // 진화=보라, 영웅=황금: 맥동하는 링 + 둘레를 도는 반짝이
+        const pu = 0.5 + 0.5 * Math.sin(nowT / 220), col = c.evoOf ? '#c38bff' : '#ffd24d', lt = c.evoOf ? '#f0dcff' : '#fff6c0';
+        cx.save(); cx.shadowColor = col; cx.shadowBlur = 8 + pu * 10; cx.lineWidth = 0.14 + pu * 0.06; cx.strokeStyle = col; cx.beginPath(); cx.arc(x, dy, r + 0.16, 0, 7); cx.stroke(); cx.restore();
+        cx.fillStyle = lt; for (let i = 0; i < 3; i++) { const an = nowT / 600 + i * 2.094, sz = 0.1 + 0.07 * (0.5 + 0.5 * Math.sin(nowT / 140 + i * 2)); cx.beginPath(); cx.arc(x + Math.cos(an) * (r + 0.2), dy + Math.sin(an) * (r + 0.2), sz, 0, 7); cx.fill(); }
+      }
       if (e.shield > 0 || e.sh) { cx.lineWidth = 0.16; cx.strokeStyle = 'rgba(140,210,255,.95)'; cx.beginPath(); cx.arc(x, dy, r + 0.34, 0, 7); cx.stroke(); }
       if (e.slowT > 0 || e.slw) { cx.fillStyle = 'rgba(110,190,255,.38)'; cx.beginPath(); cx.arc(x, dy, r, 0, 7); cx.fill(); }
     }
