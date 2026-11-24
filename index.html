@@ -319,6 +319,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .rchip.r4{background:linear-gradient(110deg,#ffd24d,#ff8a3d 60%,#ff5a5a);color:#3a1600;box-shadow:0 0 8px rgba(255,170,60,.7)}
 .dc.r4{border-color:#ffd24d;box-shadow:inset 0 0 0 2px #ff8a3d,0 0 12px rgba(255,170,60,.75);animation:lgd 2.4s ease-in-out infinite}
 .card.r4{border-color:#ffd24d;box-shadow:0 0 10px rgba(255,170,60,.7)}
+#sm .lt{font-size:12px;opacity:.7;margin:8px 0 2px;text-align:left}#sm .lr{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border-radius:10px;padding:5px 8px;margin:3px 0}#sm .lr em{flex:1;text-align:left;font-style:normal}#sm .btn.sm{padding:4px 10px;font-size:12px;min-height:0}
 </style>
 </head>
 <body>
@@ -454,7 +455,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="item"><em>AI 대전<small id="md-sub"></small></em><button class="btn gold" onclick="restart()">시작</button></div>
         <div class="ptabs" id="md-diff"></div>
         <div class="item"><em>1대1 친구 대전<small>소셜 탭에서 접속 중인 친구에게 친선전·트로피전을 신청해요</small></em><button class="btn gold" onclick="showMenu('social')">소셜로</button></div>
-        <div class="item"><em>2대2 팀 대전<small>나 + AI 동료 vs AI 2명 · 난이도는 위에서 골라요</small></em><button class="btn gold" onclick="restart(1)">시작</button></div>
+        <div class="item"><em>2대2 팀 대전<small>빈 자리는 AI가 채워요 · 친구를 부르면 그 자리에 들어와요</small></em><div style="display:flex;flex-direction:column;gap:6px"><button class="btn gold" onclick="restart(1)">AI와</button><button class="btn" onclick="pv2Host()">친구와</button></div></div>
       </div>
 
       <div class="pg" id="pg-pass">
@@ -633,6 +634,14 @@ function newGame(net, m2) {
     e2.wait += 1.2;   // 두 적이 동시에 움직이지 않게 엇갈리기
   }
   else if (!net) { G.ai = newAI(); G.bots = [G.ai]; }
+  else if (net.role === 'host' && net.m2) {   // 2대2 방장: 손님 자리는 사람, 나머지는 AI
+    G.m2 = 1; G.st = [0, 0, 1, 1]; G.S = [null, null, null, null]; G.bots = []; net.ack = 0; net.seq = 0; net.sc = 0;
+    for (let i = 1; i < 4; i++) {
+      const sd = net.seats[i], tm = G.st[i];
+      if (sd) { const q = [...sd.deck].sort(() => Math.random() - 0.5); G.S[i] = { human: 1, seat: i, team: tm, conn: sd.conn, name: sd.name, el: CFG.startElixir, hand: q.splice(0, 4), nxt: q.shift(), q, ack: 0, seen: new Set(), lastPing: Date.now() }; }
+      else { const b = newBot(tm, i, AIP[tm ? DIFF : Math.max(1, DIFF)]); b.wait += i * 0.4; G.S[i] = b; G.bots.push(b); }
+    }
+  }
   else if (net.role === 'host') { const q = [...net.oppDeck].sort(() => Math.random() - 0.5); G.o = { el: CFG.startElixir, hand: q.splice(0, 4), nxt: q.shift(), q }; net.ack = 0; net.seen = new Set(); net.sc = 0; net.seq = 0; }
   else { G.gm = new Map(); net.snapAt = performance.now(); net.snapDt = 100; net.pending = []; net.lastS = -1; net.buf = null; net.lastSnap = Date.now(); net.pq = 0; }
   if (!net || net.role === 'host') for (const team of [0, 1])
@@ -701,6 +710,7 @@ function tick(dt) {
     else if (G.t >= q.until) { G.pend = null; lack(); } }
   if (G.net && G.net.role === 'guest') return;   // 게스트는 스냅샷으로만 갱신
   if (G.o) G.o.el = Math.min(10, G.o.el + dt / s.sec);
+  if (G.m2 && G.S) for (const so of G.S) if (so && so.human) so.el = Math.min(10, so.el + dt / s.sec);
   aiTick(dt);
   for (const e of G.ents) { e.px = e.x; e.py = e.y; }
   for (const e of G.ents) if (e.hp > 0) think(e, dt);
@@ -1243,7 +1253,7 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fin').className = w === 0 ? 'win' : w === 1 ? 'lose' : 'draw';
   $('fn-title').textContent = forfeit ? '기권패' : w === 0 ? '승리!' : w === 1 ? '패배' : '무승부';
   $('fn-ec').innerHTML = crownRow(crowns(1), '#e5445a'); $('fn-pc').innerHTML = crownRow(crowns(0), '#3b82f6');
-  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : '1대1 친선전') : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
+  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : nt.m2 ? '2대2 친선전' : '1대1 친선전') : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
   $('fn-rw').innerHTML = rw.length ? rw.map(r => `<div class="rb2">${r.i}<span>${r.t}</span></div>`).join('') : '<p>받은 보상이 없어요</p>';
   $('fin').style.display = 'flex'; $('fin').querySelectorAll('.pt').forEach(e => e.remove()); if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); pubSoon();
 }
@@ -1468,13 +1478,15 @@ const r1 = v => Math.round(v * 10);
 const PEERROOM = {
   join(name, role) {
     return new Promise((ok, fail) => {
-      const h = {}; let conn = null, peer, done = false;
-      const deliver = m => { if (m && typeof m.t === 'string') for (const f of (h[m.t] || [])) f({ topic: m.t, data: m.d, isMe: false }); };
+      const h = {}, conns = new Map(); let peer, done = false;
+      const deliver = (m, from) => { if (m && typeof m.t === 'string') for (const f of (h[m.t] || [])) f({ topic: m.t, data: m.d, isMe: false, from }); };
       const room = {
-        emit: async (t, d) => { if (conn && conn.open) conn.send({ t, d: d ?? null }); },
+        cap: 1,   // 방장이 동시에 받을 수 있는 연결 수 (2대2 방은 3)
+        emit: async (t, d, to) => { const msg = { t, d: d ?? null }; for (const [k, c] of conns) if ((to == null || to === k) && c.open) c.send(msg); },
         on: (t, f) => { (h[t] ||= []).push(f); return () => { h[t] = (h[t] || []).filter(x => x !== f); }; },
+        drop: k => { const c = conns.get(k); conns.delete(k); try { c && c.close(); } catch (e) {} },
         leave: async () => { try { peer.destroy(); } catch (e) {} } };
-      const bind = c => { c.on('data', deliver); c.on('close', () => { if (conn === c) { conn = null; deliver({ t: 'peerleft' }); } }); c.on('error', () => {}); };
+      const bind = c => { const k = c.peer; c.on('data', m => deliver(m, k)); c.on('close', () => { if (conns.get(k) === c) { conns.delete(k); deliver({ t: 'peerleft' }, k); } }); c.on('error', () => {}); };
       const fin = (f, v) => { if (!done) { done = true; f(v); } };
       const id = 'clashfriends-' + name;
       peer = role === 'host' ? new Peer(id, { debug: 0 }) : new Peer({ debug: 0 });
@@ -1482,13 +1494,13 @@ const PEERROOM = {
       if (role === 'host') {
         peer.on('open', () => fin(ok, room));
         peer.on('connection', c => {
-          if (conn && conn.open) { c.on('open', () => { c.send({ t: 'full', d: { any: 1 } }); setTimeout(() => c.close(), 600); }); return; }
-          conn = c; bind(c);
+          if ([...conns.values()].filter(x => x.open).length >= room.cap) { c.on('open', () => { c.send({ t: 'full', d: { any: 1 } }); setTimeout(() => c.close(), 600); }); return; }
+          conns.set(c.peer, c); bind(c);
         });
       } else {
         peer.on('open', () => {
           const c = peer.connect(id, { serialization: 'json', reliable: true });
-          c.on('open', () => { conn = c; bind(c); fin(ok, room); });
+          c.on('open', () => { conns.set(c.peer, c); bind(c); fin(ok, room); });
           setTimeout(() => { if (!done) { try { peer.destroy(); } catch (e) {} fin(fail, new Error('timeout')); } }, 9000);
         });
       }
@@ -1507,7 +1519,7 @@ function pvUI() {
   sub.textContent = !n ? '방을 만들고 코드를 친구에게 알려주세요' : n.state === 'wait' ? '방 코드 ' + n.code + ' · 친구를 기다리는 중…' : n.state === 'join' ? '방 ' + n.code + ' 입장 중…' : '대전 중';
   b.textContent = n && n.role === 'host' ? '취소' : '방 만들기'; b.disabled = !!n && n.role === 'guest';
 }
-async function pvHost(mode) {
+async function pvHost(mode, m2) {
   if (NET) { pvLeave(); pvUI(); return; }
   toast('방을 만드는 중…');
   const R = await pvRoom(); if (!R) { toast('온라인 연결을 쓸 수 없어요 · 초대받은 사람만 이 링크로 연결돼요'); return; }
@@ -1517,13 +1529,15 @@ async function pvHost(mode) {
     try { room = await R.join(code.toLowerCase(), 'host'); } catch (e) { room = null; }
   }
   if (!room) { toast('방을 만들지 못했어요. 잠시 뒤 다시 해 주세요'); return; }
-  const n = NET = { role: 'host', code, room, state: 'wait', unsubs: [], lastPing: Date.now(), mode: mode === 'trophy' ? 'trophy' : 'friendly' };
+  const n = NET = { role: 'host', code, room, state: m2 ? 'lobby' : 'wait', unsubs: [], lastPing: Date.now(), mode: mode === 'trophy' ? 'trophy' : 'friendly' };
+  if (m2) { n.m2 = 1; n.seat = 0; n.seats = [{ name: P.name }, null, null, null]; room.cap = 3; }
   n.unsubs.push(room.on('hello', m => hostHello(n, m)), room.on('play', m => hostPlay(n, m)), room.on('hab', m => hostHab(n, m)),
-    room.on('ff', m => { if (!m.isMe && G.net === n && G.res === undefined) end(0); }), room.on('ping', m => { if (!m.isMe) n.lastPing = Date.now(); }), room.on('peerleft', () => { n.lastPing = 0; }));
+    room.on('ff', m => hostFF(n, m)), room.on('ping', m => hostPing(n, m)), room.on('peerleft', m => hostLeft(n, m)));
   pvUI(); try { navigator.clipboard.writeText(code); } catch (e) {}
   return code;
 }
 function hostHello(n, m) {
+  if (n.m2) return hostHello2(n, m);
   if (m.isMe || NET !== n) return; const d = m.data || {};
   if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
   const deck = Array.isArray(d.deck) ? d.deck.map(i => CIDS[i]) : [];
@@ -1532,7 +1546,7 @@ function hostHello(n, m) {
   n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode }).catch(() => {});
   pvBegin(n);
 }
-async function pvJoin(codeArg) {
+async function pvJoin(codeArg, want) {
   if (NET) return;
   const code = String(codeArg || $('pv-code').value).trim().toUpperCase(); if (code.length !== 5) { toast('방 코드 5자리를 입력해 주세요'); return; }
   toast('입장 중…');
@@ -1540,16 +1554,86 @@ async function pvJoin(codeArg) {
   let room; try { room = await R.join(code.toLowerCase(), 'guest'); } catch (e) { toast('방을 찾지 못했어요. 코드를 다시 확인해 주세요'); return; }
   const n = NET = { role: 'guest', code, room, state: 'join', unsubs: [], tok: Math.random().toString(36).slice(2, 10), lastSnap: Date.now() };
   n.unsubs.push(
-    room.on('start', m => { const d = m.data || {}; if (m.isMe || n.state !== 'join' || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); n.mode = d.mode === 'trophy' ? 'trophy' : 'friendly'; clearTimeout(n.t1); pvBegin(n); }),
+    room.on('start', m => { const d = m.data || {}; if (m.isMe || (n.state !== 'join' && n.state !== 'lobby') || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); n.mode = d.mode === 'trophy' ? 'trophy' : 'friendly'; clearTimeout(n.t1);
+      n.flip = d.m2 ? (d.seat >= 2 ? 1 : 0) : 1;   // 1대1 손님·2대2 상대 팀은 화면을 뒤집어 보고, 같은 팀은 그대로 봐요
+      if (d.m2) { n.m2 = 1; n.seat = d.seat; n.names = d.names || []; n.opp = (d.seat >= 2 ? [n.names[0], n.names[1]] : [n.names[2], n.names[3]]).join(' · '); smClose(); }
+      pvBegin(n); }),
+    room.on('lobby', m => { const d = m.data || {}; if (m.isMe || (n.state !== 'join' && n.state !== 'lobby') || d.tok !== n.tok) return; n.state = 'lobby'; n.seat = d.seat; n.names = d.names || []; clearTimeout(n.t1); guestLobby(n); }),
     room.on('full', m => { const d = m.data || {}; if (m.isMe || n.state !== 'join' || !(d.any || d.tok === n.tok)) return; toast('이미 가득 찬 방이에요'); pvLeave(); pvUI(); }),
-    room.on('snap', m => { if (!m.isMe) onSnap(n, m.data); }), room.on('peerleft', () => { n.lastSnap = 0; }));
+    room.on('snap', m => { if (!m.isMe) onSnap(n, m.data); }), room.on('peerleft', () => { n.lastSnap = 0; if (n.state === 'lobby') { toast('방이 닫혔어요'); pvLeave(); smClose(); pvUI(); } }));
   let tries = 0;
   const hello = () => {
     if (n.state !== 'join') return;
     if (++tries > 6) { toast('방을 찾지 못했어요. 코드를 다시 확인해 주세요'); pvLeave(); pvUI(); return; }
-    room.emit('hello', { tok: n.tok, name: P.name, deck: CFG.playerDeck.map(id => CIDS.indexOf(id)) }).catch(() => {}); n.t1 = setTimeout(hello, 1500);
+    room.emit('hello', { tok: n.tok, st: want | 0, name: P.name, deck: CFG.playerDeck.map(id => CIDS.indexOf(id)) }).catch(() => {}); n.t1 = setTimeout(hello, 1500);
   };
   hello(); pvUI();
+}
+// ---------- 2대2 온라인: 로비 · 좌석 · 끊기면 AI 인계 ----------
+const seatOf = (n, from) => (n.seats || []).findIndex(x => x && x.conn === from);
+const seatNames = n => [P.name, ...[1, 2, 3].map(i => n.seats[i] ? n.seats[i].name : 'AI')];
+function hostFF(n, m) { if (m.isMe || G.net !== n || G.res !== undefined) return; if (n.m2) { const i = seatOf(n, m.from); if (i > 0) botify(n, i); } else end(0); }
+function hostPing(n, m) { if (m.isMe) return; if (n.m2) { const i = seatOf(n, m.from); if (i > 0) { n.seats[i].lastPing = Date.now(); if (G.S && G.S[i] && G.S[i].human) G.S[i].lastPing = Date.now(); } } else n.lastPing = Date.now(); }
+function hostLeft(n, m) { if (!n.m2) { n.lastPing = 0; return; } const i = seatOf(n, m.from); if (i < 1) return; if (n.state === 'lobby') { n.seats[i] = null; lobbyShare(n); lobbyDraw(); } else botify(n, i); }
+function botify(n, i) {   // 자리를 비운 사람 대신 AI가 손패·엘릭서를 그대로 이어받아요
+  const so = G.S && G.S[i]; if (!so || !so.human || G.net !== n) return;
+  const b = newBot(so.team, i, AIP[so.team ? DIFF : Math.max(1, DIFF)]); Object.assign(b, { hand: so.hand, nxt: so.nxt, q: so.q, el: so.el });
+  G.S[i] = b; G.bots.push(b); if (n.seats[i]) { n.room.drop(n.seats[i].conn); n.seats[i] = null; } toast(esc(so.name) + '님이 나가서 AI가 이어받아요');
+}
+function hostHello2(n, m) {
+  if (m.isMe || NET !== n) return; const d = m.data || {}, from = m.from, ex = seatOf(n, from);
+  if (ex > 0) { if (n.state === 'play') n.room.emit('start', startMsg(n, ex), from).catch(() => {}); else n.room.emit('lobby', { tok: n.seats[ex].tok, seat: ex, names: seatNames(n) }, from).catch(() => {}); return; }
+  if (n.state !== 'lobby') { n.room.emit('full', { tok: d.tok }, from).catch(() => {}); return; }
+  const deck = Array.isArray(d.deck) ? d.deck.map(i => CIDS[i]) : [];
+  if (deck.length !== 8 || deck.some(x => !x || CARDS[x].hidden) || new Set(deck).size !== 8 || !deckRules(deck)) return;
+  const want = d.st | 0, pool = want === 1 ? [1] : want >= 2 ? [want, want === 2 ? 3 : 2] : [1, 2, 3], seat = pool.find(i => !n.seats[i]);
+  if (!seat) { n.room.emit('full', { tok: d.tok }, from).catch(() => {}); return; }
+  n.seats[seat] = { conn: from, name: String(d.name || '친구').slice(0, 12), deck, tok: String(d.tok), lastPing: Date.now() };
+  if (n.inviting && n.inviting.seat === seat) stopInvite();
+  lobbyShare(n); lobbyDraw();
+}
+const startMsg = (n, i) => ({ tok: n.seats[i].tok, host: P.name, mode: 'friendly', m2: 1, seat: i, names: seatNames(n) });
+function lobbyShare(n) { n.seats.forEach((x, i) => { if (x && i) n.room.emit('lobby', { tok: x.tok, seat: i, names: seatNames(n) }, x.conn).catch(() => {}); }); }
+function pv2Host() {
+  if (NET) { toast('이미 방이 열려 있어요'); return; }
+  if (!AUTH) { toast('친구를 부르려면 로그인이 필요해요'); return; }
+  pvHost('friendly', 1).then(code => { if (code) { n2().pick = 0; lobbyDraw(); } });
+}
+const n2 = () => NET && NET.m2 && NET.role === 'host' ? NET : null;
+function lobbyDraw() {
+  const n = n2(); if (!n || n.state !== 'lobby') return; SM.lock = 1;
+  const row = i => { const sd = n.seats[i], inv = n.inviting && n.inviting.seat === i;
+    return `<div class="lr">${sd ? avH(sd.name) : '<span class="av" style="background:#46546b">AI</span>'}<em>${i === 0 ? esc(P.name) + ' (나)' : sd ? esc(sd.name) : inv ? esc(n.inviting.name) + ' 초대 중…' : 'AI가 해요'}</em>${i === 0 ? '' : sd ? `<button class="btn sm" onclick="lbKick(${i})">내보내기</button>` : inv ? '<button class="btn sm" onclick="stopInvite()">취소</button>' : `<button class="btn sm" onclick="lbPick(${i})">친구 초대</button>`}</div>`; };
+  let pick = '';
+  if (n.pick) { const on = FR.filter(o => isOn(o) && o.st !== 'play' && !n.seats.some(x => x && x.name === o.n)); pick = `<p style="margin:8px 0 4px">${SEATN[n.pick]} 자리에 부를 친구</p>` + (on.length ? on.map(o => `<button class="btn" onclick="lbSend('${o.uid}')">${esc(o.n)}</button>`).join('') : '<p>지금 접속한 친구가 없어요</p>'); }
+  smOpen(`<h3>2대2 팀 대전 방</h3><p>내 팀과 상대 팀 빈 자리는 AI가 채워요</p><div class="lt">내 팀</div>${row(0)}${row(1)}<div class="lt">상대 팀</div>${row(2)}${row(3)}${pick}<div class="row" style="margin-top:10px"><button class="btn" onclick="lbClose()">방 닫기</button><button class="btn gold" onclick="lobbyStart()">시작</button></div>`);
+}
+const SEATN = ['나', '같은 팀', '상대 1', '상대 2'];
+function lbPick(i) { const n = n2(); if (!n) return; n.pick = n.pick === i ? 0 : i; lobbyDraw(); if (n.pick) { SOC.busy = 0; socLoad().then(lobbyDraw).catch(() => {}); } }
+function lbKick(i) { const n = n2(); if (!n || !n.seats[i]) return; n.room.emit('full', { tok: n.seats[i].tok, any: 1 }, n.seats[i].conn).catch(() => {}); const c = n.seats[i].conn; n.seats[i] = null; setTimeout(() => n.room.drop(c), 300); lobbyShare(n); lobbyDraw(); }
+function lbClose() { stopInvite(); pvLeave(); smClose(); pvUI(); }
+async function lbSend(uid) {
+  const n = n2(), o = FR.find(x => x.uid === uid), i = n && n.pick; if (!n || !o || !i || n.seats[i]) return;
+  const at = Date.now(); PUBX.to = uid; PUBX.inv = { code: n.code, type: '2v2', seat: i, at, from: AUTH.uid }; n.inviting = { uid, seat: i, at, name: o.n }; n.pick = 0; lobbyDraw();
+  try { await pubPush(); } catch (e) { stopInvite(); toast('초대를 보내지 못했어요'); return; }
+  clearInterval(SOC.w); const t0 = Date.now();
+  SOC.w = setInterval(async () => {
+    if (!NET || NET !== n || n.state !== 'lobby' || !n.inviting || n.seats[n.inviting.seat]) return stopInvite();
+    if (Date.now() - t0 > 45000) { toast('초대에 응답이 없어요'); return stopInvite(); }
+    try { await tokenOk(); const j = await jf(fsDoc('profiles', uid), { headers: hdr() }); if (((j.fields.dc || {}).stringValue) === AUTH.uid + ':' + at) { toast(o.n + '님이 거절했어요'); stopInvite(); } } catch (e) {}
+  }, 2500);
+}
+function stopInvite() { clearInterval(SOC.w); if (NET) NET.inviting = null; PUBX.to = ''; PUBX.inv = null; pubPush().catch(() => {}); lobbyDraw(); }
+function lobbyStart() {
+  const n = n2(); if (!n || n.state !== 'lobby') return;
+  clearInterval(SOC.w); n.inviting = null; PUBX.to = ''; PUBX.inv = null; pubPush().catch(() => {}); smClose();
+  n.state = 'play'; n.lastPing = Date.now(); n.opp = [n.seats[2] ? n.seats[2].name : 'AI', n.seats[3] ? n.seats[3].name : 'AI'].join(' · ');
+  n.seats.forEach((x, i) => { if (x && i) { x.lastPing = Date.now(); n.room.emit('start', startMsg(n, i), x.conn).catch(() => {}); } });
+  pvBegin(n);
+}
+function guestLobby(n) {
+  SM.lock = 1; const nm = n.names || [], me = i => i === n.seat ? ' (나)' : '', r = i => `<div class="lr">${avH(nm[i] || 'AI')}<em>${esc(nm[i] || 'AI')}${me(i)}</em></div>`;
+  smOpen(`<h3>2대2 방에 들어왔어요</h3><p>방장이 시작할 때까지 잠깐 기다려요</p><div class="lt">${n.seat < 2 ? '내 팀' : '상대 팀'}</div>${r(0)}${r(1)}<div class="lt">${n.seat < 2 ? '상대 팀' : '내 팀'}</div>${r(2)}${r(3)}<button class="btn" style="margin-top:10px" onclick="pvLeave();smClose();pvUI()">나가기</button>`);
 }
 function pvBegin(n) {
   pubSoon(); newGame(n); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false;
@@ -1559,7 +1643,8 @@ function pvBegin(n) {
 }
 function watchdog(n) {
   if (G.net !== n || n.closing || G.res !== undefined) return;
-  if (n.role === 'host' && Date.now() - n.lastPing > 10000) { toast('상대의 연결이 끊겨서 승리했어요'); end(0); }
+  if (n.role === 'host' && n.m2) { for (let i = 1; i < 4; i++) { const so = G.S && G.S[i]; if (so && so.human && Date.now() - so.lastPing > 10000) botify(n, i); } }
+  else if (n.role === 'host' && Date.now() - n.lastPing > 10000) { toast('상대의 연결이 끊겨서 승리했어요'); end(0); }
   else if (n.role === 'guest' && Date.now() - n.lastSnap > 10000) { G.res = 9; showRes('연결이 끊겼어요', '호스트와 연결할 수 없어요', '<button onclick="menu()">확인</button>'); }
 }
 function pvLeave() {
@@ -1568,34 +1653,39 @@ function pvLeave() {
 }
 function sendSnap(n) {
   if (G.net !== n || !n.room) return;
-  const s = ++n.seq, E = [], o = G.o;
+  const s = ++n.seq, E = [], m2 = n.m2;
   for (const e of G.ents) {
     const hp = e.hp > 0 ? Math.max(1, Math.round(e.hp)) : 0;
-    E.push(e.kind === 'tower' ? [e.id, e.tk === 'king' ? -2 : -1, e.team, r1(e.x), r1(e.y), hp, e.active ? 1 : 0, e.stunT > 0 ? 16 : 0] : [e.id, CIDS.indexOf(e.card.id), e.team, r1(e.x), r1(e.y), hp, Math.round(Math.max(0, e.dep) * 10), (e.shield > 0 ? 1 : 0) | ((e.ab | 0) << 1) | (e.stunT > 0 ? 16 : 0) | (e.slowT > 0 ? 32 : 0) | (e.card.charge && (e.chg || 0) >= e.card.charge.dist ? 64 : 0) | (e.bfT > 0 ? 128 : 0) | (e.abT > 0 ? 256 : 0) | (hid(e) ? 512 : 0)]);
+    const row = e.kind === 'tower' ? [e.id, e.tk === 'king' ? -2 : -1, e.team, r1(e.x), r1(e.y), hp, e.active ? 1 : 0, e.stunT > 0 ? 16 : 0] : [e.id, CIDS.indexOf(e.card.id), e.team, r1(e.x), r1(e.y), hp, Math.round(Math.max(0, e.dep) * 10), (e.shield > 0 ? 1 : 0) | ((e.ab | 0) << 1) | (e.stunT > 0 ? 16 : 0) | (e.slowT > 0 ? 32 : 0) | (e.card.charge && (e.chg || 0) >= e.card.charge.dist ? 64 : 0) | (e.bfT > 0 ? 128 : 0) | (e.abT > 0 ? 256 : 0) | (hid(e) ? 512 : 0)];
+    if (m2 && e.kind !== 'tower') row.push(e.sd ?? e.team);   // 누구(좌석)의 유닛인지 — 영웅 능력 버튼에 필요
+    E.push(row);
   }
-  const N = 70, cn = Math.max(1, Math.ceil(E.length / N));
-  for (let i = 0; i < cn; i++) {
+  const N = 70, cn = Math.max(1, Math.ceil(E.length / N)), Pj = G.projs.map(p => [r1(p.x), r1(p.y), Math.max(0, PSN.indexOf(pstyle(p.c))), Math.round(Math.atan2(p.ty - p.y, p.tx - p.x) * 10)]),
+    Fx = G.fx.map(f => [r1(f.x), r1(f.y), r1(f.r), Math.round(f.t * 100), Math.round(f.max * 100), f.vis ? 1 : 0, f.c ? CIDS.indexOf(f.c.id) : -1, f.team]);
+  const tg = m2 ? (G.S || []).filter(o => o && o.human).map(o => ({ o, to: o.conn, a: o.ack })) : [{ o: G.o, to: undefined, a: n.ack }];
+  for (const t of tg) for (let i = 0; i < cn; i++) {
     const d = { s, i, c: cn, E: E.slice(i * N, i * N + N) };
-    if (i === 0) Object.assign(d, { t: Math.round(G.t * 100), ot: G.ot ? 1 : 0, r: G.res === undefined ? -2 : G.res, a: n.ack, el: Math.round(o.el * 100), h: o.hand.map(x => CIDS.indexOf(x)), nx: CIDS.indexOf(o.nxt),
-      P: G.projs.map(p => [r1(p.x), r1(p.y), Math.max(0, PSN.indexOf(pstyle(p.c))), Math.round(Math.atan2(p.ty - p.y, p.tx - p.x) * 10)]), F: G.fx.map(f => [r1(f.x), r1(f.y), r1(f.r), Math.round(f.t * 100), Math.round(f.max * 100), f.vis ? 1 : 0, f.c ? CIDS.indexOf(f.c.id) : -1, f.team]) });
-    n.room.emit('snap', d).catch(() => {});
+    if (i === 0) Object.assign(d, { t: Math.round(G.t * 100), ot: G.ot ? 1 : 0, r: G.res === undefined ? -2 : G.res, a: t.a, el: Math.round(t.o.el * 100), h: t.o.hand.map(x => CIDS.indexOf(x)), nx: CIDS.indexOf(t.o.nxt), P: Pj, F: Fx });
+    n.room.emit('snap', d, t.to).catch(() => {});
   }
 }
 function guestPlay(n, i, id, c, x, y) {
   x = Math.min(W, Math.max(0, x)); y = Math.min(H, Math.max(0, y));
   sfx('deploy'); if (c.evoOf) cycNext(0, id); const q = ++n.pq; n.pending.push({ seq: q, cost: c.cost }); G.elixir = Math.max(0, G.elixir - c.cost);
-  const d = { q, i, id: CIDS.indexOf(id), x: r1(W - x), y: r1(H - y) };   // 호스트 좌표계로 변환
+  const d = { q, i, id: CIDS.indexOf(id), x: r1(n.flip ? W - x : x), y: r1(n.flip ? H - y : y) };   // 호스트 좌표계로 변환
   const send = () => { if (G.net === n) n.room.emit('play', d).catch(() => {}); };
   send(); setTimeout(send, 120); setTimeout(send, 320);                   // 유실 대비 재전송 (호스트가 번호로 중복 제거)
 }
 function hostPlay(n, m) {
   if (m.isMe || G.net !== n || G.res !== undefined) return;
-  const d = m.data || {}, q = d.q | 0; if (n.seen.has(q)) return; n.seen.add(q); if (q > n.ack) n.ack = q;
-  const id = CIDS[d.id], o = G.o, i = d.i | 0, c = CARDS[id];
+  const d = m.data || {}, q = d.q | 0; let o = G.o, team = 1, seat = 1, sn = n;
+  if (n.m2) { seat = (G.S || []).findIndex(x => x && x.human && x.conn === m.from); if (seat < 0) return; o = sn = G.S[seat]; team = G.st[seat]; }
+  if (sn.seen.has(q)) return; sn.seen.add(q); if (q > sn.ack) sn.ack = q;
+  const id = CIDS[d.id], i = d.i | 0, c = CARDS[id];
   if (!c || i < 0 || i > 3 || o.hand[i] !== id || o.el < c.cost) return;
   let x = Math.min(W, Math.max(0, +d.x / 10)), y = Math.min(H, Math.max(0, +d.y / 10)); if (!(x >= 0 && y >= 0)) return;
-  if (c.type !== 'spell') { x = Math.floor(x) + 0.5; y = Math.floor(y) + 0.5; if (!okSpotC(c, 1, x, y)) return; }
-  o.el -= c.cost; spawn(id, 1, x, y); o.q.push(id); o.hand[i] = o.nxt; o.nxt = o.q.shift();
+  if (c.type !== 'spell') { x = Math.floor(x) + 0.5; y = Math.floor(y) + 0.5; if (!okSpotC(c, team, x, y)) return; }
+  o.el -= c.cost; spawn(id, team, x, y, seat); o.q.push(id); o.hand[i] = o.nxt; o.nxt = o.q.shift();
 }
 function onSnap(n, d) {
   if (!d || G.net !== n || d.s < n.lastS) return;
@@ -1608,26 +1698,27 @@ function applySnap(n, b) {
   const m = b.got[0]; if (!m) return;
   const now = performance.now(), a = Math.min(1, (now - n.snapAt) / n.snapDt);
   n.snapDt = Math.min(250, Math.max(60, now - n.snapAt)); n.snapAt = now;
-  const seen = new Set();
+  const seen = new Set(), FL = n.flip, TM = t => FL ? 1 - t : t;
   for (let k = 0; k < b.c; k++) for (const r of b.got[k].E) {
-    const [hid, ci, ht, X, Y, hp, f, fl] = r, x = W - X / 10, y = H - Y / 10; seen.add(hid);
+    const [hid, ci, ht, X, Y, hp, f, fl, sdv] = r, x = FL ? W - X / 10 : X / 10, y = FL ? H - Y / 10 : Y / 10; seen.add(hid);
     let e = G.gm.get(hid);
     if (!e) {
-      e = ci < 0 ? mkTower(1 - ht, ci === -2 ? 'king' : 'princess', x, y) : mkUnit(CIDS[ci], 1 - ht, x, y);
+      e = ci < 0 ? mkTower(TM(ht), ci === -2 ? 'king' : 'princess', x, y) : mkUnit(CIDS[ci], TM(ht), x, y);
       e.hid = hid; G.gm.set(hid, e); G.ents.push(e);
     } else { e.px += (e.x - e.px) * a; e.py += (e.y - e.py) * a; e.x = x; e.y = y; if (e.hp - hp > 0.5) fxDamage(e, e.hp - hp); if (e.kind === 'tower' && e.hp > 0 && hp <= 0) fxDeath(e.x, e.y, true); }
+    if (sdv !== undefined) e.sd = sdv;
     e.hp = hp; e.stn = (fl >> 4) & 1; if (e.kind === 'tower') e.active = !!f; else { e.dep = f / 10; e.sh = (fl | 0) & 1; e.slw = (fl >> 5) & 1; e.cgo = (fl >> 6) & 1; e.bfd = (fl >> 7) & 1; e.abc = (fl >> 8) & 1; e.hdn = (fl >> 9) & 1; const ab = ((fl | 0) >> 1) & 7; if (!(Date.now() - (e.abAt || 0) < 1500)) e.ab = ab; else e.ab = Math.max(e.ab | 0, ab); }
   }
   for (const [hid, e] of G.gm) if (!seen.has(hid)) { if (e.kind === 'unit' && e.dep <= 0) fxDeath(e.x, e.y, false); G.gm.delete(hid); }
   G.ents = G.ents.filter(e => seen.has(e.hid));
-  G.projs = (m.P || []).map(p => ({ x: W - p[0] / 10, y: H - p[1] / 10, st: PSN[p[2] | 0] || 'dot', ang: (p[3] || 0) / 10 + Math.PI }));   // 게스트 화면은 180° 뒤집혀 있어요
-  G.fx = (m.F || []).map(f => ({ x: W - f[0] / 10, y: H - f[1] / 10, r: f[2] / 10, t: f[3] / 100, max: f[4] / 100, vis: f[5], c: f[6] >= 0 ? CARDS[CIDS[f[6]]] : null, team: 1 - f[7] }));
+  G.projs = (m.P || []).map(p => ({ x: FL ? W - p[0] / 10 : p[0] / 10, y: FL ? H - p[1] / 10 : p[1] / 10, st: PSN[p[2] | 0] || 'dot', ang: (p[3] || 0) / 10 + (FL ? Math.PI : 0) }));   // 게스트 화면은 180° 뒤집혀 있어요
+  G.fx = (m.F || []).map(f => ({ x: FL ? W - f[0] / 10 : f[0] / 10, y: FL ? H - f[1] / 10 : f[1] / 10, r: f[2] / 10, t: f[3] / 100, max: f[4] / 100, vis: f[5], c: f[6] >= 0 ? CARDS[CIDS[f[6]]] : null, team: TM(f[7]) }));
   G.t = m.t / 100; if (m.ot && !G.ot) { G.ot = 1; say('연장전!'); }
   n.pending = n.pending.filter(p => p.seq > m.a);
   G.elixir = Math.max(0, m.el / 100 - n.pending.reduce((s, p) => s + p.cost, 0));
   const hand = m.h.map(i => CIDS[i]), nxt = CIDS[m.nx];
   if (hand.join() !== G.hand.join() || nxt !== G.nxt) { G.hand = hand; G.nxt = nxt; buildHand(); }
-  if (m.r !== -2 && G.res === undefined) end(m.r === -1 ? -1 : 1 - m.r);
+  if (m.r !== -2 && G.res === undefined) end(m.r === -1 ? -1 : FL ? 1 - m.r : m.r);
 }
 
 const gap = (a, b) => hyp(a.x - b.x, a.y - b.y) - a.r - b.r;
@@ -1712,6 +1803,7 @@ function elGive(team, n) { (G.st || [0, 1]).forEach((t, s) => { if (t === team) 
 const hid = u => u.kind === 'unit' && (u.hdn !== undefined ? !!u.hdn : ((u.card.stealth && !(u.vs > 0)) || u.invT > 0));   // 보이지 않는 유닛은 타겟이 되지 않아요
 const abOf = c => c.champ ? CHAMP[c.id] : c.heroOf ? HERO[c.heroOf] : null;
 const gst = () => G.net && G.net.role === 'guest';
+const mySeat = () => G.net && G.net.m2 ? G.net.seat | 0 : 0;
 const abLeft = e => { const h = abOf(e.card); if (h.cdn) return (gst() ? (Date.now() - (e.abAt || 0) < h.cdn * 1000 || e.abc) : e.abT > 0) ? 0 : 1; return h.uses - (e.ab | 0); };
 const myHero = team => G.ents.find(e => (e.sd ?? e.team) === team && e.kind === 'unit' && abOf(e.card) && e.hp > 0 && e.dep <= 0);
 function heroDo(team) {   // 호스트/싱글에서 실제 능력 발동
@@ -1759,7 +1851,7 @@ function dash(e) {   // 골드 나이트: 가까운 적에게 차례로 돌진
 }
 function heroPress() {   // 영웅 능력 버튼
   if (PAUSE || G.res !== undefined) return;
-  const e = myHero(0); if (!e || abLeft(e) <= 0) return; const h = abOf(e.card);
+  const e = myHero(mySeat()); if (!e || abLeft(e) <= 0) return; const h = abOf(e.card);
   if (G.elixir < h.cost) return lack();
   const n = G.net;
   if (n && n.role === 'guest') {
@@ -1770,7 +1862,9 @@ function heroPress() {   // 영웅 능력 버튼
 }
 function hostHab(n, m) {
   if (m.isMe || G.net !== n || G.res !== undefined) return;
-  const q = ((m.data || {}).q) | 0; if (n.seen.has(q)) return; n.seen.add(q); if (q > n.ack) n.ack = q; heroDo(1);
+  const q = ((m.data || {}).q) | 0; let sn = n, seat = 1;
+  if (n.m2) { seat = (G.S || []).findIndex(x => x && x.human && x.conn === m.from); if (seat < 0) return; sn = G.S[seat]; }
+  if (sn.seen.has(q)) return; sn.seen.add(q); if (q > sn.ack) sn.ack = q; heroDo(seat);
 }
 function hurt(t, d, c, sx, sy) {
   if (t.card && t.card.dr && t.mv) d *= 1 - t.card.dr;                    // 진화 기사: 이동 중 피해 감소
@@ -2018,16 +2112,16 @@ async function invPoll() {
     const r = await jf(fsRoot() + ':runQuery', { method: 'POST', headers: { ...JH, ...hdr() }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'profiles' }], where: { fieldFilter: { field: { fieldPath: 'to' }, op: 'EQUAL', value: { stringValue: AUTH.uid } } }, limit: 5 } }) });
     const now = Date.now(); let best = null;
     for (const x of r) { const d = x.document; if (!d) continue; const o = JSON.parse(d.fields.d.stringValue), v = o.inv, from = d.name.split('/').pop();
-      if (!v || v.from !== from || now - v.at > 45000 || INVS.seen[v.from + ':' + v.at] || !/^[A-Z0-9]{5}$/.test(String(v.code))) continue; best = { ...v, n: o.n }; }
+      if (!v || v.from !== from || now - v.at > 45000 || INVS.seen[v.from + ':' + v.at] || !/^[A-Z0-9]{5}$/.test(String(v.code)) || (v.type === '2v2' && !(v.seat >= 1 && v.seat <= 3))) continue; best = { ...v, n: o.n }; }
     if (best && !SM.lock && !NET) showInvite(best);
   } catch (e) {}
 }
 function showInvite(v) {
   INVS.cur = v; SM.lock = 1; sfx('elixir');
-  smOpen(`<h3>${esc(v.n)}님의 대전 신청</h3><p>${v.type === 'trophy' ? '트로피전 · 승리 +30 / 패배 -20' : '친선전 · 트로피 변화 없음'}</p><div class="row"><button class="btn" onclick="invNo()">거절</button><button class="btn gold" onclick="invYes()">수락</button></div>`);
+  smOpen(`<h3>${esc(v.n)}님의 ${v.type === '2v2' ? '2대2 초대' : '대전 신청'}</h3><p>${v.type === '2v2' ? (v.seat < 2 ? '같은 팀' : '상대 팀') + '으로 들어가요 · 빈 자리는 AI가 채워요' : v.type === 'trophy' ? '트로피전 · 승리 +30 / 패배 -20' : '친선전 · 트로피 변화 없음'}</p><div class="row"><button class="btn" onclick="invNo()">거절</button><button class="btn gold" onclick="invYes()">수락</button></div>`);
   setTimeout(() => { if (INVS.cur === v) { INVS.seen[v.from + ':' + v.at] = 1; INVS.cur = null; smClose(); } }, Math.max(1000, v.at + 45000 - Date.now()));
 }
-function invYes() { const v = INVS.cur; if (!v) return smClose(); INVS.seen[v.from + ':' + v.at] = 1; INVS.cur = null; smClose(); pvJoin(v.code); }
+function invYes() { const v = INVS.cur; if (!v) return smClose(); INVS.seen[v.from + ':' + v.at] = 1; INVS.cur = null; smClose(); pvJoin(v.code, v.type === '2v2' ? v.seat : 0); }
 function invNo() { const v = INVS.cur; if (v) { INVS.seen[v.from + ':' + v.at] = 1; PUBX.dc = v.from + ':' + v.at; pubPush().catch(() => {}); } INVS.cur = null; smClose(); }
 
 // ---------- 순위표 ----------
@@ -2291,7 +2385,7 @@ function ui() {
   $('ef').style.width = G.elixir * 10 + '%'; $('en').textContent = Math.floor(G.elixir);
   [...$('hand').children].forEach((el, i) => { const c = CARDS[G.hand[i]]; el.classList.toggle('off', c.cost > G.elixir);
     const tg = el.querySelector('.tg'); if (tg) { if (c.evoOf) { const l = Math.max(0, c.cycles - (G.cyc[0][c.id] | 0)); tg.textContent = l ? '진화 ' + l + '회 후' : '진화!'; tg.classList.toggle('rd', !l); el.classList.toggle('rdy', !l); } else tg.textContent = '영웅'; } });
-  const hb = $('hab'), he = myHero(0);
+  const hb = $('hab'), he = myHero(mySeat());
   if (he && abLeft(he) > 0) { const h = abOf(he.card); hb.style.display = 'block'; hb.textContent = h.name + ' · 💧' + h.cost + (h.cdn ? (h.ab === 'souls' ? ' · 영혼 ' + (he.souls | 0) : '') : h.uses > 1 ? ' (' + abLeft(he) + ')' : ''); hb.classList.toggle('off', G.elixir < h.cost); }
   else if (he && abOf(he.card).cdn) { const h = abOf(he.card); hb.style.display = 'block'; hb.textContent = h.name + ' · 대기 ' + (gst() ? '…' : Math.ceil(he.abT) + '초'); hb.classList.add('off'); }
   else hb.style.display = 'none';
