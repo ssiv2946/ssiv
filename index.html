@@ -407,7 +407,6 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>프로필</h2></div>
         <div class="panel"><span>이름</span><input type="text" id="p-name" maxlength="10"></div>
         <div class="panel" id="p-acct" style="display:none"><span>계정 ID</span><b></b></div>
-        <div class="panel"><b id="p-lv"></b><p id="p-exp"></p></div>
       </div>
 
       <div class="pg" id="pg-news">
@@ -744,7 +743,6 @@ const SKINS = [{ id: 'blue', n: '기본 파랑', c: '#3b82f6' }, { id: 'green', 
 const SHOP = [{ n: '골드 주머니', sub: '골드 1,000', m: 20, g: 1000 }, { n: '골드 상자', sub: '골드 5,000', m: 90, g: 5000 }, { n: '골드 금고', sub: '골드 10,000', m: 160, g: 10000 }];
 const fmt = n => n.toLocaleString('ko-KR');
 const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
-const title = () => P.exp < 450 ? '신입 지휘관' : P.exp < 1200 ? '숙련 지휘관' : '왕국 수호자';
 
 function loadStore() {
   DEFDECK = [...CFG.playerDeck]; ST = { ...ST, ...LS.get('cf_st', {}) }; { const sp = LS.get('cf_pass', {}) || {}; PASS = { ...PASS, ...sp }; if (sp.w == null) PASS.w = Math.min(10, Math.floor((sp.xp || 0) / 100)); }   // 예전 XP 방식 → 승리 횟수 방식
@@ -871,7 +869,7 @@ function showMenu(p) {
 
 function drawHome() {
   evSync();
-  $('h-name').textContent = P.name; $('h-title').textContent = title() + ' · 🏆 ' + (P.tr | 0);
+  $('h-name').textContent = P.name; $('h-title').textContent = '🏆 ' + (P.tr | 0);
   const t = passTier(), n = REW.reduce((s, r, i) => s + (i < t && !PASS.claimed.includes(i) ? 1 : 0), 0);
   $('h-pass').textContent = '단계 ' + t + '/10'; setBadge('h-pb', n);
   const can = P.daily !== today(); $('h-daily').textContent = can ? '골드 +300' : '내일 다시'; setBadge('h-db', can ? '!' : 0);
@@ -1094,7 +1092,6 @@ function drawStats() {
 function drawProfile() {
   const i = $('p-name'); i.value = P.name; i.onchange = () => { P.name = i.value.trim() || '플레이어'; i.value = P.name; saveP(); toast('이름을 저장했어요'); };
   $('p-acct').style.display = AUTH ? '' : 'none'; if (AUTH) $('p-acct').lastElementChild.textContent = AUTH.id;
-  $('p-lv').textContent = 'Lv ' + (1 + Math.floor(P.exp / 150)) + ' · ' + title(); $('p-exp').textContent = '경험치 ' + P.exp + ' (150마다 레벨 업)';
 }
 
 // ---------- 대전 시작 / 종료 ----------
@@ -1112,7 +1109,7 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fin').className = w === 0 ? 'win' : w === 1 ? 'lose' : 'draw';
   $('fn-title').textContent = forfeit ? '기권패' : w === 0 ? '승리!' : w === 1 ? '패배' : '무승부';
   $('fn-ec').innerHTML = crownRow(crowns(1), '#e5445a'); $('fn-pc').innerHTML = crownRow(crowns(0), '#3b82f6');
-  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : '1대1 친선전') : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = title();
+  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : '1대1 친선전') : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
   $('fn-rw').innerHTML = rw.length ? rw.map(r => `<div class="rb2">${r.i}<span>${r.t}</span></div>`).join('') : '<p>받은 보상이 없어요</p>';
   $('fin').style.display = 'flex'; $('fin').querySelectorAll('.pt').forEach(e => e.remove()); if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); pubSoon();
 }
@@ -1124,11 +1121,11 @@ const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : ''
 function end(w) {
   G.res = w; evSync(); const g = Math.round((w === 0 ? 100 : w === 1 ? 30 : 50) * (G.net ? 1 : AIP[DIFF].gold)); let m = 0, evNew = 0;
   if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
-  P.exp += w === 0 ? 30 : 10; P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
+  P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
   const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); if (w === 0) passWin();
   const rw = [{ i: '<span class="dot g"></span>', t: '+' + fmt(g) }]; if (m) rw.push({ i: '<span class="dot m"></span>', t: '+' + m });
   if (evNew) rw.push({ i: '<span style="font-size:20px">📦</span>', t: '이벤트 상자 ★' + (evNew >= 3 ? 3 : 2) + '+ (홈에서 열기)' });
-  rw.push({ i: '<i>★</i>', t: '+' + (w === 0 ? 30 : 10) + ' XP' }, ...trRw(td)); showFinal(w, rw, false);
+  rw.push(...trRw(td)); showFinal(w, rw, false);
 }
 function restart() { pubSoon(); pvLeave(); newGame(); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false; }
 function askForfeit() {
