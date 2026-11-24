@@ -474,7 +474,7 @@ const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ2
 const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, log: [], hist: [], owned: ['blue'], skin: 'blue', code: newCode() });
 
 // ---------- 로그인 (Firebase REST: 아이디 → 가짜 이메일로 계정 생성, 데이터는 Firestore users/<uid>) ----------
-const FB = { apiKey: '', projectId: '' };   // ← Firebase 웹 앱 설정의 apiKey, projectId 를 여기에 넣으면 로그인이 켜져요 (비워 두면 이 기기에만 저장)
+const FB = { apiKey: 'AIzaSyB78UUQkJZuQcdXUlUuDHR2ZI0x5sBytYk', projectId: 'clash-friends' };   // ← Firebase 웹 앱 설정의 apiKey, projectId 를 여기에 넣으면 로그인이 켜져요 (비워 두면 이 기기에만 저장)
 const FBON = () => !!(FB.apiKey && FB.projectId);
 let AUTH = null, READY = 0, SYNC = { st: '', t: 0, dirty: 0, busy: 0, first: 0 };
 const SYNCT = { ok: '☁ 저장됨', wait: '☁ 저장 중…', off: '오프라인 · 연결되면 저장돼요', err: '저장 실패 · 다시 시도해요' };
