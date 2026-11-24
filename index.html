@@ -199,6 +199,15 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .dc .nm{font-size:12px;font-weight:700;margin-top:5px;text-shadow:0 1px 2px #000;max-width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dc .lv{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);font-size:11px;font-weight:800;text-align:center;padding:2px 0}
 .dc.used{opacity:.4}.dc.used::after{content:'\2713';position:absolute;right:5px;top:2px;color:#38d46a;font-weight:900;font-size:18px}
+.dc.lk{filter:grayscale(.85) brightness(.75)}
+.dc.evo{border-color:#5ad7ff}.dc.hero{border-color:#ffd24d}
+.dc.evo .lv{color:#7fe3ff}.dc.hero .lv{color:#ffd24d}
+.card .tg{position:absolute;right:2px;top:-7px;font-size:10px;font-style:normal;font-weight:800;padding:1px 6px;border-radius:9px;background:#2a8fb5;color:#fff;white-space:nowrap}
+.card.hero .tg{background:#c99a14;color:#2b1f00}.card .tg.rd{background:#5ad7ff;color:#04223a}
+#bottom{position:relative}
+#hab{position:absolute;left:50%;transform:translateX(-50%);top:-46px;z-index:5;padding:9px 16px;border-radius:22px;border:2px solid #fff;background:linear-gradient(#ffd24d,#d9a21a);color:#2b1f00;font-weight:900;font-size:14px;box-shadow:0 3px 0 #7a5a05,0 4px 10px rgba(0,0,0,.5);touch-action:manipulation}
+#hab.off{filter:grayscale(.7) brightness(.8)}
+#app.land #hab{position:static;transform:none;margin:0 0 6px;width:100%}
 .dc.empty{background:rgba(5,20,40,.4);border-style:dashed;cursor:default}
 .dbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .elx{display:flex;align-items:center;gap:8px;background:rgba(5,20,40,.5);padding:6px 14px;border-radius:12px;font-weight:900;font-size:22px}
@@ -211,6 +220,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
   <canvas id="cv"></canvas>
   <div id="bottom">
     <div id="bar"><i></i><div id="ef"></div><span id="en">8</span></div>
+    <button id="hab" onclick="heroPress()" style="display:none"></button>
     <div id="row"><div id="next"></div><div id="hand"></div></div>
   </div>
   <div id="ci" onclick="if(event.target===this)ciClose()"><div class="box"><div id="ci-head"></div><div id="ci-body"></div><div class="cib"><button id="ci-btn" class="btn" onclick="ciToggle()"></button><button class="btn" onclick="ciClose()">닫기</button></div></div></div>
@@ -278,6 +288,9 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
       <div class="pg" id="pg-shop">
         <div class="sub"><h2>상점</h2></div>
         <div class="sect">골드 교환</div><div id="sh-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="sect">카드 해금 (골드)</div><div id="sh-card" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="sect">진화 (보석)</div><div id="sh-evo" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="sect">히어로 (보석)</div><div id="sh-hero" style="display:flex;flex-direction:column;gap:8px"></div>
         <div class="sect">타워 색상</div><div id="sh-skin" style="display:flex;flex-direction:column;gap:8px"></div>
         <p>보석은 이벤트와 로얄패스 보상으로 얻어요. 결제 기능은 없어요.</p>
       </div>
@@ -393,9 +406,39 @@ const $ = id => document.getElementById(id), hyp = Math.hypot;
 const cv = $('cv'), cx = cv.getContext('2d');
 let CARDS = {}, CIDS = [], CFG, G, S = 20, dpr = 1, drag = null, sel = -1, hov = null;
 
+// ---------- 해금 · 진화 · 히어로 ----------
+const LOCK = { mega_minion: 600, royal_giant: 900, pekka: 1500 };   // 잠긴 카드 = 골드 가격 (새 카드를 잠그려면 여기에 추가)
+const EVOP = 40, HEROP = 70;                                         // 진화 · 히어로 = 보석 가격
+const EVO = {   // cy: 이 횟수만큼 낸 뒤부터 진화 (원작의 '사이클')
+  knight: { cy: 2, hpX: 1.15, dmgX: 1.15, dr: 0.6, desc: '체력·공격력 +15% · 이동 중에는 받는 피해 60% 감소' },
+  archers: { cy: 2, range: 6.5, longShot: 5, desc: '사거리 6.5칸 · 5칸 이상 먼 적에게 2배 피해' },
+  barbarians: { cy: 1, rage: { k: 0.07, max: 12 }, desc: '때릴 때마다 공격 속도·이동 속도가 계속 빨라져요' },
+  skeletons: { cy: 2, evoSpawn: 6, desc: '공격할 때마다 해골 병사가 한 마리씩 늘어나요 (최대 6마리)' },
+  valkyrie: { cy: 2, pull: 1.6, desc: '휘두를 때마다 주변 적 유닛을 끌어당겨요' },
+  bats: { cy: 2, hpX: 1.3, heal: 1, desc: '체력 +30% · 공격할 때마다 체력을 회복해요' },
+};
+const HERO = {   // 능력은 전장에 나온 뒤 버튼으로 사용 (엘릭서 소모)
+  knight: { ab: 'taunt', cost: 2, uses: 1, name: '도발의 함성', desc: '4초 동안 주변 적과 타워가 영웅을 공격하고, 방어막이 피해를 먼저 막아요' },
+  musketeer: { ab: 'turret', cost: 2, uses: 1, name: '믿음직한 포탑', desc: '앞에 작은 포탑을 설치해요 · 설치 순간 범위 피해, 이후 공중·지상 공격' },
+  mini_pekka: { ab: 'pancake', cost: 1, uses: 5, name: '아침 식사', desc: '팬케이크를 먹을 때마다 체력·공격력 +10% (최대 5번)' },
+};
+function mkVariants() {
+  for (const [b, v] of Object.entries(EVO)) { const c = CARDS[b]; if (!c) continue; const o = { ...c, ...v, id: 'evo_' + b, name: '진화 ' + c.name, evoOf: b, cycles: v.cy };
+    if (v.hpX) o.hp = Math.round(c.hp * v.hpX); if (v.dmgX) o.damage = Math.round(c.damage * v.dmgX); delete o.cy; delete o.hpX; delete o.dmgX; CARDS[o.id] = o; }
+  for (const [b, v] of Object.entries(HERO)) { const c = CARDS[b]; if (!c) continue;
+    CARDS['hero_' + b] = { ...c, id: 'hero_' + b, name: '영웅 ' + c.name, heroOf: b, ab: v.ab, abCost: v.cost, desc: '능력 「' + v.name + '」 (엘릭서 ' + v.cost + ') · ' + v.desc }; }
+  CARDS.hero_turret = { id: 'hero_turret', name: '믿음직한 포탑', initial: '포', color: '#9fb4c8', type: 'building', cost: 0, count: 1, hp: 520, damage: 120, hitSpeed: 0.8, firstHit: 0.4, range: 6, speed: 0, sight: 6, targets: 'air_ground', flying: false, mass: 1000, radius: 0.5, deployTime: 0.4, splash: 0, projSpeed: 16, canJumpRiver: false, lifetime: 10, hidden: true };
+}
+const COLL = () => Object.keys(CARDS).filter(i => !CARDS[i].hidden);
+const baseOf = id => CARDS[id].evoOf || CARDS[id].heroOf || id;
+const have = id => { const c = CARDS[id]; return c.evoOf ? (P.evo || []).includes(c.evoOf) : c.heroOf ? (P.hero || []).includes(c.heroOf) : !LOCK[id] || (P.buy || []).includes(id); };
+const price = id => { const c = CARDS[id]; return c.evoOf ? { m: EVOP } : c.heroOf ? { m: HEROP } : { g: LOCK[id] || 0 }; };
+const priceTxt = id => { const p = price(id); return p.g ? '🔒 골드 ' + p.g.toLocaleString('ko-KR') : '🔒 보석 ' + p.m; };
+const deckRules = d => new Set(d.map(baseOf)).size === d.length && d.filter(i => CARDS[i].evoOf).length <= 1 && d.filter(i => CARDS[i].heroOf).length <= 1;
+
 async function boot() {
   const c = CARDS_DATA, f = CFG_DATA;
-  c.forEach(x => { CARDS[x.id] = x; if (x.towerDamage) x.towerRatio = x.towerDamage / x.damage; }); CFG = f; CIDS = Object.keys(CARDS);
+  c.forEach(x => { CARDS[x.id] = x; if (x.towerDamage) x.towerRatio = x.towerDamage / x.damage; }); CFG = f; mkVariants(); CIDS = Object.keys(CARDS);
   if (FBON()) await authGate();
   loadStore(); READY = 1; if (AUTH && SYNC.first) cloudDirty(); if (AUTH) socStart(); newGame(); buildHand(); resize(); addEventListener('resize', resize); showMenu('home');
   let last = performance.now(), acc = 0;
@@ -420,7 +463,7 @@ function mkUnit(id, team, x, y) {
 function newGame(net) {
   sel = -1; drag = null; hov = null;
   G = { t: 0, ot: 0, res: undefined, n: 0, ents: [], projs: [], fx: [], elixir: CFG.startElixir, cur: CFG.elixir[0],
-        q: [...CFG.playerDeck].sort(() => Math.random() - 0.5), hand: [], nxt: null, net: net || null, vfx: [], shake: 0 };
+        q: [...CFG.playerDeck].sort(() => Math.random() - 0.5), hand: [], nxt: null, net: net || null, vfx: [], shake: 0, cyc: [{}, {}] };
   G.hand = G.q.splice(0, 4); G.nxt = G.q.shift();
   if (!net) G.ai = newAI();
   else if (net.role === 'host') { const q = [...net.oppDeck].sort(() => Math.random() - 0.5); G.o = { el: CFG.startElixir, hand: q.splice(0, 4), nxt: q.shift(), q }; net.ack = 0; net.seen = new Set(); net.sc = 0; net.seq = 0; }
@@ -431,7 +474,8 @@ function newGame(net) {
 
 // ---------- 소환 / 카드 ----------
 function spawn(id, team, x, y) {
-  const c = CARDS[id], m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
+  let c = CARDS[id]; const m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
+  if (c.evoOf) { const n = G.cyc[team][id] | 0; G.cyc[team][id] = n + 1; if (n < c.cycles) { id = c.evoOf; c = CARDS[id]; } }   // 사이클이 차기 전에는 기본 카드로 소환
   if (c.type === 'spell') { G.fx.push({ x, y, r: c.radius, t: c.delay, max: c.delay, c, team, m, left: c.waves || 1 }); return; }
   const n = c.count || 1;
   for (let i = 0; i < n; i++) {
@@ -517,7 +561,7 @@ function judge() {
 // ---------- 저장 데이터 / 메인 화면 ----------
 let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }, PASS = { xp: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
 const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
-const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, log: [], hist: [], owned: ['blue'], skin: 'blue', code: newCode() });
+const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
 
 // ---------- 로그인 (Firebase REST: 아이디 → 가짜 이메일로 계정 생성, 데이터는 Firestore users/<uid>) ----------
 const FB = { apiKey: 'AIzaSyB78UUQkJZuQcdXUlUuDHR2ZI0x5sBytYk', projectId: 'clash-friends' };   // ← Firebase 웹 앱 설정의 apiKey, projectId 를 여기에 넣으면 로그인이 켜져요 (비워 두면 이 기기에만 저장)
@@ -640,11 +684,11 @@ function loadStore() {
   P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(2, Math.max(0, LS.get('cf_diff', 1) | 0));
   loadDecks();
 }
-const okDeck = d => Array.isArray(d) && d.length === 8 && new Set(d).size === 8 && d.every(i => CARDS[i]);
+const okDeck = d => Array.isArray(d) && d.length === 8 && new Set(d).size === 8 && d.every(i => CARDS[i] && !CARDS[i].hidden && have(i)) && deckRules(d);
 const starters = () => [[...DEFDECK], ['goblins', 'skeleton_army', 'hog_rider', 'cannon', 'archers', 'knight', 'arrows', 'fireball'],
   ['wizard', 'baby_dragon', 'giant', 'valkyrie', 'archers', 'prince', 'fireball', 'arrows'], ['prince', 'knight', 'goblins', 'skeleton_army', 'wizard', 'cannon', 'arrows', 'fireball'],
-  ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'royal_giant', 'bomber', 'rocket', 'arrows']];
-const AIDECKS = () => [...starters().slice(0, 4), ['pekka', 'dart_goblin', 'bats', 'fire_spirit', 'mega_minion', 'spear_goblins', 'fireball', 'arrows'], starters()[4]];
+  ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'giant', 'bomber', 'rocket', 'arrows']];
+const AIDECKS = () => [...starters().slice(0, 4), ['pekka', 'dart_goblin', 'bats', 'fire_spirit', 'mega_minion', 'spear_goblins', 'fireball', 'arrows'], ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'royal_giant', 'bomber', 'rocket', 'arrows']];
 function loadDecks() { // 덱 프리셋 5개 (자동 저장)
   const st = starters(), v = LS.get('cf_decks', null); DK = { cur: 0, list: st };
   if (v && Array.isArray(v.list)) { DK.cur = Math.min(4, Math.max(0, v.cur | 0)); DK.list = st.map((x, i) => okDeck(v.list[i]) ? v.list[i] : x); }
@@ -687,7 +731,21 @@ function drawHome() {
 }
 
 // 상점
+function shopRow(id) {
+  const c = CARDS[id], own = have(id), p = price(id);
+  return `<div class="item${own ? ' dim' : ''}"><span class="sw" style="background:${c.color};display:grid;place-items:center;font-weight:900;font-size:13px;color:#111">${c.initial}</span><em>${c.name}<small>${c.desc || '엘릭서 ' + c.cost}</small></em><button class="btn${own ? '' : ' gold'}" ${own ? 'disabled' : ''} onclick="unlock('${id}')">${own ? '보유 중' : p.g ? '골드 ' + fmt(p.g) : '보석 ' + p.m}</button></div>`;
+}
+function unlock(id) {
+  const c = CARDS[id]; if (!c || have(id)) return; const p = price(id);
+  if (p.g ? P.gold < p.g : P.gems < p.m) return toast((p.g ? '골드' : '보석') + '가 부족해요');
+  earn(-(p.g || 0), -(p.m || 0), '해금: ' + c.name);
+  (c.evoOf ? P.evo : c.heroOf ? P.hero : P.buy).push(c.evoOf || c.heroOf || id); saveP(); sfx('elixir'); toast(c.name + ' 해금!');
+  if (CURP === 'shop') drawShop(); if (CURP === 'deck') drawDeck(); if (CI) ciBtn();
+}
 function drawShop() {
+  $('sh-card').innerHTML = Object.keys(LOCK).map(shopRow).join('');
+  $('sh-evo').innerHTML = Object.keys(EVO).map(b => shopRow('evo_' + b)).join('');
+  $('sh-hero').innerHTML = Object.keys(HERO).map(b => shopRow('hero_' + b)).join('');
   $('sh-list').innerHTML = SHOP.map((s, i) => `<div class="item"><em>${s.n}<small>${s.sub}</small></em><button class="btn" onclick="buy(${i})">보석 ${s.m}</button></div>`).join('');
   $('sh-skin').innerHTML = SKINS.map(k => {
     const own = P.owned.includes(k.id), on = P.skin === k.id, price = k.gold ? '골드 ' + fmt(k.gold) : '보석 ' + k.gems;
@@ -706,17 +764,18 @@ function buySkin(id) {
 function equip(id) { P.skin = id; saveP(); applySkin(); drawShop(); toast('타워 색상을 바꿨어요'); }
 
 // 덱
-const dcard = (id, cls) => { const c = CARDS[id]; return `<div class="dc ${cls}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span><span class="lv">레벨 ${CFG.playerLevel}</span></div>`; };
+const dcard = (id, cls) => { const c = CARDS[id], lk = !have(id);
+  return `<div class="dc ${cls}${lk ? ' lk' : ''}${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span>${lk ? `<span class="lv">${priceTxt(id)}</span>` : c.evoOf ? '<span class="lv">진화</span>' : c.heroOf ? '<span class="lv">영웅</span>' : ''}</div>`; };
 let DTAB = 0;
 function deckTab(i) { DTAB = i; drawDeck(); }
 function drawDeck() {
-  $('dt-deck').classList.toggle('on', DTAB === 0); $('dt-col').classList.toggle('on', DTAB === 1); $('dt-cnt').textContent = Object.keys(CARDS).length;
+  $('dt-deck').classList.toggle('on', DTAB === 0); $('dt-col').classList.toggle('on', DTAB === 1); $('dt-cnt').textContent = COLL().filter(have).length + '/' + COLL().length;
   $('dk-colw').style.display = DTAB === 1 ? 'flex' : 'none';
   $('dk-tabs').innerHTML = [0, 1, 2, 3, 4].map(i => `<button class="${i === DK.cur ? 'on' : ''}" onclick="pickDeck(${i})">${i + 1}</button>`).join('');
   const av = deck.reduce((s, i) => s + CARDS[i].cost, 0) / (deck.length || 1);
   $('dk-slots').innerHTML = deck.map(i => dcard(i, '')).join('') + '<div class="dc empty"></div>'.repeat(8 - deck.length);
   $('dk-av').textContent = av.toFixed(1);
-  $('dk-all').innerHTML = Object.keys(CARDS).map(i => dcard(i, deck.includes(i) ? 'used' : '')).join('');
+  $('dk-all').innerHTML = COLL().map(i => dcard(i, deck.includes(i) ? 'used' : '')).join('');
   $('dk-st').textContent = deck.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장' : deck.length + '/8 · 컬렉션에서 카드를 골라 8장을 채워 주세요';
 }
 function saveDecks() { CFG.playerDeck = [...DK.list[DK.cur]]; LS.set('cf_decks', DK); }
@@ -741,18 +800,28 @@ function cardInfo(id) {
     if (c.count > 1) add('소환 수', c.count + '마리');
     if (c.splash) add('범위 공격', '반지름 ' + c.splash + '칸');
   }
-  const ft = []; if (c.charge) ft.push('돌진: 달리다가 첫 공격은 2배 피해'); if (c.suicide) ft.push('적에 닿으면 자폭'); if (c.canJumpRiver) ft.push('강을 뛰어넘음'); if (c.lifetime) ft.push('지속 시간 ' + c.lifetime + '초');
-  $('ci-head').innerHTML = `<div class="cic" style="background:${c.color}">${c.initial}</div><div><b>${c.name}</b><small>Lv ${CFG.playerLevel} 기준 능력치</small></div><i class="cic2">${c.cost}</i>`;
+  const ft = []; if (c.charge) ft.push('돌진: 달리다가 첫 공격은 2배 피해'); if (c.suicide) ft.push('적에 닿으면 자폭'); if (c.canJumpRiver) ft.push('강을 뛰어넘음'); if (c.lifetime) ft.push('지속 시간 ' + c.lifetime + '초'); if (c.desc) ft.unshift('★ ' + c.desc);
+  $('ci-head').innerHTML = `<div class="cic" style="background:${c.color}">${c.initial}</div><div><b>${c.name}</b><small>${c.evoOf ? '진화 · ' + c.cycles + '번 낸 뒤부터 발동' : c.heroOf ? '영웅 · 전장에서 능력 버튼 사용' : c.rarity || ''}</small></div><i class="cic2">${c.cost}</i>`;
   $('ci-body').innerHTML = R.join('') + (ft.length ? `<div class="ft">${ft.join('<br>')}</div>` : '');
   ciBtn(); $('ci').style.display = 'flex';
 }
 function ciBtn() {
-  const inD = deck.includes(CI), b = $('ci-btn'); b.textContent = inD ? '덱에서 빼기' : deck.length >= 8 ? '덱이 가득 찼어요 (8/8)' : '덱에 넣기'; b.disabled = !inD && deck.length >= 8; b.className = 'btn' + (inD ? '' : ' gold');
+  const b = $('ci-btn'); if (!CI) return;
+  if (!have(CI)) { const p = price(CI); b.textContent = '해금 · ' + (p.g ? '골드 ' + p.g.toLocaleString('ko-KR') : '보석 ' + p.m); b.disabled = false; b.className = 'btn gold'; return; }
+  const inD = deck.includes(CI), sw = !inD && deck.some(x => baseOf(x) === baseOf(CI));
+  b.textContent = inD ? '덱에서 빼기' : sw ? '덱의 같은 카드와 바꾸기' : deck.length >= 8 ? '덱이 가득 찼어요 (8/8)' : '덱에 넣기'; b.disabled = !inD && !sw && deck.length >= 8; b.className = 'btn' + (inD ? '' : ' gold');
 }
-function ciToggle() { if (CI) tgl(CI); ciBtn(); }
+function ciToggle() { if (CI) { if (!have(CI)) unlock(CI); else tgl(CI); } ciBtn(); }
 function ciClose() { $('ci').style.display = 'none'; CI = null; }
 function tgl(i) {
-  const k = deck.indexOf(i); if (k >= 0) deck.splice(k, 1); else if (deck.length < 8) deck.push(i);
+  const k = deck.indexOf(i);
+  if (k >= 0) deck.splice(k, 1);
+  else {
+    const c = CARDS[i], same = deck.findIndex(x => baseOf(x) === baseOf(i)), other = key => deck.some((x, j) => CARDS[x][key] && j !== same);
+    if (c.evoOf && other('evoOf')) return toast('진화 카드는 덱에 1장만 넣을 수 있어요');
+    if (c.heroOf && other('heroOf')) return toast('영웅 카드는 덱에 1장만 넣을 수 있어요');
+    if (same >= 0) deck[same] = i; else if (deck.length < 8) deck.push(i); else return toast('덱이 가득 찼어요 (8/8)');
+  }
   if (deck.length === 8) { DK.list[DK.cur] = [...deck]; saveDecks(); }
   drawDeck();
 }
@@ -1006,7 +1075,7 @@ async function pvHost(mode) {
   }
   if (!room) { toast('방을 만들지 못했어요. 잠시 뒤 다시 해 주세요'); return; }
   const n = NET = { role: 'host', code, room, state: 'wait', unsubs: [], lastPing: Date.now(), mode: mode === 'trophy' ? 'trophy' : 'friendly' };
-  n.unsubs.push(room.on('hello', m => hostHello(n, m)), room.on('play', m => hostPlay(n, m)),
+  n.unsubs.push(room.on('hello', m => hostHello(n, m)), room.on('play', m => hostPlay(n, m)), room.on('hab', m => hostHab(n, m)),
     room.on('ff', m => { if (!m.isMe && G.net === n && G.res === undefined) end(0); }), room.on('ping', m => { if (!m.isMe) n.lastPing = Date.now(); }), room.on('peerleft', () => { n.lastPing = 0; }));
   pvUI(); try { navigator.clipboard.writeText(code); } catch (e) {}
   return code;
@@ -1015,7 +1084,7 @@ function hostHello(n, m) {
   if (m.isMe || NET !== n) return; const d = m.data || {};
   if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
   const deck = Array.isArray(d.deck) ? d.deck.map(i => CIDS[i]) : [];
-  if (deck.length !== 8 || deck.some(x => !x) || new Set(deck).size !== 8) return;
+  if (deck.length !== 8 || deck.some(x => !x || CARDS[x].hidden) || new Set(deck).size !== 8 || !deckRules(deck)) return;
   n.tok = String(d.tok); n.opp = String(d.name || '친구').slice(0, 12); n.oppDeck = deck; n.state = 'play'; n.lastPing = Date.now();
   n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode }).catch(() => {});
   pvBegin(n);
@@ -1059,7 +1128,7 @@ function sendSnap(n) {
   const s = ++n.seq, E = [], o = G.o;
   for (const e of G.ents) {
     const hp = e.hp > 0 ? Math.max(1, Math.round(e.hp)) : 0;
-    E.push(e.kind === 'tower' ? [e.id, e.tk === 'king' ? -2 : -1, e.team, r1(e.x), r1(e.y), hp, e.active ? 1 : 0] : [e.id, CIDS.indexOf(e.card.id), e.team, r1(e.x), r1(e.y), hp, Math.round(Math.max(0, e.dep) * 10)]);
+    E.push(e.kind === 'tower' ? [e.id, e.tk === 'king' ? -2 : -1, e.team, r1(e.x), r1(e.y), hp, e.active ? 1 : 0] : [e.id, CIDS.indexOf(e.card.id), e.team, r1(e.x), r1(e.y), hp, Math.round(Math.max(0, e.dep) * 10), (e.shield > 0 ? 1 : 0) | ((e.ab | 0) << 1)]);
   }
   const N = 70, cn = Math.max(1, Math.ceil(E.length / N));
   for (let i = 0; i < cn; i++) {
@@ -1071,7 +1140,7 @@ function sendSnap(n) {
 }
 function guestPlay(n, i, id, c, x, y) {
   x = Math.min(W, Math.max(0, x)); y = Math.min(H, Math.max(0, y));
-  sfx('deploy'); const q = ++n.pq; n.pending.push({ seq: q, cost: c.cost }); G.elixir = Math.max(0, G.elixir - c.cost);
+  sfx('deploy'); if (c.evoOf) G.cyc[0][id] = (G.cyc[0][id] | 0) + 1; const q = ++n.pq; n.pending.push({ seq: q, cost: c.cost }); G.elixir = Math.max(0, G.elixir - c.cost);
   const d = { q, i, id: CIDS.indexOf(id), x: r1(W - x), y: r1(H - y) };   // 호스트 좌표계로 변환
   const send = () => { if (G.net === n) n.room.emit('play', d).catch(() => {}); };
   send(); setTimeout(send, 120); setTimeout(send, 320);                   // 유실 대비 재전송 (호스트가 번호로 중복 제거)
@@ -1098,13 +1167,13 @@ function applySnap(n, b) {
   n.snapDt = Math.min(250, Math.max(60, now - n.snapAt)); n.snapAt = now;
   const seen = new Set();
   for (let k = 0; k < b.c; k++) for (const r of b.got[k].E) {
-    const [hid, ci, ht, X, Y, hp, f] = r, x = W - X / 10, y = H - Y / 10; seen.add(hid);
+    const [hid, ci, ht, X, Y, hp, f, fl] = r, x = W - X / 10, y = H - Y / 10; seen.add(hid);
     let e = G.gm.get(hid);
     if (!e) {
       e = ci < 0 ? mkTower(1 - ht, ci === -2 ? 'king' : 'princess', x, y) : mkUnit(CIDS[ci], 1 - ht, x, y);
       e.hid = hid; G.gm.set(hid, e); G.ents.push(e);
     } else { e.px += (e.x - e.px) * a; e.py += (e.y - e.py) * a; e.x = x; e.y = y; if (e.hp - hp > 0.5) fxDamage(e, e.hp - hp); if (e.kind === 'tower' && e.hp > 0 && hp <= 0) fxDeath(e.x, e.y, true); }
-    e.hp = hp; if (e.kind === 'tower') e.active = !!f; else e.dep = f / 10;
+    e.hp = hp; if (e.kind === 'tower') e.active = !!f; else { e.dep = f / 10; e.sh = (fl | 0) & 1; if (!(Date.now() - (e.abAt || 0) < 1500)) e.ab = (fl | 0) >> 1; else e.ab = Math.max(e.ab | 0, (fl | 0) >> 1); }
   }
   for (const [hid, e] of G.gm) if (!seen.has(hid)) { if (e.kind === 'unit' && e.dep <= 0) fxDeath(e.x, e.y, false); G.gm.delete(hid); }
   G.ents = G.ents.filter(e => seen.has(e.hid));
@@ -1124,10 +1193,12 @@ function ok(c, t) { if (t.fly) return c.targets === 'air_ground'; if (c.targets 
 function think(e, dt) {
   const c = e.card;
   if (e.dep > 0) { e.dep -= dt; return; }                       // 소환 지연
+  if (e.taunt > 0) { e.taunt -= dt; if (e.taunt <= 0) e.shield = 0; }
   if (e.kind === 'building') e.hp -= e.max / c.lifetime * dt;   // 수명
   if (e.kind === 'tower' && !e.active) return;
   // 타겟팅: 공격을 시작하기 전(이동 중)에는 매 틱 가장 가까운 적으로 갈아타고, 사거리에 들어와 공격을 시작하면 그 타겟에 고정(lock)돼요.
   // 고정된 타겟은 죽거나 시야(sight) 밖으로 나가야 풀려요. (원작: 새로 나온 유닛이 공격 중인 유닛을 끌어오지 못함, 이동 중엔 가까운 쪽으로 끌려옴)
+  const tn = e.taunt > 0 ? null : tauntOf(e); if (tn && e.tgt !== tn) e.lock = false;   // 도발: 고정된 타겟도 풀고 영웅을 노려요
   const t0 = e.tgt, far = c.targets === 'buildings' ? 1e9 : c.sight;
   if (!(e.lock && t0 && t0.hp > 0 && gap(e, t0) <= far)) {
     e.lock = false;
@@ -1136,13 +1207,15 @@ function think(e, dt) {
     if (n !== t0) { e.tgt = n; e.cd = c.firstHit ?? 0.5; } // 타겟이 바뀌면 공격 준비 시간 리셋
   }
   const t = e.tgt;
-  if (t && gap(e, t) <= c.range) { e.lock = true; e.cd -= dt; if (e.cd <= 0) { strike(e, t); e.cd = c.hitSpeed; } return; }
+  if (t && gap(e, t) <= c.range) { e.lock = true; e.mv = 0; e.cd -= dt * (1 + (e.rg || 0) * (c.rage ? c.rage.k : 0)); if (e.cd <= 0) { strike(e, t); e.cd = c.hitSpeed; } return; }
   if (e.kind !== 'unit') return;
-  const g = t || goal(e); if (g) move(e, g, dt);
+  const g = t || goal(e); if (g) { e.mv = 1; move(e, g, dt); }
 }
 
+function tauntOf(e) { const c = e.card; for (const t of G.ents) if (t.taunt > 0 && t.team !== e.team && t.hp > 0 && gap(e, t) <= 6 && ok(c, t)) return t; return null; }
 function find(e) {
   const c = e.card; let best = null, bd = 1e9;
+  const tn = tauntOf(e); if (tn) return tn;
   for (const t of G.ents) {
     if (t.team === e.team || t.hp <= 0 || !ok(c, t)) continue;
     const d = gap(e, t) + (c.targets === 'buildings' ? lanePen(e, t) : 0);
@@ -1175,11 +1248,45 @@ function move(e, g, dt) {
   }
   const d = hyp(ax - e.x, ay - e.y); if (d < 1e-3) return;
   const ch = c.charge, charging = ch && (e.chg || 0) >= ch.dist; // 프린스: 일정 거리 달리면 돌진(속도·피해 증가)
-  const sp = Math.min(c.speed * (charging ? ch.speedMult : 1) / 60 * dt, d); // 속도 단위: 분당 타일 → 초당
+  const sp = Math.min(c.speed * (charging ? ch.speedMult : 1) * (1 + (e.rg || 0) * (c.rage ? c.rage.k : 0)) / 60 * dt, d); // 속도 단위: 분당 타일 → 초당
   e.x += (ax - e.x) / d * sp; e.y += (ay - e.y) / d * sp; if (ch) e.chg = (e.chg || 0) + sp;
 }
 
-function hurt(t, d) { t.hp -= d; if (t.tk === 'king') t.active = true; fxDamage(t, d); }
+const abLeft = e => HERO[e.card.heroOf].uses - (e.ab | 0);
+const myHero = team => G.ents.find(e => e.team === team && e.kind === 'unit' && e.card.heroOf && e.hp > 0 && e.dep <= 0);
+function heroDo(team) {   // 호스트/싱글에서 실제 능력 발동
+  const e = myHero(team); if (!e) return false; const h = HERO[e.card.heroOf]; if (abLeft(e) <= 0) return false;
+  const el = team ? G.o.el : G.elixir; if (el < h.cost) return false;
+  if (team) G.o.el -= h.cost; else G.elixir -= h.cost;
+  e.ab = (e.ab | 0) + 1;
+  if (h.ab === 'taunt') { e.taunt = 4; e.shield = e.max * 0.4; }
+  else if (h.ab === 'turret') {
+    const u = Object.assign(mkUnit('hero_turret', team, e.x, e.y + (team ? 1.6 : -1.6)), { id: ++G.n });
+    G.ents.push(u); area(u.x, u.y, 1.8, 180, team, CARDS.hero_turret, 0.35);
+  } else if (h.ab === 'pancake') { e.max *= 1.1; e.hp = Math.min(e.max, e.hp * 1.1 + e.max * 0.05); e.m *= 1.1; }
+  if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'puff', x: e.x, y: e.y, at: performance.now(), max: 420 });
+  sfx('elixir'); return true;
+}
+function heroPress() {   // 영웅 능력 버튼
+  if (PAUSE || G.res !== undefined) return;
+  const e = myHero(0); if (!e || abLeft(e) <= 0) return; const h = HERO[e.card.heroOf];
+  if (G.elixir < h.cost) return lack();
+  const n = G.net;
+  if (n && n.role === 'guest') {
+    const q = ++n.pq; n.pending.push({ seq: q, cost: h.cost }); G.elixir = Math.max(0, G.elixir - h.cost); e.ab = (e.ab | 0) + 1; e.abAt = Date.now(); sfx('elixir');
+    const send = () => { if (G.net === n) n.room.emit('hab', { q }).catch(() => {}); }; send(); setTimeout(send, 120); setTimeout(send, 320); return;
+  }
+  heroDo(0);
+}
+function hostHab(n, m) {
+  if (m.isMe || G.net !== n || G.res !== undefined) return;
+  const q = ((m.data || {}).q) | 0; if (n.seen.has(q)) return; n.seen.add(q); if (q > n.ack) n.ack = q; heroDo(1);
+}
+function hurt(t, d) {
+  if (t.card && t.card.dr && t.mv) d *= 1 - t.card.dr;                    // 진화 기사: 이동 중 피해 감소
+  if (t.shield > 0) { const a = Math.min(t.shield, d); t.shield -= a; d -= a; if (d <= 0) return; }   // 영웅 방어막
+  t.hp -= d; if (t.tk === 'king') t.active = true; fxDamage(t, d);
+}
 
 // ---------- 6단계: 효과음(WebAudio 합성, 파일 없음) · 타격 이펙트 ----------
 let AC = null; const SFXT = {};
@@ -1406,6 +1513,15 @@ function area(x, y, r, d, team, c, tr = 1) {
 
 function strike(e, t) {
   const c = e.card; let d = c.damage * e.m;
+  if (c.longShot && gap(e, t) >= c.longShot) d *= 2;                      // 진화 아처: 먼 적에게 2배
+  if (c.rage) e.rg = Math.min(c.rage.max, (e.rg || 0) + 1);               // 진화 바바리안: 때릴수록 빨라짐
+  if (c.heal) e.hp = Math.min(e.max, e.hp + d);                           // 진화 박쥐: 공격하면 회복
+  if (c.evoSpawn && G.ents.filter(u => u.team === e.team && u.card === c && u.hp > 0).length < c.evoSpawn)   // 진화 해골: 한 마리씩 늘어남
+    G.ents.push(Object.assign(mkUnit(c.id, e.team, e.x + (Math.random() - 0.5) * 0.6, e.y + (e.team ? 0.4 : -0.4)), { id: ++G.n, lane: e.lane }));
+  if (c.pull) for (const u of G.ents) if (u.team !== e.team && u.kind === 'unit' && u.hp > 0 && u.dep <= 0) {   // 진화 발키리: 끌어당김
+    const dx = e.x - u.x, dy = e.y - u.y, dd = hyp(dx, dy) || 1, go = Math.min(c.pull, dd - e.r - u.r - 0.05);
+    if (dd <= c.splash + 0.8 && go > 0) { u.x += dx / dd * go; u.y += dy / dd * go; }
+  }
   if (c.charge) { if ((e.chg || 0) >= c.charge.dist) d *= c.charge.dmgMult; e.chg = 0; } // 돌진 피해 후 초기화
   if (c.projSpeed) G.projs.push({ x: e.x, y: e.y, t, tx: t.x, ty: t.y, team: e.team, d, sp: c.projSpeed, rad: c.splash || 0, c });
   else if (c.splash) { area(e.x, e.y, c.splash, d, e.team, c, c.towerRatio); if (c.suicide) e.hp = 0; } else hurt(t, d);
@@ -1476,8 +1592,8 @@ function buildHand() {
   const h = $('hand'); h.innerHTML = '';
   G.hand.forEach((id, i) => {
     const c = CARDS[id], d = document.createElement('div');
-    d.className = 'card' + (i === sel ? ' sel' : ''); d.innerHTML = `<div class="c">${c.cost}</div><div class="i">${c.initial}</div><small>${c.name}</small>`;
-    d.style.borderColor = c.color;
+    d.className = 'card' + (i === sel ? ' sel' : '') + (c.evoOf ? ' evo' : c.heroOf ? ' hero' : ''); d.innerHTML = `<div class="c">${c.cost}</div><div class="i">${c.initial}</div><small>${c.name}</small>${c.evoOf || c.heroOf ? '<em class="tg"></em>' : ''}`;
+    d.style.borderColor = c.evoOf ? '#5ad7ff' : c.heroOf ? '#ffd24d' : c.color;
     d.onpointerdown = e => { drag = { i, x: null, y: null, card: 1, lift: 1 }; d.classList.add('sel'); e.preventDefault(); };
     h.appendChild(d);
   });
@@ -1515,7 +1631,10 @@ function ui() {
   $('mode').textContent = '엘릭서 ×' + G.cur.mult;
   $('crown').textContent = '👑 ' + crowns(0) + ' : ' + crowns(1);
   $('ef').style.width = G.elixir * 10 + '%'; $('en').textContent = Math.floor(G.elixir);
-  [...$('hand').children].forEach((el, i) => el.classList.toggle('off', CARDS[G.hand[i]].cost > G.elixir));
+  [...$('hand').children].forEach((el, i) => { const c = CARDS[G.hand[i]]; el.classList.toggle('off', c.cost > G.elixir);
+    const tg = el.querySelector('.tg'); if (tg) { if (c.evoOf) { const l = Math.max(0, c.cycles - (G.cyc[0][c.id] | 0)); tg.textContent = l ? '진화 ' + l + '회 후' : '진화!'; tg.classList.toggle('rd', !l); } else tg.textContent = '영웅'; } });
+  const hb = $('hab'), he = myHero(0);
+  if (he && abLeft(he) > 0) { const h = HERO[he.card.heroOf]; hb.style.display = 'block'; hb.textContent = h.name + ' · 💧' + h.cost + (h.uses > 1 ? ' (' + abLeft(he) + ')' : ''); hb.classList.toggle('off', G.elixir < h.cost); } else hb.style.display = 'none';
 }
 
 function applyUI() {   // 손패 크기 / 가로 배치
@@ -1589,13 +1708,11 @@ function drawTower(e, x, y) {
   cx.fillStyle = '#f6b21b'; if (king) crown(x, y - r * 0.15, r * 0.9); else { cx.beginPath(); cx.arc(x, y - r * 0.15, r * 0.3, 0, 7); cx.fill(); cx.lineWidth = 0.1; cx.strokeStyle = col; cx.stroke(); }
 }
 function towerBar(e, x, y) {
-  const r = e.r, by = y + r + (e.tk === 'king' ? 0.28 : 0.5), lv = e.team ? CFG.enemyLevel : CFG.playerLevel;
+  const r = e.r, by = y + r + (e.tk === 'king' ? 0.28 : 0.5);
   cx.fillStyle = 'rgba(0,0,0,.55)'; cx.fillRect(x - r, by, r * 2, 0.24);
   cx.fillStyle = TC[e.team]; cx.fillRect(x - r, by, r * 2 * Math.max(0, e.hp / e.max), 0.24);
   cx.font = 'bold 0.62px sans-serif'; cx.lineJoin = 'round'; cx.lineWidth = 0.14; cx.strokeStyle = 'rgba(0,0,0,.7)'; cx.fillStyle = '#fff';
   const t = String(Math.ceil(e.hp)); cx.strokeText(t, x, by - 0.3); cx.fillText(t, x, by - 0.3);
-  cx.fillStyle = '#f6b21b'; cx.beginPath(); cx.arc(x - r - 0.05, by + 0.12, 0.34, 0, 7); cx.fill();
-  cx.fillStyle = '#4a2f00'; cx.font = 'bold 0.4px sans-serif'; cx.fillText(lv, x - r - 0.05, by + 0.12);
 }
 
 // ---------- 렌더 (이전/현재 위치 보간) ----------
@@ -1642,6 +1759,8 @@ function render(a) {
         cx.fillStyle = c.color; cx.fill(); cx.lineWidth = 0.12; cx.strokeStyle = TC[e.team]; cx.stroke();
         cx.fillStyle = '#111'; cx.font = `bold ${Math.max(0.5, r * 1.1)}px sans-serif`; cx.fillText(c.initial, x, dy);
       }
+      if (c.evoOf || c.heroOf) { cx.lineWidth = 0.14; cx.strokeStyle = c.evoOf ? '#5ad7ff' : '#ffd24d'; cx.beginPath(); cx.arc(x, dy, r + 0.14, 0, 7); cx.stroke(); }
+      if (e.shield > 0 || e.sh) { cx.lineWidth = 0.16; cx.strokeStyle = 'rgba(140,210,255,.95)'; cx.beginPath(); cx.arc(x, dy, r + 0.34, 0, 7); cx.stroke(); }
     }
     cx.globalAlpha = 1;
     if (e.flash > nowT && e.hp > 0) { cx.globalAlpha = 0.5 * (e.flash - nowT) / 110; cx.fillStyle = '#fff'; cx.beginPath(); if (e.kind === 'unit' || e.kind === 'building') cx.arc(x, e.fly ? y - 0.5 : y, e.r, 0, 7); else cx.rect(x - e.r, y - e.r, e.r * 2, e.r * 2); cx.fill(); cx.globalAlpha = 1; }
@@ -1677,10 +1796,10 @@ function render(a) {
     cx.globalAlpha = 0.5; cx.fillStyle = dc.color; cx.beginPath();
     if (dc.type === 'building') cx.rect(px - dc.radius, py - dc.radius, dc.radius * 2, dc.radius * 2); else cx.arc(px, py, sp ? dc.radius : Math.max(dc.radius, 0.5), 0, 7);
     cx.fill(); cx.globalAlpha = 1;
-    if (!sp) { // 카드 이름 + 레벨
+    if (!sp) { // 카드 이름
       cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.lineJoin = 'round'; cx.lineWidth = 0.16; cx.strokeStyle = 'rgba(0,0,0,.75)'; cx.fillStyle = '#fff';
       cx.font = 'bold 0.8px sans-serif'; cx.strokeText(dc.name, px, py - dc.radius - 1.2); cx.fillText(dc.name, px, py - dc.radius - 1.2);
-      cx.font = 'bold 0.6px sans-serif'; const lt = 'Lvl. ' + CFG.playerLevel; cx.strokeText(lt, px, py - dc.radius - 0.55); cx.fillText(lt, px, py - dc.radius - 0.55);
+      
     }
   }
 }
