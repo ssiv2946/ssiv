@@ -511,7 +511,7 @@ async function tokenOk() {
 async function cloudGet() {
   await tokenOk();
   try { const j = await jf(fsUrl(AUTH.uid), { headers: { Authorization: 'Bearer ' + AUTH.idToken } }); return { data: JSON.parse(j.fields.data.stringValue), ts: +j.fields.ts.integerValue }; }
-  catch (e) { if (e.code === 404 && !/database/i.test(e.message)) return null; throw e; }
+  catch (e) { if (e.code === 404 && !/does not exist/i.test(e.message)) return null; throw e; }
 }
 async function cloudPut(str, ts) {
   await tokenOk();
@@ -554,7 +554,7 @@ function errKo(e) {
   if (/TOO_MANY/.test(m)) return '시도가 너무 많아요. 잠시 후 다시 해 주세요';
   if (/OPERATION_NOT_ALLOWED/.test(m)) return 'Firebase에서 이메일/비밀번호 로그인을 켜 주세요';
   if (/API key|API_KEY/i.test(m)) return 'API 키가 올바르지 않아요';
-  if (e.code === 403 || /PERMISSION|database/i.test(m)) return 'Firestore 데이터베이스·규칙 설정을 확인해 주세요';
+  if (e.code === 403 || /PERMISSION|does not exist/i.test(m)) return 'Firestore 데이터베이스·규칙 설정을 확인해 주세요';
   return '오류: ' + m.slice(0, 60);
 }
 async function lgGo(kind) {
