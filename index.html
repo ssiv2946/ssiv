@@ -137,6 +137,9 @@ input{-webkit-user-select:text;user-select:text}
 .frame svg{height:100%;max-width:100%}
 .event{background:#6b3fb3;border-radius:14px;padding:6px 8px 8px;text-align:center;font-size:13px;font-weight:800}
 .slots{display:flex;gap:6px;justify-content:center;background:#2a1a4d;border-radius:10px;padding:6px;margin-top:5px}
+.slot.ch{width:58px;height:46px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;line-height:1;font-size:19px;opacity:.5;cursor:default}.slot.ch small{font-size:10px;font-weight:800;color:#ffe9a8}
+.slot.ch.on{opacity:1;cursor:pointer;box-shadow:0 0 0 2px #ffd24d;animation:chp 1.2s ease-in-out infinite}.slot.ch.op{opacity:.5;animation:none;box-shadow:none;background:#2c3b50}
+@keyframes chp{50%{transform:translateY(-3px)}}
 .slot{width:44px;height:32px;border-radius:8px;background:#3d2a6b;display:grid;place-items:center;font-size:16px}.slot.on{background:#8e5df0}
 .h-bat{display:flex;gap:8px;align-items:stretch;height:74px}
 .sq{width:76px;border:0;border-radius:14px;background:#2f7de1;color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #1b4f99;font-size:15px;line-height:1.25;padding:4px}
@@ -572,7 +575,7 @@ function judge() {
 // ---------- 저장 데이터 / 메인 화면 ----------
 let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }, PASS = { w: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
 const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
-const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
+const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, evOpen: [], log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
 
 // ---------- 로그인 (Firebase REST: 아이디 → 가짜 이메일로 계정 생성, 데이터는 Firestore users/<uid>) ----------
 const FB = { apiKey: 'AIzaSyB78UUQkJZuQcdXUlUuDHR2ZI0x5sBytYk', projectId: 'clash-friends' };   // ← Firebase 웹 앱 설정의 apiKey, projectId 를 여기에 넣으면 로그인이 켜져요 (비워 두면 이 기기에만 저장)
@@ -721,7 +724,34 @@ const saveP = () => LS.set('cf_prof', P);
 const applySkin = () => { TC[0] = (SKINS.find(k => k.id === P.skin) || SKINS[0]).c; };
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => e.classList.remove('show'), 1800); }
 function earn(g, m, why) { P.gold += g; P.gems += m; P.log.unshift({ t: why, g, m, at: Date.now() }); P.log.length = Math.min(P.log.length, 20); saveP(); refreshTop(); }
-function evSync() { if (P.evDay !== today()) { P.evDay = today(); P.evWins = 0; P.evDone = 0; saveP(); } }
+function evSync() { if (P.evDay !== today()) { P.evDay = today(); P.evWins = 0; P.evDone = 0; P.evOpen = []; saveP(); } if (!Array.isArray(P.evOpen)) P.evOpen = []; }
+// ---------- 상자 (★1~★5) ----------
+const CHP = [25, 45, 15, 10, 5];   // 일반 상자 등급 확률(%)
+const CHR = [{ g: [100, 200] }, { g: [250, 400], m: [1, 2], mp: 0.3 }, { g: [500, 800], m: [3, 6] }, { g: [1000, 1500], m: [8, 15], card: 0.1 }, { g: [2500, 3500], m: [25, 40], tk: 1 }];   // 등급별 보상
+const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+function rollStar(min) {   // min★ 이상 확정: 원래 확률 비율을 유지한 채 min★ 미만만 빼고 다시 계산
+  const w = CHP.map((p, i) => i + 1 >= min ? p : 0), t = w.reduce((a, b) => a + b, 0); let r = Math.random() * t;
+  for (let i = 0; i < 5; i++) { r -= w[i]; if (r < 0) return i + 1; } return 5;
+}
+const lockedPool = kind => kind === 'card' ? Object.keys(LOCK).filter(id => CARDS[id] && !have(id)) : [...Object.keys(EVO).map(b => 'evo_' + b), ...Object.keys(HERO).map(b => 'hero_' + b)].filter(id => CARDS[id] && !have(id));
+function grantId(id) { const c = CARDS[id]; (c.evoOf ? P.evo : c.heroOf ? P.hero : P.buy).push(c.evoOf || c.heroOf || id); }
+function chestRoll(star) {
+  const R = CHR[star - 1]; let g = rint(R.g[0], R.g[1]), m = R.m ? (R.mp && Math.random() >= R.mp ? 0 : rint(R.m[0], R.m[1])) : 0; const got = [];
+  const give = kind => { const pool = lockedPool(kind); if (!pool.length) return false; const id = pool[Math.random() * pool.length | 0]; grantId(id); got.push('🎟 ' + CARDS[id].name + ' 해금!'); return true; };
+  if (R.card && Math.random() < R.card) give('card');
+  if (R.tk) { const ks = ['card', 'evh'].filter(k => lockedPool(k).length); if (ks.length) give(ks[Math.random() * ks.length | 0]); else { g += 1000; m += 50; got.push('모두 보유 → 보너스 골드 1,000 · 보석 50'); } }
+  return { g, m, got };
+}
+function openChest(i) {
+  evSync(); if (i >= Math.min(3, P.evWins) || P.evOpen.includes(i)) return;
+  const star = rollStar(i >= 2 ? 3 : 2), r = chestRoll(star); P.evOpen.push(i);
+  earn(r.g, r.m, '이벤트 상자 ★' + star); saveP(); if (DK) refreshPlay(); sfx('win');
+  const col = ['#9aa7b8', '#5ad7ff', '#7cf29a', '#ffd24d', '#ff8c4d'][star - 1];
+  smOpen(`<div style="font-size:46px">📦</div><h3 style="color:${col}">${'★'.repeat(star)} 상자</h3>
+    <div class="item" style="justify-content:center;font-weight:800">골드 +${fmt(r.g)}</div>${r.m ? `<div class="item" style="justify-content:center;font-weight:800">보석 +${r.m}</div>` : ''}
+    ${r.got.map(t => `<div class="item" style="justify-content:center;font-weight:800;color:#ffd24d">${t}</div>`).join('')}<button class="btn gold" onclick="smClose();drawHome()">확인</button>`);
+  drawHome();
+}
 function setBadge(id, v) { const e = $(id); e.textContent = v; e.style.display = v ? 'grid' : 'none'; }
 function refreshTop() {
   $('t-gold').textContent = fmt(P.gold); $('t-gem').textContent = fmt(P.gems);
@@ -746,8 +776,9 @@ function drawHome() {
   $('h-pass').textContent = '단계 ' + t + '/10'; setBadge('h-pb', n);
   const can = P.daily !== today(); $('h-daily').textContent = can ? '골드 +300' : '내일 다시'; setBadge('h-db', can ? '!' : 0);
   $('h-rec').textContent = P.w + '승 ' + P.l + '패'; $('h-fsub').textContent = 'AI 대전 · ' + AIP[DIFF].n;
-  $('h-evt').textContent = P.evDone ? '오늘의 이벤트 완료!' : '오늘의 이벤트 · 3승하면 보석 +20';
-  $('h-ev').innerHTML = [0, 1, 2].map(i => `<div class="slot${i < P.evWins ? ' on' : ''}">${i < P.evWins ? '✓' : ''}</div>`).join('');
+  const ready = [0, 1, 2].filter(i => i < P.evWins && !P.evOpen.includes(i)).length;
+  $('h-evt').textContent = P.evOpen.length >= 3 ? '오늘의 이벤트 완료!' : '오늘의 이벤트 · 승리하면 상자' + (ready ? ' · 열 수 있어요!' : '');
+  $('h-ev').innerHTML = [0, 1, 2].map(i => { const has = i < P.evWins, op = P.evOpen.includes(i); return `<div class="slot ch${has ? ' on' : ''}${op ? ' op' : ''}" ${has && !op ? `onclick="openChest(${i})"` : ''}>${op ? '✓' : '📦'}<small>★${i >= 2 ? 3 : 2}+</small></div>`; }).join('');
   const av = CFG.playerDeck.reduce((s, i) => s + CARDS[i].cost, 0) / 8;
   $('h-deck').innerHTML = '덱 ' + (DK.cur + 1) + '<small>평균 ' + av.toFixed(1) + '</small>';
 }
@@ -979,11 +1010,12 @@ function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
 }
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
 function end(w) {
-  G.res = w; evSync(); const g = Math.round((w === 0 ? 100 : w === 1 ? 30 : 50) * (G.net ? 1 : AIP[DIFF].gold)); let m = 0, ex = '';
-  if (w === 0) { P.w++; P.evWins++; if (P.evWins >= 3 && !P.evDone) { P.evDone = 1; m = 20; ex = ' · 이벤트 보석 +20'; } } else if (w === 1) P.l++; else P.d++;
+  G.res = w; evSync(); const g = Math.round((w === 0 ? 100 : w === 1 ? 30 : 50) * (G.net ? 1 : AIP[DIFF].gold)); let m = 0, evNew = 0;
+  if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
   P.exp += w === 0 ? 30 : 10; P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
   const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); if (w === 0) passWin();
   const rw = [{ i: '<span class="dot g"></span>', t: '+' + fmt(g) }]; if (m) rw.push({ i: '<span class="dot m"></span>', t: '+' + m });
+  if (evNew) rw.push({ i: '<span style="font-size:20px">📦</span>', t: '이벤트 상자 ★' + (evNew >= 3 ? 3 : 2) + '+ (홈에서 열기)' });
   rw.push({ i: '<i>★</i>', t: '+' + (w === 0 ? 30 : 10) + ' XP' }, ...trRw(td)); showFinal(w, rw, false);
 }
 function restart() { pubSoon(); pvLeave(); newGame(); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false; }
