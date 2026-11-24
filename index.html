@@ -219,6 +219,11 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .dpre button.hb{background:linear-gradient(#5a6b82,#3b4a60);border-color:#1b2433;font-size:22px;padding:0}
 .dpre button{flex:1 1 0;max-width:52px;min-width:26px;height:42px;border-radius:10px;border:2px solid #0b3a2a;background:linear-gradient(#35c47a,#1f9a5b);color:#fff;font:inherit;font-weight:900;font-size:19px;cursor:pointer;padding:0;text-shadow:0 2px 0 rgba(0,0,0,.35)}
 .dpre button.on{background:linear-gradient(#ffd24d,#f6a01b);color:#3a2600;border-color:#a56b00;transform:translateY(-2px);text-shadow:none}
+.sortbar{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.sortbar select{flex:1;max-width:220px;height:38px;border-radius:10px;border:2px solid #6aa6f0;background:linear-gradient(#3a7bd5,#2a5db0);color:#fff;font-weight:800;font-size:14px;padding:0 10px;box-shadow:0 3px 0 #173a73}
+.sortbar select option{color:#111;background:#fff}
+.sortbar button{width:44px;height:38px;border-radius:10px;border:2px solid #6aa6f0;background:linear-gradient(#3a7bd5,#2a5db0);color:#fff;font-weight:900;font-size:16px;box-shadow:0 3px 0 #173a73}
+.sortbar button:active{transform:translateY(2px);box-shadow:0 1px 0 #173a73}
 .dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .dc{aspect-ratio:3/4;border-radius:12px;position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.28);background:linear-gradient(160deg,var(--cc),#10233d 92%);overflow:hidden;padding-bottom:16px}
 .dc .art{width:62%;aspect-ratio:1;border-radius:50%;background:var(--cc);display:grid;place-items:center;font-size:clamp(20px,7vw,32px);font-weight:900;text-shadow:0 2px 3px rgba(0,0,0,.6);box-shadow:inset 0 -6px 0 rgba(0,0,0,.25),0 3px 8px rgba(0,0,0,.4);border:3px solid rgba(255,255,255,.35)}
@@ -346,7 +351,9 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="dpre" id="dk-tabs"></div>
         <div class="dgrid" id="dk-slots"></div>
         <div class="dbar" id="dk-bar"><div class="elx"><i></i><b id="dk-av">0.0</b></div><span id="dk-st" style="text-align:right;font-size:12px;color:#a9c4e6"></span></div>
-        <div id="dk-colw" style="display:none;flex-direction:column;gap:8px"><p style="text-align:center;margin:0">카드를 누르면 정보창이 떠요 · 일반/진화/영웅 칸을 골라 덱에 넣어요</p><div class="dgrid" id="dk-all"></div></div>
+        <div id="dk-colw" style="display:none;flex-direction:column;gap:8px"><p style="text-align:center;margin:0">카드를 누르면 정보창이 떠요 · 일반/진화/영웅 칸을 골라 덱에 넣어요</p>
+          <div class="sortbar"><select id="dk-sk" onchange="setSort(this.value)" aria-label="정렬 기준"><option value="cost">엘릭서 기준</option><option value="rar">희귀도 기준</option><option value="name">이름순 (ㄱ~ㅎ)</option></select><button id="dk-sd" type="button" onclick="flipSort()" aria-label="정렬 방향">▲</button></div>
+          <div class="dgrid" id="dk-all"></div></div>
       </div>
 
       <div class="pg" id="pg-social">
@@ -923,6 +930,19 @@ const dcard = (id, cls, k) => {   // k: 덱 칸 번호 (있으면 그 칸에서 
   return `<div class="dc ${cls}${lk ? ' lk' : ''}${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span>${tag ? `<span class="lv">${tag}</span>` : ''}</div>`;
 };
 let DTAB = 0;
+// 카드 정렬: 엘릭서 · 희귀도 · 이름(ㄱ→ㅎ), 위(▲ 오름차순)/아래(▼ 내림차순)
+const RAR = { knight: 0, archers: 0, goblins: 0, spear_goblins: 0, bomber: 0, barbarians: 0, minions: 0, skeletons: 0, bats: 0, fire_spirit: 0, ice_spirit: 0, electro_spirit: 0, royal_giant: 0, cannon: 0, arrows: 0, zap: 0, giant_snowball: 0, royal_recruits: 0, elite_barbarians: 0, firecracker: 0, skeleton_dragons: 0,
+  giant: 1, valkyrie: 1, wizard: 1, mini_pekka: 1, musketeer: 1, hog_rider: 1, mega_minion: 1, dart_goblin: 1, flying_machine: 1, royal_hogs: 1, fireball: 1, rocket: 1, tombstone: 1, bomb_tower: 1, inferno_tower: 1, ice_golem: 1,
+  baby_dragon: 2, skeleton_army: 2, prince: 2, dark_prince: 2, witch: 2, balloon: 2, golem: 2, pekka: 2, executioner: 2, giant_skeleton: 2, barbarian_barrel: 2, goblin_barrel: 2, rage: 2, poison: 2, freeze: 2, lightning: 2, tornado: 2,
+  princess: 3, ice_wizard: 3, electro_wizard: 3, bandit: 3, mega_knight: 3, sparky: 3, inferno_dragon: 3, night_witch: 3, lava_hound: 3, the_log: 3 };
+const RARN = ['일반', '희귀', '영웅', '전설'];
+let SORT = { k: 'cost', d: 1 }; try { const q = JSON.parse(localStorage.getItem('cf_sort') || 'null'); if (q && ['cost', 'rar', 'name'].includes(q.k)) SORT = { k: q.k, d: q.d === -1 ? -1 : 1 }; } catch (e) {}
+function sortedColl() {
+  const key = i => SORT.k === 'cost' ? CARDS[i].cost : SORT.k === 'rar' ? (RAR[i] ?? 0) : 0;
+  return COLL().slice().sort((a, b) => (key(a) - key(b)) * SORT.d || (SORT.k === 'name' ? CARDS[a].name.localeCompare(CARDS[b].name, 'ko') * SORT.d : CARDS[a].name.localeCompare(CARDS[b].name, 'ko')));
+}
+function setSort(k) { SORT.k = k; try { localStorage.setItem('cf_sort', JSON.stringify(SORT)); } catch (e) {} drawDeck(); }
+function flipSort() { SORT.d = -SORT.d; try { localStorage.setItem('cf_sort', JSON.stringify(SORT)); } catch (e) {} drawDeck(); }
 function deckTab(i) { DTAB = i; drawDeck(); }
 function drawDeck() {
   while (deck.length < 8) deck.push(null); deck.length = 8;
@@ -932,7 +952,8 @@ function drawDeck() {
   const f = deck.filter(Boolean), av = f.reduce((s, i) => s + CARDS[i].cost, 0) / (f.length || 1);
   $('dk-slots').innerHTML = deck.map((id, k) => id ? dcard(id, 'sl-' + SLOT(k), k) : `<div class="dc empty sl-${SLOT(k)}" onclick="deckTab(1)">${SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : ''}</div>`).join('');
   $('dk-av').textContent = av.toFixed(1);
-  $('dk-all').innerHTML = COLL().map(i => dcard(i, deck.includes(i) ? 'used' : '')).join('');
+  $('dk-sk').value = SORT.k; $('dk-sd').textContent = SORT.d === 1 ? '▲' : '▼';
+  $('dk-all').innerHTML = sortedColl().map(i => dcard(i, deck.includes(i) ? 'used' : '')).join('');
   $('dk-st').textContent = f.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장' : f.length + '/8 · 8장을 채워야 전투에 쓸 수 있어요';
 }
 function saveDecks() { refreshPlay(); LS.set('cf_decks', DK); }
