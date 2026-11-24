@@ -208,6 +208,12 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 #hab{position:absolute;left:50%;transform:translateX(-50%);top:-46px;z-index:5;padding:9px 16px;border-radius:22px;border:2px solid #fff;background:linear-gradient(#ffd24d,#d9a21a);color:#2b1f00;font-weight:900;font-size:14px;box-shadow:0 3px 0 #7a5a05,0 4px 10px rgba(0,0,0,.5);touch-action:manipulation}
 #hab.off{filter:grayscale(.7) brightness(.8)}
 #app.land #hab{position:static;transform:none;margin:0 0 6px;width:100%}
+.dc.sl-evo{border-color:rgba(90,215,255,.55)}.dc.sl-hero{border-color:rgba(255,210,77,.55)}
+.dc.empty.sl-evo{border:2px dashed #5ad7ff;color:#7fe3ff}.dc.empty.sl-hero{border:2px dashed #ffd24d;color:#ffd24d}
+.dc.empty{font-size:12px;font-weight:800;text-align:center;padding-bottom:0}
+#ci-acts{display:flex;flex-direction:column;gap:6px;margin:8px 0 6px}
+.slrow{display:flex;gap:6px}.slrow .btn{flex:1;padding-left:4px;padding-right:4px}
+#ci-acts .hint{color:#a9c4e6;font-size:11px;text-align:center}
 .dc.empty{background:rgba(5,20,40,.4);border-style:dashed;cursor:default}
 .dbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .elx{display:flex;align-items:center;gap:8px;background:rgba(5,20,40,.5);padding:6px 14px;border-radius:12px;font-weight:900;font-size:22px}
@@ -223,7 +229,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
     <button id="hab" onclick="heroPress()" style="display:none"></button>
     <div id="row"><div id="next"></div><div id="hand"></div></div>
   </div>
-  <div id="ci" onclick="if(event.target===this)ciClose()"><div class="box"><div id="ci-head"></div><div id="ci-body"></div><div class="cib"><button id="ci-btn" class="btn" onclick="ciToggle()"></button><button class="btn" onclick="ciClose()">닫기</button></div></div></div>
+  <div id="ci" onclick="if(event.target===this)ciClose()"><div class="box"><div id="ci-head"></div><div id="ci-body"></div><div id="ci-acts"></div><div class="cib"><button class="btn" onclick="ciClose()">닫기</button></div></div></div>
   <div id="sm" onclick="if(event.target===this&&!SM.lock)smClose()"><div class="box" id="sm-box"></div></div>
   <div id="banner"></div><div id="lack">엘릭서가 부족합니다!</div>
   <div id="res"><h1 id="rt"></h1><p id="rs"></p><div id="rb"></div></div>
@@ -300,7 +306,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="dpre" id="dk-tabs"></div>
         <div class="dgrid" id="dk-slots"></div>
         <div class="dbar" id="dk-bar"><div class="elx"><i></i><b id="dk-av">0.0</b></div><span id="dk-st" style="text-align:right;font-size:12px;color:#a9c4e6"></span></div>
-        <div id="dk-colw" style="display:none;flex-direction:column;gap:8px"><p style="text-align:center;margin:0">카드를 누르면 정보가 떠요 · 정보창에서 덱에 넣고 뺄 수 있어요</p><div class="dgrid" id="dk-all"></div></div>
+        <div id="dk-colw" style="display:none;flex-direction:column;gap:8px"><p style="text-align:center;margin:0">카드를 누르면 정보창이 떠요 · 일반/진화/영웅 칸을 골라 덱에 넣어요</p><div class="dgrid" id="dk-all"></div></div>
       </div>
 
       <div class="pg" id="pg-social">
@@ -429,12 +435,16 @@ function mkVariants() {
     CARDS['hero_' + b] = { ...c, id: 'hero_' + b, name: '영웅 ' + c.name, heroOf: b, ab: v.ab, abCost: v.cost, desc: '능력 「' + v.name + '」 (엘릭서 ' + v.cost + ') · ' + v.desc }; }
   CARDS.hero_turret = { id: 'hero_turret', name: '믿음직한 포탑', initial: '포', color: '#9fb4c8', type: 'building', cost: 0, count: 1, hp: 520, damage: 120, hitSpeed: 0.8, firstHit: 0.4, range: 6, speed: 0, sight: 6, targets: 'air_ground', flying: false, mass: 1000, radius: 0.5, deployTime: 0.4, splash: 0, projSpeed: 16, canJumpRiver: false, lifetime: 10, hidden: true };
 }
-const COLL = () => Object.keys(CARDS).filter(i => !CARDS[i].hidden);
+const COLL = () => Object.keys(CARDS).filter(i => !CARDS[i].hidden && !CARDS[i].evoOf && !CARDS[i].heroOf);   // 컬렉션 = 기본 카드만 (진화·영웅은 칸에 두면 적용)
+const SLOT = k => k < 2 ? 'evo' : k < 4 ? 'hero' : 'norm';   // 덱 칸: 1~2번 진화 칸, 3~4번 영웅 칸, 5~8번 일반 칸
+const SLOTN = { evo: '진화 칸', hero: '영웅 칸', norm: '일반 칸' }, SLOTR = { evo: [0, 1], hero: [2, 3], norm: [4, 5, 6, 7] };
+const effOf = (id, k) => k < 2 && EVO[id] && have('evo_' + id) ? 'evo_' + id : k >= 2 && k < 4 && HERO[id] && have('hero_' + id) ? 'hero_' + id : id;   // 칸 + 보유 여부로 실제 카드 결정
+const effDeck = d => d.map((id, k) => effOf(id, k));
 const baseOf = id => CARDS[id].evoOf || CARDS[id].heroOf || id;
 const have = id => { const c = CARDS[id]; return c.evoOf ? (P.evo || []).includes(c.evoOf) : c.heroOf ? (P.hero || []).includes(c.heroOf) : !LOCK[id] || (P.buy || []).includes(id); };
 const price = id => { const c = CARDS[id]; return c.evoOf ? { m: EVOP } : c.heroOf ? { m: HEROP } : { g: LOCK[id] || 0 }; };
 const priceTxt = id => { const p = price(id); return p.g ? '🔒 골드 ' + p.g.toLocaleString('ko-KR') : '🔒 보석 ' + p.m; };
-const deckRules = d => new Set(d.map(baseOf)).size === d.length && d.filter(i => CARDS[i].evoOf).length <= 1 && d.filter(i => CARDS[i].heroOf).length <= 1;
+const deckRules = d => new Set(d.map(baseOf)).size === d.length && d.filter(i => CARDS[i].evoOf).length <= 2 && d.filter(i => CARDS[i].heroOf).length <= 2;
 
 async function boot() {
   const c = CARDS_DATA, f = CFG_DATA;
@@ -684,7 +694,7 @@ function loadStore() {
   P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(2, Math.max(0, LS.get('cf_diff', 1) | 0));
   loadDecks();
 }
-const okDeck = d => Array.isArray(d) && d.length === 8 && new Set(d).size === 8 && d.every(i => CARDS[i] && !CARDS[i].hidden && have(i)) && deckRules(d);
+const okDeck = d => Array.isArray(d) && d.length === 8 && new Set(d).size === 8 && d.every(i => CARDS[i] && !CARDS[i].hidden && !CARDS[i].evoOf && !CARDS[i].heroOf && have(i)) && deckRules(d);
 const starters = () => [[...DEFDECK], ['goblins', 'skeleton_army', 'hog_rider', 'cannon', 'archers', 'knight', 'arrows', 'fireball'],
   ['wizard', 'baby_dragon', 'giant', 'valkyrie', 'archers', 'prince', 'fireball', 'arrows'], ['prince', 'knight', 'goblins', 'skeleton_army', 'wizard', 'cannon', 'arrows', 'fireball'],
   ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'giant', 'bomber', 'rocket', 'arrows']];
@@ -693,7 +703,7 @@ function loadDecks() { // 덱 프리셋 5개 (자동 저장)
   const st = starters(), v = LS.get('cf_decks', null); DK = { cur: 0, list: st };
   if (v && Array.isArray(v.list)) { DK.cur = Math.min(4, Math.max(0, v.cur | 0)); DK.list = st.map((x, i) => okDeck(v.list[i]) ? v.list[i] : x); }
   else { const d = LS.get('cf_deck', null); if (okDeck(d)) DK.list[0] = d; }
-  CFG.playerDeck = [...DK.list[DK.cur]]; deck = [...CFG.playerDeck]; LS.set('cf_decks', DK);
+  CFG.playerDeck = effDeck(DK.list[DK.cur]); deck = [...DK.list[DK.cur]]; LS.set('cf_decks', DK);
 }
 const saveP = () => LS.set('cf_prof', P);
 const applySkin = () => { TC[0] = (SKINS.find(k => k.id === P.skin) || SKINS[0]).c; };
@@ -740,6 +750,7 @@ function unlock(id) {
   if (p.g ? P.gold < p.g : P.gems < p.m) return toast((p.g ? '골드' : '보석') + '가 부족해요');
   earn(-(p.g || 0), -(p.m || 0), '해금: ' + c.name);
   (c.evoOf ? P.evo : c.heroOf ? P.hero : P.buy).push(c.evoOf || c.heroOf || id); saveP(); sfx('elixir'); toast(c.name + ' 해금!');
+  if (DK) CFG.playerDeck = effDeck(DK.list[DK.cur]);
   if (CURP === 'shop') drawShop(); if (CURP === 'deck') drawDeck(); if (CI) ciBtn();
 }
 function drawShop() {
@@ -764,29 +775,34 @@ function buySkin(id) {
 function equip(id) { P.skin = id; saveP(); applySkin(); drawShop(); toast('타워 색상을 바꿨어요'); }
 
 // 덱
-const dcard = (id, cls) => { const c = CARDS[id], lk = !have(id);
-  return `<div class="dc ${cls}${lk ? ' lk' : ''}${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span>${lk ? `<span class="lv">${priceTxt(id)}</span>` : c.evoOf ? '<span class="lv">진화</span>' : c.heroOf ? '<span class="lv">영웅</span>' : ''}</div>`; };
+const dcard = (id, cls, k) => {   // k: 덱 칸 번호 (있으면 그 칸에서 실제로 나올 모습으로 표시)
+  const e = k == null ? id : effOf(id, k), c = CARDS[e], lk = !have(id), ev = k == null && EVO[id] && have('evo_' + id), hr = k == null && HERO[id] && have('hero_' + id);
+  const tag = lk ? priceTxt(id) : k == null ? (ev ? '진화' : '') + (ev && hr ? '·' : '') + (hr ? '영웅' : '') : c.evoOf ? '진화 적용' : c.heroOf ? '영웅 적용' : SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : '';
+  return `<div class="dc ${cls}${lk ? ' lk' : ''}${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span>${tag ? `<span class="lv">${tag}</span>` : ''}</div>`;
+};
 let DTAB = 0;
 function deckTab(i) { DTAB = i; drawDeck(); }
 function drawDeck() {
+  while (deck.length < 8) deck.push(null); deck.length = 8;
   $('dt-deck').classList.toggle('on', DTAB === 0); $('dt-col').classList.toggle('on', DTAB === 1); $('dt-cnt').textContent = COLL().filter(have).length + '/' + COLL().length;
   $('dk-colw').style.display = DTAB === 1 ? 'flex' : 'none';
   $('dk-tabs').innerHTML = [0, 1, 2, 3, 4].map(i => `<button class="${i === DK.cur ? 'on' : ''}" onclick="pickDeck(${i})">${i + 1}</button>`).join('');
-  const av = deck.reduce((s, i) => s + CARDS[i].cost, 0) / (deck.length || 1);
-  $('dk-slots').innerHTML = deck.map(i => dcard(i, '')).join('') + '<div class="dc empty"></div>'.repeat(8 - deck.length);
+  const f = deck.filter(Boolean), av = f.reduce((s, i) => s + CARDS[i].cost, 0) / (f.length || 1);
+  $('dk-slots').innerHTML = deck.map((id, k) => id ? dcard(id, 'sl-' + SLOT(k), k) : `<div class="dc empty sl-${SLOT(k)}" onclick="deckTab(1)">${SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : ''}</div>`).join('');
   $('dk-av').textContent = av.toFixed(1);
   $('dk-all').innerHTML = COLL().map(i => dcard(i, deck.includes(i) ? 'used' : '')).join('');
-  $('dk-st').textContent = deck.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장' : deck.length + '/8 · 컬렉션에서 카드를 골라 8장을 채워 주세요';
+  $('dk-st').textContent = f.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장' : f.length + '/8 · 컬렉션에서 카드를 골라 8칸을 채워 주세요';
 }
-function saveDecks() { CFG.playerDeck = [...DK.list[DK.cur]]; LS.set('cf_decks', DK); }
+function saveDecks() { CFG.playerDeck = effDeck(DK.list[DK.cur]); LS.set('cf_decks', DK); }
 function pickDeck(i) {
-  if (deck.length !== 8) return toast('덱을 8장으로 채우면 다른 덱으로 바꿀 수 있어요');
+  if (!deck.every(Boolean)) return toast('덱을 8장으로 채우면 다른 덱으로 바꿀 수 있어요');
   DK.cur = i; deck = [...DK.list[i]]; saveDecks(); drawDeck();
 }
+const SPCT = c => [EVO[c.id] ? '진화 가능' : '', HERO[c.id] ? '영웅 가능' : ''].filter(Boolean).join(' · ');
 let CI = null;
 const SPD = v => v <= 0 ? '-' : v <= 45 ? '느림' : v <= 60 ? '보통' : v <= 90 ? '빠름' : '매우 빠름';
 function cardInfo(id) {
-  CI = id; const c = CARDS[id], m = lv(CFG.playerLevel), sp = c.type === 'spell', n = x => Math.round(x).toLocaleString('ko-KR'), R = [];
+  id = baseOf(id); CI = id; const c = CARDS[id], m = lv(CFG.playerLevel), sp = c.type === 'spell', n = x => Math.round(x).toLocaleString('ko-KR'), R = [];
   const add = (k, v) => R.push(`<div class="ir"><span>${k}</span><b>${v}</b></div>`);
   add('종류', sp ? '주문' : c.type === 'building' ? '건물' : '유닛'); add('엘릭서', c.cost);
   if (sp) {
@@ -800,31 +816,33 @@ function cardInfo(id) {
     if (c.count > 1) add('소환 수', c.count + '마리');
     if (c.splash) add('범위 공격', '반지름 ' + c.splash + '칸');
   }
-  const ft = []; if (c.charge) ft.push('돌진: 달리다가 첫 공격은 2배 피해'); if (c.suicide) ft.push('적에 닿으면 자폭'); if (c.canJumpRiver) ft.push('강을 뛰어넘음'); if (c.lifetime) ft.push('지속 시간 ' + c.lifetime + '초'); if (c.desc) ft.unshift('★ ' + c.desc);
-  $('ci-head').innerHTML = `<div class="cic" style="background:${c.color}">${c.initial}</div><div><b>${c.name}</b><small>${c.evoOf ? '진화 · ' + c.cycles + '번 낸 뒤부터 발동' : c.heroOf ? '영웅 · 전장에서 능력 버튼 사용' : c.rarity || ''}</small></div><i class="cic2">${c.cost}</i>`;
+  const ft = []; if (c.charge) ft.push('돌진: 달리다가 첫 공격은 2배 피해'); if (c.suicide) ft.push('적에 닿으면 자폭'); if (c.canJumpRiver) ft.push('강을 뛰어넘음'); if (c.lifetime) ft.push('지속 시간 ' + c.lifetime + '초'); if (EVO[id]) ft.push('★ 진화 ' + (have('evo_' + id) ? '(보유)' : '(보석 ' + EVOP + ')') + ': ' + EVO[id].desc + ' · ' + EVO[id].cy + '번 낸 뒤부터');
+  if (HERO[id]) ft.push('★ 영웅 ' + (have('hero_' + id) ? '(보유)' : '(보석 ' + HEROP + ')') + ': 「' + HERO[id].name + '」 엘릭서 ' + HERO[id].cost + ' · ' + HERO[id].desc);
+  $('ci-head').innerHTML = `<div class="cic" style="background:${c.color}">${c.initial}</div><div><b>${c.name}</b><small>${SPCT(c)}</small></div><i class="cic2">${c.cost}</i>`;
   $('ci-body').innerHTML = R.join('') + (ft.length ? `<div class="ft">${ft.join('<br>')}</div>` : '');
   ciBtn(); $('ci').style.display = 'flex';
 }
 function ciBtn() {
-  const b = $('ci-btn'); if (!CI) return;
-  if (!have(CI)) { const p = price(CI); b.textContent = '해금 · ' + (p.g ? '골드 ' + p.g.toLocaleString('ko-KR') : '보석 ' + p.m); b.disabled = false; b.className = 'btn gold'; return; }
-  const inD = deck.includes(CI), sw = !inD && deck.some(x => baseOf(x) === baseOf(CI));
-  b.textContent = inD ? '덱에서 빼기' : sw ? '덱의 같은 카드와 바꾸기' : deck.length >= 8 ? '덱이 가득 찼어요 (8/8)' : '덱에 넣기'; b.disabled = !inD && !sw && deck.length >= 8; b.className = 'btn' + (inD ? '' : ' gold');
+  const box = $('ci-acts'); if (!CI) return; const id = CI, k = deck.indexOf(id), H = [];
+  if (!have(id)) { const p = price(id); box.innerHTML = `<button class="btn gold" onclick="unlock('${id}')">해금 · ${p.g ? '골드 ' + p.g.toLocaleString('ko-KR') : '보석 ' + p.m}</button>`; return; }
+  for (const [key, T, nm, pr] of [['evo', EVO, '진화', EVOP], ['hero', HERO, '영웅', HEROP]]) if (T[id])
+    H.push(have(key + '_' + id) ? `<div class="ir"><span>${nm}</span><b>보유 ✓</b></div>` : `<button class="btn" onclick="unlock('${key}_${id}')">${nm} 해금 · 보석 ${pr}</button>`);
+  const cur = k < 0 ? null : SLOT(k);
+  const bt = kind => { const free = SLOTR[kind].some(j => !deck[j]), here = cur === kind;
+    return `<button class="btn${here ? ' gold' : ''}" ${here || (!free && k < 0) ? 'disabled' : ''} onclick="place('${kind}')">${SLOTN[kind]}${here ? ' ✓' : !free ? (k < 0 ? ' (가득)' : ' (바꾸기)') : ''}</button>`; };
+  H.push('<div class="slrow">' + ['norm', 'evo', 'hero'].map(bt).join('') + '</div>');
+  if (k >= 0) H.push('<button class="btn" onclick="unplace()">덱에서 빼기</button>');
+  H.push('<small class="hint">' + (k < 0 && deck.every(Boolean) ? '덱이 가득 찼어요 · 다른 카드를 먼저 빼 주세요<br>' : '') + '진화·영웅 칸에 두면, 진화·영웅을 보유한 카드만 그 모습으로 나와요</small>');
+  box.innerHTML = H.join('');
 }
-function ciToggle() { if (CI) { if (!have(CI)) unlock(CI); else tgl(CI); } ciBtn(); }
+function commitDeck() { if (deck.every(Boolean)) { DK.list[DK.cur] = [...deck]; saveDecks(); } drawDeck(); }
+function place(kind) {
+  const id = CI; if (!id) return; const k = deck.indexOf(id); let j = SLOTR[kind].find(x => !deck[x]);
+  if (j == null) { if (k < 0) return toast(SLOTN[kind] + '이 가득 찼어요'); j = SLOTR[kind][0]; }   // 이미 덱에 있으면 그 칸의 카드와 자리를 바꿔요
+  if (k >= 0) deck[k] = deck[j]; deck[j] = id; commitDeck(); ciBtn();
+}
+function unplace() { const k = deck.indexOf(CI); if (k >= 0) deck[k] = null; commitDeck(); ciBtn(); }
 function ciClose() { $('ci').style.display = 'none'; CI = null; }
-function tgl(i) {
-  const k = deck.indexOf(i);
-  if (k >= 0) deck.splice(k, 1);
-  else {
-    const c = CARDS[i], same = deck.findIndex(x => baseOf(x) === baseOf(i)), other = key => deck.some((x, j) => CARDS[x][key] && j !== same);
-    if (c.evoOf && other('evoOf')) return toast('진화 카드는 덱에 1장만 넣을 수 있어요');
-    if (c.heroOf && other('heroOf')) return toast('영웅 카드는 덱에 1장만 넣을 수 있어요');
-    if (same >= 0) deck[same] = i; else if (deck.length < 8) deck.push(i); else return toast('덱이 가득 찼어요 (8/8)');
-  }
-  if (deck.length === 8) { DK.list[DK.cur] = [...deck]; saveDecks(); }
-  drawDeck();
-}
 
 // 소셜
 
