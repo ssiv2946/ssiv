@@ -404,6 +404,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
           <div class="side" style="visibility:hidden"><button class="sb">　</button></div>
         </div>
         <div class="event"><span id="h-evt"></span><div class="slots" id="h-ev"></div></div>
+        <div class="event" id="h-wcb" style="display:none"><span id="h-wct"></span><div class="slots" id="h-wc"></div></div>
         <div class="h-bat">
           <button class="sq" id="h-deck" onclick="showMenu('deck')"></button>
           <button class="fight" onclick="restart()">전투<small id="h-fsub">AI 대전</small></button>
@@ -751,7 +752,7 @@ function judge() {
 // ---------- 저장 데이터 / 메인 화면 ----------
 let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }, PASS = { w: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
 const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
-const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, evOpen: [], log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
+const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, evOpen: [], wc: [], log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
 
 // ---------- 로그인 (Firebase REST: 아이디 → 가짜 이메일로 계정 생성, 데이터는 Firestore users/<uid>) ----------
 const FB = { apiKey: 'AIzaSyB78UUQkJZuQcdXUlUuDHR2ZI0x5sBytYk', projectId: 'clash-friends' };   // ← Firebase 웹 앱 설정의 apiKey, projectId 를 여기에 넣으면 로그인이 켜져요 (비워 두면 이 기기에만 저장)
@@ -955,6 +956,12 @@ function openChest(i) {
   earn(r.g, r.m, '이벤트 상자 ★' + star); saveP(); if (DK) refreshPlay();   // 보상은 열자마자 지급 (연출 중 닫아도 안전)
   chestShow(min, star, r);
 }
+function openWinChest(i) {   // 승리 상자: 이길 때마다 쌓이고, 홈에서 하나씩 열어요
+  if (!Array.isArray(P.wc) || i < 0 || i >= P.wc.length) return;
+  const min = P.wc.splice(i, 1)[0] || 1, star = rollStar(min), r = chestRoll(star);
+  earn(r.g, r.m, '승리 상자 ★' + star); saveP(); if (DK) refreshPlay();   // 보상은 열자마자 지급
+  chestShow(min, star, r, min > 1 ? '승리 상자 · ★' + min + '+ 확정' : '승리 상자');
+}
 function chestShow(min, star, r, title) {
   const o = $('cho'); CXT.forEach(clearTimeout); CXT = []; o.style.display = 'flex'; o.className = '';
   o.style.setProperty('--cg', CHC[0][4]);
@@ -1011,6 +1018,9 @@ function drawHome() {
   const ready = [0, 1, 2].filter(i => i < P.evWins && !P.evOpen.includes(i)).length;
   $('h-evt').textContent = P.evOpen.length >= 3 ? '오늘의 이벤트 완료!' : '오늘의 이벤트 · 승리하면 상자' + (ready ? ' · 열 수 있어요!' : '');
   $('h-ev').innerHTML = [0, 1, 2].map(i => { const has = i < P.evWins, op = P.evOpen.includes(i); return `<div class="slot ch${has ? ' on' : ''}${op ? ' op' : ''}" ${has && !op ? `onclick="openChest(${i})"` : ''}>${chestSvg(0, op)}<small>★${i >= 2 ? 3 : 2}+</small></div>`; }).join('');
+  if (!Array.isArray(P.wc)) P.wc = [];
+  $('h-wcb').style.display = P.wc.length ? '' : 'none'; $('h-wct').textContent = '승리 상자 ' + P.wc.length + '개 · 눌러서 열어요';
+  $('h-wc').innerHTML = P.wc.slice(0, 5).map((m, i) => `<div class="slot ch on" onclick="openWinChest(${i})">${chestSvg(0, false)}<small>★${m}+</small></div>`).join('') + (P.wc.length > 5 ? `<div class="slot ch" style="opacity:1;width:40px"><small>+${P.wc.length - 5}</small></div>` : '');
   const av = CFG.playerDeck.reduce((s, i) => s + CARDS[i].cost, 0) / 8;
   $('h-deck').innerHTML = '덱 ' + (DK.cur + 1) + '<small>평균 ' + av.toFixed(1) + '</small>';
 }
@@ -1333,10 +1343,12 @@ function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
 function end(w) {
   G.res = w; evSync(); const g = Math.round((w === 0 ? 100 : w === 1 ? 30 : 50) * (G.net ? 1 : AIP[DIFF].gold)); let m = 0, evNew = 0;
+  let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF === 2 ? 2 : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
   if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
   P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
   const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); if (w === 0) passWin();
   const rw = [{ i: '<span class="dot g"></span>', t: '+' + fmt(g) }]; if (m) rw.push({ i: '<span class="dot m"></span>', t: '+' + m });
+  if (wcMin) rw.push({ i: '<span style="font-size:20px">🎁</span>', t: '승리 상자' + (wcMin > 1 ? ' ★' + wcMin + '+ 확정' : '') + ' (홈에서 열기)' });
   if (evNew) rw.push({ i: '<span style="font-size:20px">📦</span>', t: '이벤트 상자 ★' + (evNew >= 3 ? 3 : 2) + '+ (홈에서 열기)' });
   rw.push(...trRw(td)); showFinal(w, rw, false);
 }
