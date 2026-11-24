@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>클래시 프렌즈</title>
+<style>
+:root{--bg:#14181f;--ink:#f3efe6;--elx:#c13bd6;--blue:#3b82f6;--red:#ef4444}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif;overflow:hidden;touch-action:none}
+#app{height:100dvh;padding-top:env(safe-area-inset-top,0px);display:flex;flex-direction:column;align-items:center;position:relative}
+#hud{height:36px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700;font-size:15px;width:100%;max-width:560px;padding:0 10px}
+#hud span:last-child{color:var(--elx)}
+#cv{display:block;touch-action:none;border-radius:6px}
+#bottom{padding:6px 0 max(6px,env(safe-area-inset-bottom))}
+#bar{height:22px;background:#2a2f3a;border-radius:11px;position:relative;overflow:hidden;margin-bottom:6px}
+#ef{height:100%;width:0;background:var(--elx)}
+#bar i{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),#14181f calc(10% - 2px) 10%)}
+#en{position:absolute;left:10px;top:0;line-height:22px;font-weight:800;font-size:14px;z-index:2}
+#row{display:flex;gap:6px;align-items:stretch}
+#next{width:46px;border-radius:8px;background:#222833;font-size:11px;text-align:center;padding-top:4px;color:#9aa3b2;opacity:.9}
+#next b{display:block;font-size:18px;color:var(--ink)}
+#hand{flex:1;display:flex;gap:6px}
+.card{flex:1;height:92px;border-radius:10px;background:#2c3340;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none;cursor:grab;border:2px solid #3a4352}
+.card .c{position:absolute;left:-4px;top:-6px;background:var(--elx);width:26px;height:26px;border-radius:50%;font-weight:800;font-size:14px;display:grid;place-items:center}
+.card .i{font-size:30px;font-weight:800}
+.card small{font-size:11px;color:#c9d0dc;margin-top:2px}
+.card.off{opacity:.45}
+.card.sel{border-color:#fff;transform:translateY(-6px)}
+#banner{position:absolute;top:30%;left:0;right:0;text-align:center;font-size:30px;font-weight:900;color:#fff;text-shadow:0 2px 10px #000;opacity:0;pointer-events:none;transition:opacity .4s}
+#banner.show{opacity:1}
+#res{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,12,18,.82);z-index:5}
+#res h1{margin:0;font-size:44px}
+#res p{margin:0 0 10px;font-size:20px}
+#rb{display:flex;gap:10px}
+#rb button{font:inherit;font-weight:700;font-size:16px;padding:12px 22px;border:0;border-radius:10px;background:#3b82f6;color:#fff;cursor:pointer}
+#rb button+button{background:#3a4352}
+input{-webkit-user-select:text;user-select:text}
+#fin{position:absolute;inset:0;z-index:6;display:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px;background:linear-gradient(180deg,rgba(140,30,80,.86),rgba(18,16,40,.9) 48%,rgba(20,60,150,.88));-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);overflow:hidden}
+#fn-title{font-size:46px;font-weight:900;letter-spacing:2px;text-shadow:0 3px 0 rgba(0,0,0,.45);margin-bottom:6px}
+#fin.win #fn-title{color:#ffd24d;text-shadow:0 3px 0 rgba(0,0,0,.45),0 0 18px rgba(255,200,80,.7)}
+#fin.lose #fn-title{color:#b9c6e4}#fin.draw #fn-title{color:#fff}
+.plate{width:min(92%,420px);position:relative;z-index:1}
+.crowns{display:flex;justify-content:center;align-items:flex-end;gap:2%;padding:0 4%;margin-bottom:-16px;position:relative;z-index:2}
+.crowns svg{width:29%;height:auto;display:block;filter:drop-shadow(0 4px 4px rgba(0,0,0,.4))}
+.crowns svg:nth-child(2){width:33%;transform:translateY(-8px)}
+.rib{position:relative;text-align:center;padding:22px 20px 10px;color:#fff;clip-path:polygon(0 0,100% 0,97% 50%,100% 100%,0 100%,3% 50%)}
+.plate.red .rib{background:linear-gradient(#d83a5a,#9d1c3e)}.plate.blue .rib{background:linear-gradient(#3b82f6,#1f4fb3)}
+.rib b{display:block;font-size:22px}.rib small{opacity:.85;font-size:13px}
+.vs{font-size:30px;font-weight:900;color:#e9e3ef;text-shadow:0 2px 0 rgba(0,0,0,.5);margin:2px 0}
+.rewlab{font-size:14px;color:#ffe9a8;font-weight:800;margin-top:8px}
+#fn-rw{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#fn-rw p{margin:14px 0;color:#c7cfe6}
+.rb2{min-width:92px;padding:14px 12px 10px;border:3px solid #f6c026;border-radius:12px;background:rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:900;font-size:20px;box-shadow:0 0 14px rgba(246,194,38,.35)}
+.rb2 .dot{width:26px;height:26px}.rb2 i{font-style:normal;color:#ffd24d;font-size:26px;line-height:26px}
+.fbtns{display:flex;gap:10px;margin-top:10px}
+.fbtns button{font:inherit;font-weight:900;font-size:18px;padding:12px 30px;border:0;border-radius:10px;color:#fff;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.fbtns .ok{background:linear-gradient(#4c9bff,#2467d6)}.fbtns .again{background:#3a4c63}
+.pt{position:absolute;top:-24px;width:12px;height:18px;border-radius:50% 0;opacity:.85;animation:fall linear infinite;pointer-events:none}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){.pt{display:none}}
+#menu{position:absolute;inset:0;z-index:9;display:flex;justify-content:center;padding-top:env(safe-area-inset-top,0px);background-color:#0d3157;background-image:linear-gradient(45deg,rgba(255,255,255,.045) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.045) 75%),linear-gradient(45deg,rgba(255,255,255,.045) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.045) 75%),linear-gradient(#0b2f55,#17639c);background-size:56px 56px,56px 56px,100% 100%;background-position:0 0,28px 28px,0 0}
+#mcol{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;min-height:0}
+#mtop{display:flex;gap:8px;padding:8px 10px;align-items:center}
+.lvl{flex:1;height:30px;border-radius:15px;background:#0a2240;position:relative;overflow:hidden;border:2px solid #0a1a30}
+.lvl i{position:absolute;top:0;bottom:0;left:0;background:#3dd5f3;width:0}
+.lvl b{position:absolute;inset:0;display:flex;align-items:center;padding-left:12px;font-size:13px;font-weight:800;text-shadow:0 1px 2px #000}
+.cur{height:30px;min-width:96px;padding:0 12px;border-radius:15px;background:#0a2240;border:2px solid #0a1a30;display:flex;align-items:center;gap:7px;font-weight:800;font-size:14px}
+.dot{width:16px;height:16px;border-radius:50%;flex:none}
+.dot.g{background:#f6c026;box-shadow:inset 0 0 0 3px #c58f0a}
+.dot.m{background:#34d399;border-radius:3px;transform:rotate(45deg) scale(.85);box-shadow:inset 0 0 0 3px #0f9f6e}
+#mbody{flex:1;min-height:0;position:relative}
+.pg{display:none;position:absolute;inset:0;overflow-y:auto;touch-action:pan-y;padding:6px 12px 14px;flex-direction:column;gap:10px}
+.pg p{margin:0;color:#b6cbe6;font-size:14px}
+.sub{display:flex;align-items:center;gap:10px}
+.sub h2{margin:0;font-size:22px}
+.back{width:38px;height:38px;border-radius:10px;border:0;background:#1c4f86;color:#fff;font-size:20px;cursor:pointer;flex:none;padding:0}
+.btn{font:inherit;font-weight:800;font-size:15px;padding:10px 16px;border:0;border-radius:10px;background:#2f7de1;color:#fff;cursor:pointer;box-shadow:0 3px 0 #1b4f99;white-space:nowrap}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #1b4f99}
+.btn:disabled{opacity:.5;cursor:default;box-shadow:none;background:#41546b;transform:none}
+.btn.gold{background:#f6b21b;color:#3a2600;box-shadow:0 3px 0 #b07a05}
+.panel{background:rgba(5,20,40,.5);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;gap:10px;background:rgba(5,20,40,.5);border-radius:12px;padding:10px 12px;width:100%}
+.item em{flex:1;font-style:normal;font-weight:700}
+.item small{display:block;color:#a9c4e6;font-size:12px;font-weight:500;margin-top:1px}
+.item.dim{opacity:.6}
+.sw{width:26px;height:26px;border-radius:6px;flex:none;border:2px solid rgba(255,255,255,.5)}
+.sect{margin:6px 2px 0;font-size:14px;font-weight:800;color:#cfe0f5}
+.code{font-size:30px;font-weight:900;letter-spacing:6px;text-align:center;color:#ffd24d}
+.big{font-size:34px;font-weight:900}
+.two{display:flex;gap:10px}.two>.panel{flex:1;align-items:center}
+.pbar{width:100%;height:14px;background:#0a2240;border-radius:7px;overflow:hidden}#ps-bar{height:100%;width:0;background:#3dd5f3}
+.grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.mc{width:72px;height:88px;border-radius:10px;background:#1b3f6b;border:2px solid #3a4352;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+.mc b{position:absolute;left:-4px;top:-6px;background:var(--elx);width:24px;height:24px;border-radius:50%;font-size:13px;display:grid;place-items:center}
+.mc i{font-style:normal;font-size:26px;font-weight:800}.mc small{font-size:11px;color:#c9d0dc}
+.mc.used{opacity:.35}.mc.empty{background:transparent;border-style:dashed;cursor:default}
+.badge{position:absolute;right:-6px;top:-8px;background:#e5383b;color:#fff;border-radius:11px;min-width:22px;height:22px;font-size:12px;font-weight:800;display:none;place-items:center;padding:0 5px;border:2px solid #0b2a4d}
+.h-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.prof{background:rgba(0,0,0,.3);border-radius:12px;padding:8px 14px;min-width:130px}
+.prof b{display:block;font-size:18px}.prof small{color:#bcd0ea;font-size:12px}
+.h-r{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.icons{display:flex;gap:6px}
+.ib{width:40px;height:40px;border-radius:10px;background:#1c4f86;border:2px solid #0b2a4d;color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
+.ib svg{width:22px;height:22px}
+.passbtn{position:relative;display:flex;flex-direction:column;align-items:center;padding:7px 18px;border:0;border-radius:12px;background:linear-gradient(#ffd24d,#f0a30a);color:#3a2600;font:inherit;font-weight:900;cursor:pointer;box-shadow:0 3px 0 #a56b00}
+.passbtn small{font-size:12px;font-weight:700}
+.h-mid{flex:1;min-height:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.side{display:flex;flex-direction:column;gap:12px}
+.sb{position:relative;width:78px;padding:10px 4px;border-radius:14px;background:#17497d;border:2px solid #0b2a4d;color:#fff;font:inherit;font-weight:800;font-size:13px;cursor:pointer;text-align:center}
+.sb small{display:block;font-size:11px;color:#a9c4e6;font-weight:600}
+.frame{flex:1;min-width:0;height:100%;max-height:340px;display:flex;align-items:center;justify-content:center;background:rgba(5,20,40,.4);border-radius:18px;border:3px solid #0b2a4d;padding:10px}
+.frame svg{height:100%;max-width:100%}
+.event{background:#6b3fb3;border-radius:14px;padding:6px 8px 8px;text-align:center;font-size:13px;font-weight:800}
+.slots{display:flex;gap:6px;justify-content:center;background:#2a1a4d;border-radius:10px;padding:6px;margin-top:5px}
+.slot{width:44px;height:32px;border-radius:8px;background:#3d2a6b;display:grid;place-items:center;font-size:16px}.slot.on{background:#8e5df0}
+.h-bat{display:flex;gap:8px;align-items:stretch;height:74px}
+.sq{width:76px;border:0;border-radius:14px;background:#2f7de1;color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #1b4f99;font-size:15px;line-height:1.25;padding:4px}
+.sq small{display:block;font-size:11px;font-weight:600;opacity:.85}
+.fight{flex:1;border:0;border-radius:14px;background:linear-gradient(#ffc83d,#f59e0b);color:#3a2600;font:inherit;font-weight:900;font-size:30px;cursor:pointer;box-shadow:0 4px 0 #a56b00;line-height:1.1}
+.fight small{display:block;font-size:13px;font-weight:700}
+.ptabs{display:flex;gap:6px;justify-content:center}
+.ptab{width:48px;height:40px;border-radius:10px;border:2px solid #0b2a4d;background:#17497d;color:#fff;font:inherit;font-weight:800;font-size:16px;cursor:pointer;padding:0}
+.ptab.on{background:linear-gradient(#ffc83d,#e0900a);color:#3a2600;border-color:#a56b00}
+#rb button.red{background:#b3303c}
+#nav{display:flex;background:#0a1d36;border-top:2px solid #06101f;padding-bottom:env(safe-area-inset-bottom,0px)}
+.tab{flex:1;border:0;background:transparent;color:#8fa6c2;font:inherit;font-size:12px;font-weight:800;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.tab svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tab.mid{flex:1.3}.tab.mid svg{width:32px;height:32px}
+.tab.on{background:linear-gradient(#ffc83d,#e0900a);color:#3a2600}
+#toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);background:rgba(0,0,0,.85);padding:10px 18px;border-radius:20px;font-weight:700;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:10;white-space:nowrap}
+#toast.show{opacity:1}
+input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10px;border:2px solid #0b2a4d;background:#0a2240;color:#fff;width:100%}
+#xb{background:#3a2330;color:#ffb4b4;border:0;border-radius:8px;height:28px;padding:0 12px;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud"><button id="xb" onclick="askForfeit()">기권</button><span id="time">3:00</span><span id="crown">👑 0 : 0</span><span id="mode">엘릭서 ×1</span></div>
+  <canvas id="cv"></canvas>
+  <div id="bottom">
+    <div id="bar"><i></i><div id="ef"></div><span id="en">8</span></div>
+    <div id="row"><div id="next"></div><div id="hand"></div></div>
+  </div>
+  <div id="banner"></div>
+  <div id="res"><h1 id="rt"></h1><p id="rs"></p><div id="rb"></div></div>
+  <div id="fin">
+    <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#e09a12"/></linearGradient></defs></svg>
+    <div id="fn-title"></div>
+    <div class="plate red"><div class="crowns" id="fn-ec"></div><div class="rib"><b id="fn-en">연습 상대</b><small id="fn-es">AI 대전</small></div></div>
+    <div class="vs">VS</div>
+    <div class="plate blue"><div class="crowns" id="fn-pc"></div><div class="rib"><b id="fn-pn"></b><small id="fn-pt"></small></div></div>
+    <div class="rewlab">보상</div><div id="fn-rw"></div>
+    <div class="fbtns"><button class="ok" onclick="menu()">확인</button><button class="again" onclick="restart()">다시하기</button></div>
+  </div>
+  <div id="menu"><div id="mcol">
+    <div id="mtop">
+      <div class="lvl"><i id="lv-b"></i><b id="lv-t">Lv 1</b></div>
+      <div class="cur"><span class="dot g"></span><span id="t-gold">0</span></div>
+      <div class="cur"><span class="dot m"></span><span id="t-gem">0</span></div>
+    </div>
+    <div id="mbody">
+      <div class="pg" id="pg-home">
+        <div class="h-top">
+          <div class="prof"><b id="h-name"></b><small id="h-title"></small></div>
+          <div class="h-r">
+            <div class="icons">
+              <button class="ib" aria-label="프로필" onclick="showMenu('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-7 8-7s8 2.5 8 7"/></svg></button>
+              <button class="ib" aria-label="공지" onclick="showMenu('news')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></button>
+              <button class="ib" aria-label="설정" onclick="showMenu('set')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+            </div>
+            <button class="passbtn" onclick="showMenu('pass')">로얄패스<small id="h-pass"></small><span class="badge" id="h-pb"></span></button>
+          </div>
+        </div>
+        <div class="h-mid">
+          <div class="side">
+            <button class="sb" onclick="showMenu('wallet')">일일 보상<small id="h-daily"></small><span class="badge" id="h-db"></span></button>
+            <button class="sb" onclick="showMenu('stats')">전적<small id="h-rec"></small></button>
+          </div>
+          <div class="frame">
+            <svg viewBox="0 0 200 240" role="img" aria-label="타워">
+              <defs><linearGradient id="st" x1="0" x2="1"><stop offset="0" stop-color="#a9a393"/><stop offset=".5" stop-color="#d9d4c7"/><stop offset="1" stop-color="#8f897b"/></linearGradient></defs>
+              <rect x="10" y="196" width="180" height="34" rx="10" fill="#17233b"/>
+              <rect x="24" y="186" width="152" height="18" rx="7" fill="#33466b"/>
+              <rect x="55" y="76" width="90" height="112" fill="url(#st)"/>
+              <rect x="45" y="64" width="110" height="14" rx="2" fill="#a29c8d"/>
+              <g fill="#cfc9ba"><rect x="45" y="46" width="14" height="20"/><rect x="69" y="46" width="14" height="20"/><rect x="93" y="46" width="14" height="20"/><rect x="117" y="46" width="14" height="20"/><rect x="141" y="46" width="14" height="20"/></g>
+              <rect x="55" y="130" width="90" height="12" fill="#2f7de1"/>
+              <rect x="94" y="96" width="12" height="24" rx="6" fill="#2c2a28"/>
+              <path d="M87 188v-26a13 13 0 0126 0v26z" fill="#4a3a2a"/>
+              <g stroke="rgba(0,0,0,.14)" stroke-width="2" fill="none"><path d="M55 108h28M117 108h28M55 160h26M119 160h26M70 76v14M130 76v14"/></g>
+              <path d="M82 46l6-24 12 14 12-14 6 24z" fill="#f6b21b" stroke="#b07a05" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="side" style="visibility:hidden"><button class="sb">　</button></div>
+        </div>
+        <div class="event"><span id="h-evt"></span><div class="slots" id="h-ev"></div></div>
+        <div class="h-bat">
+          <button class="sq" id="h-deck" onclick="showMenu('deck')"></button>
+          <button class="fight" onclick="restart()">전투<small id="h-fsub">AI 대전</small></button>
+          <button class="sq" onclick="showMenu('mode')">모드<small>변경</small></button>
+        </div>
+      </div>
+
+      <div class="pg" id="pg-shop">
+        <div class="sub"><h2>상점</h2></div>
+        <div class="sect">골드 교환</div><div id="sh-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="sect">타워 색상</div><div id="sh-skin" style="display:flex;flex-direction:column;gap:8px"></div>
+        <p>보석은 이벤트와 로얄패스 보상으로 얻어요. 결제 기능은 없어요.</p>
+      </div>
+
+      <div class="pg" id="pg-deck">
+        <div class="sub"><h2>덱</h2></div><div class="ptabs" id="dk-tabs"></div><p id="dk-info" style="text-align:center"></p>
+        <div class="grid" id="dk-slots"></div>
+        <p style="text-align:center">카드를 눌러 넣고 빼세요</p><div class="grid" id="dk-all"></div>
+        <p id="dk-st" style="text-align:center"></p>
+      </div>
+
+      <div class="pg" id="pg-social">
+        <div class="sub"><h2>소셜</h2></div>
+        <div class="panel" style="align-items:center"><span>내 친구 코드</span><div class="code" id="so-code"></div><button class="btn" onclick="copyCode()">코드 복사</button><p style="font-size:12px">친구 접속 기능(4단계)에서 쓰여요</p></div>
+        <div class="panel"><b>친구 목록</b><p>아직 친구가 없어요. 친구 추가는 4단계에서 열려요.</p></div>
+        <div class="item"><em>1대1 친선전<small>방 코드로 입장 · 4단계 예정</small></em><button class="btn" disabled>준비 중</button></div>
+        <div class="item"><em>2대2 팀전<small>팀 구성 · 5단계 예정</small></em><button class="btn" disabled>준비 중</button></div>
+      </div>
+
+      <div class="pg" id="pg-wallet">
+        <div class="sub"><h2>재화</h2></div>
+        <div class="two">
+          <div class="panel"><span class="dot g"></span><span class="big" id="w-gold">0</span><small>골드</small></div>
+          <div class="panel"><span class="dot m"></span><span class="big" id="w-gem">0</span><small>보석</small></div>
+        </div>
+        <button class="btn gold" id="w-daily" onclick="claimDaily()"></button>
+        <div class="two"><button class="btn" style="flex:1" onclick="showMenu('shop')">상점 가기</button><button class="btn" style="flex:1" onclick="showMenu('pass')">로얄패스</button></div>
+        <div class="sect">최근 내역</div><div id="w-log" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <div class="pg" id="pg-mode">
+        <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>대전 모드</h2></div>
+        <div class="item"><em>AI 대전<small id="md-sub"></small></em><button class="btn gold" onclick="restart()">시작</button></div>
+        <div class="ptabs" id="md-diff"></div>
+        <div class="item"><em>1대1 친구 대전<small id="pv-sub"></small></em><button class="btn gold" id="pv-make" onclick="pvHost()">방 만들기</button></div>
+        <div class="item"><em><input type="text" id="pv-name" maxlength="10" placeholder="내 닉네임" style="text-align:center"></em><button class="btn" onclick="pvName()">저장</button></div>
+        <div class="item"><em><input type="text" id="pv-code" maxlength="5" placeholder="친구의 방 코드 5자리" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:3px;text-align:center"></em><button class="btn" onclick="pvJoin()">입장</button></div>
+        <div class="item dim"><em>2대2<small>팀 구성 · 5단계 예정</small></em><button class="btn" disabled>준비 중</button></div>
+      </div>
+
+      <div class="pg" id="pg-pass">
+        <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>로얄패스</h2></div>
+        <p id="ps-info"></p><div class="pbar"><div id="ps-bar"></div></div><div id="ps-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <p style="font-size:12px">대전 완료 +10 XP, 승리 +30 XP · 티어마다 100 XP</p>
+      </div>
+
+      <div class="pg" id="pg-set">
+        <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>설정</h2></div>
+        <div id="st-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <button class="btn dim" id="rs-btn" onclick="resetAll(this)" style="background:#7a2b36;box-shadow:0 3px 0 #4d1820">저장 데이터 초기화</button>
+      </div>
+
+      <div class="pg" id="pg-stats">
+        <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>전적</h2></div>
+        <div class="two"><div class="panel"><span class="big" id="s-w">0</span><small>승</small></div><div class="panel"><span class="big" id="s-l">0</span><small>패</small></div><div class="panel"><span class="big" id="s-d">0</span><small>무</small></div></div>
+        <p id="s-rate" style="text-align:center"></p>
+        <div class="sect">최근 10경기</div><div id="s-hist" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <div class="pg" id="pg-profile">
+        <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>프로필</h2></div>
+        <div class="panel"><span>이름</span><input type="text" id="p-name" maxlength="10"></div>
+        <div class="panel"><b id="p-lv"></b><p id="p-exp"></p></div>
+      </div>
+
+      <div class="pg" id="pg-news">
+        <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>공지</h2></div>
+        <div class="item"><em>메인 화면 개편<small>상점 · 덱 · 전투 · 소셜 · 재화 탭, 골드와 보석 도입</small></em></div>
+        <div class="item"><em>2단계: 승패 판정<small>크라운, 3분 비교, 연장전, 5분 종료 판정</small></em></div>
+        <div class="item"><em>3단계: AI 대전<small>난이도 3단계(쉬움·보통·어려움), AI 덱과 방어·공격 판단</small></em></div>
+        <div class="item dim"><em>다음 예정<small>4단계 1대1 · 5단계 2대2</small></em></div>
+      </div>
+    </div>
+    <div id="nav">
+      <button class="tab" data-p="shop" onclick="showMenu('shop')"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>상점</button>
+      <button class="tab" data-p="deck" onclick="showMenu('deck')"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="11" height="14" rx="2"/><path d="M9 4l9 2-2 14"/></svg>덱</button>
+      <button class="tab mid on" data-p="home" onclick="showMenu('home')"><svg viewBox="0 0 24 24"><path d="M4 20L19 5M20 20L5 5M16 4h4v4M8 4H4v4"/></svg>전투</button>
+      <button class="tab" data-p="social" onclick="showMenu('social')"><svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 19c0-3.5 3-5.5 6-5.5s6 2 6 5.5M15 14.5c3 0 6 1.3 6 4.5"/></svg>소셜</button>
+      <button class="tab" data-p="wallet" onclick="showMenu('wallet')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9.5 9.5c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.7-1 1.5-2.5 1.7-2.5.8-2.5 1.8 1 1.7 2.5 1.7 2.5-.7 2.5-1.7"/></svg>재화</button>
+    </div>
+  </div></div>
+  <div id="toast"></div>
+</div>
+<script src="https://unpkg.com/peerjs@1.5.3/dist/peerjs.min.js"></script>
+<script>
+const CARDS_DATA=[{"id":"knight","name":"기사","initial":"기","color":"#c9a36b","sprite":"sprites/knight.png","type":"troop","cost":3,"count":1,"hp":1766,"damage":202,"hitSpeed":1.2,"firstHit":0.5,"range":1.2,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":6,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"archers","name":"아처","initial":"아","color":"#e86fa0","sprite":"sprites/archers.png","type":"troop","cost":3,"count":2,"hp":304,"damage":112,"hitSpeed":0.9,"firstHit":0.5,"range":5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":3,"radius":0.45,"deployTime":1,"splash":0,"projSpeed":10,"canJumpRiver":false},{"id":"giant","name":"자이언트","initial":"자","color":"#d98a3d","sprite":"sprites/giant.png","type":"troop","cost":5,"count":1,"hp":3968,"damage":253,"hitSpeed":1.5,"firstHit":0.5,"range":1.2,"speed":45,"sight":5.5,"targets":"buildings","flying":false,"mass":18,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"valkyrie","name":"발키리","initial":"발","color":"#e0662e","sprite":"sprites/valkyrie.png","type":"troop","cost":4,"count":1,"hp":1907,"damage":266,"hitSpeed":1.5,"firstHit":0.5,"range":1.2,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":8,"radius":0.55,"deployTime":1,"splash":1.9,"projSpeed":0,"canJumpRiver":false},{"id":"wizard","name":"마법사","initial":"마","color":"#e5c84a","sprite":"sprites/wizard.png","type":"troop","cost":5,"count":1,"hp":755,"damage":304,"hitSpeed":1.4,"firstHit":0.5,"range":5.5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":1.5,"projSpeed":8,"canJumpRiver":false},{"id":"baby_dragon","name":"베이비 드래곤","initial":"베","color":"#7bc96f","sprite":"sprites/baby_dragon.png","type":"troop","cost":4,"count":1,"hp":1152,"damage":168,"hitSpeed":1.5,"firstHit":0.5,"range":3.5,"speed":90,"sight":5.5,"targets":"air_ground","flying":true,"mass":4,"radius":0.6,"deployTime":1,"splash":1.5,"projSpeed":6,"canJumpRiver":false},{"id":"skeleton_army","name":"해골 군대","initial":"해","color":"#e8e8e8","sprite":"sprites/skeleton.png","type":"troop","cost":3,"count":15,"hp":81,"damage":81,"hitSpeed":1.1,"firstHit":0.5,"range":0.8,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":1,"radius":0.3,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"skeletons","name":"해골 병사","initial":"병","color":"#cfd3da","sprite":"sprites/skeletons.png","type":"troop","cost":1,"count":3,"hp":81,"damage":81,"hitSpeed":1.1,"firstHit":0.5,"range":0.8,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":1,"radius":0.3,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"goblins","name":"고블린","initial":"고","color":"#5fbf4a","sprite":"sprites/goblins.png","type":"troop","cost":2,"count":4,"hp":202,"damage":125,"hitSpeed":1.1,"firstHit":0.5,"range":0.5,"speed":120,"sight":5.5,"targets":"ground","flying":false,"mass":2,"radius":0.4,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"hog_rider","name":"호그 라이더","initial":"호","color":"#b5651d","sprite":"sprites/hog_rider.png","type":"troop","cost":4,"count":1,"hp":1697,"damage":317,"hitSpeed":1.6,"firstHit":0.5,"range":0.8,"speed":120,"sight":5.5,"targets":"buildings","flying":false,"mass":6,"radius":0.6,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":true},{"id":"prince","name":"프린스","initial":"프","color":"#6a5acd","sprite":"sprites/prince.png","type":"troop","cost":5,"count":1,"hp":1920,"damage":391,"hitSpeed":1.4,"firstHit":0.5,"range":1.6,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":6,"radius":0.6,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":true,"charge":{"dist":2.5,"speedMult":2,"dmgMult":2.0026}},{"id":"cannon","name":"대포","initial":"대","color":"#8a8f98","sprite":"sprites/cannon.png","type":"building","cost":3,"count":1,"hp":824,"damage":202,"hitSpeed":1.0,"firstHit":0.5,"range":5.5,"speed":0,"sight":5.5,"targets":"ground","flying":false,"mass":1000,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":15,"canJumpRiver":false,"lifetime":30},{"id":"arrows","name":"화살","initial":"화","color":"#f2d16b","sprite":"sprites/arrows.png","type":"spell","cost":3,"damage":122,"radius":3.5,"delay":0.6,"targets":"air_ground","towerDamage":25,"waves":3,"waveGap":0.2},{"id":"fireball","name":"파이어 볼","initial":"파","color":"#ff6a2b","sprite":"sprites/fireball.png","type":"spell","cost":4,"damage":688,"radius":2.5,"delay":1.0,"targets":"air_ground","towerDamage":159}];
+const CFG_DATA={"startElixir":8,"baseLevel":11,"playerLevel":11,"enemyLevel":11,"dummyInterval":5,"playerDeck":["knight","archers","giant","hog_rider","valkyrie","fireball","arrows","cannon"],"elixir":[{"from":0,"sec":2.8,"mult":1},{"from":120,"sec":1.4,"mult":2,"label":"2배 엘릭서"},{"from":240,"sec":0.9333,"mult":3,"label":"3배 엘릭서"}],"towers":{"princess":{"hp":3052,"damage":109,"hitSpeed":0.8,"firstHit":0.5,"range":7.5,"radius":1.4,"projSpeed":12},"king":{"hp":4824,"damage":109,"hitSpeed":1.0,"firstHit":0.5,"range":7,"radius":1.7,"projSpeed":12}}};
+'use strict';
+// 좌표 단위 = 타일. 아레나 18x32, 강 y 15~17, 다리 x 3.5 / 14.5 (폭 3)
+const W = 18, H = 32, RIV = [15, 17], BR = [3.5, 14.5], BRW = 1.5, DT = 1 / 20;
+const $ = id => document.getElementById(id), hyp = Math.hypot;
+const cv = $('cv'), cx = cv.getContext('2d');
+let CARDS = {}, CIDS = [], CFG, G, S = 20, dpr = 1, drag = null;
+
+async function boot() {
+  const c = CARDS_DATA, f = CFG_DATA;
+  c.forEach(x => { CARDS[x.id] = x; if (x.towerDamage) x.towerRatio = x.towerDamage / x.damage; }); CFG = f; CIDS = Object.keys(CARDS);
+  loadStore(); newGame(); buildHand(); resize(); addEventListener('resize', resize); showMenu('home');
+  let last = performance.now(), acc = 0;
+  (function loop(now) {
+    acc += Math.min(0.25, (now - last) / 1000); last = now;
+    while (acc >= DT) { tick(DT); acc -= DT; }
+    render(G.net && G.net.role === 'guest' ? Math.min(1, (now - G.net.snapAt) / G.net.snapDt) : acc / DT); ui(); requestAnimationFrame(loop);
+  })(last);
+}
+
+const lv = l => Math.pow(1.1, l - CFG.baseLevel); // 레벨당 약 10%
+
+function mkTower(team, k, x, y) {
+  const c = CFG.towers[k], m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
+  return { id: 0, team, kind: 'tower', tk: k, card: { ...c, targets: 'air_ground', sight: c.range, name: k, initial: k === 'king' ? 'K' : 'P' },
+    x, y, px: x, py: y, hp: c.hp * m, max: c.hp * m, r: c.radius, fly: false, tgt: null, cd: 0, dep: 0, active: k !== 'king', m };
+}
+function mkUnit(id, team, x, y) {
+  const c = CARDS[id], m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
+  return { id: 0, team, kind: c.type === 'building' ? 'building' : 'unit', card: c, x, y, px: x, py: y, hp: c.hp * m, max: c.hp * m, r: c.radius, fly: !!c.flying, tgt: null, cd: 0, dep: c.deployTime ?? 1, m };
+}
+function newGame(net) {
+  G = { t: 0, ot: 0, res: undefined, n: 0, ents: [], projs: [], fx: [], elixir: CFG.startElixir, cur: CFG.elixir[0],
+        q: [...CFG.playerDeck].sort(() => Math.random() - 0.5), hand: [], nxt: null, net: net || null };
+  G.hand = G.q.splice(0, 4); G.nxt = G.q.shift();
+  if (!net) G.ai = newAI();
+  else if (net.role === 'host') { const q = [...net.oppDeck].sort(() => Math.random() - 0.5); G.o = { el: CFG.startElixir, hand: q.splice(0, 4), nxt: q.shift(), q }; net.ack = 0; net.seen = new Set(); net.sc = 0; net.seq = 0; }
+  else { G.gm = new Map(); net.snapAt = performance.now(); net.snapDt = 100; net.pending = []; net.lastS = -1; net.buf = null; net.lastSnap = Date.now(); net.pq = 0; }
+  if (!net || net.role === 'host') for (const team of [0, 1])
+    for (const [k, x, y] of [['princess', 3.5, team ? 6.5 : 25.5], ['princess', 14.5, team ? 6.5 : 25.5], ['king', 9, team ? 2.5 : 29.5]]) G.ents.push(Object.assign(mkTower(team, k, x, y), { id: ++G.n }));
+}
+
+// ---------- 소환 / 카드 ----------
+function spawn(id, team, x, y) {
+  const c = CARDS[id], m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
+  if (c.type === 'spell') { G.fx.push({ x, y, r: c.radius, t: c.delay, max: c.delay, c, team, m, left: c.waves || 1 }); return; }
+  const n = c.count || 1;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * 6.283, rr = n > 1 ? Math.min(1.6, 0.4 * Math.sqrt(n)) : 0;
+    const px = Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr));
+    let py = y + Math.sin(a) * rr; py = team ? Math.min(py, Math.max(y, 14.8)) : Math.max(py, Math.min(y, 17.2));
+    G.ents.push(Object.assign(mkUnit(id, team, px, py), { id: ++G.n }));
+  }
+}
+
+function play(i, x, y) {
+  const id = G.hand[i], c = CARDS[id];
+  if (c.type !== 'spell') { x = Math.floor(x) + 0.5; y = Math.floor(y) + 0.5; } // 격자 중앙에 소환
+  if (PAUSE || G.res !== undefined || G.elixir < c.cost) return;
+  if (c.type !== 'spell' && !(y <= 31.5 && x >= 0.5 && x <= W - 0.5 && (y >= 17.5 || (y >= POCKET && pk(x < 9 ? 0 : 1))))) return;
+  if (G.net && G.net.role === 'guest') return guestPlay(G.net, i, id, c, x, y);
+  G.elixir -= c.cost; spawn(id, 0, Math.min(W, Math.max(0, x)), Math.min(H, Math.max(0, y)));
+  G.q.push(id); G.hand[i] = G.nxt; G.nxt = G.q.shift(); buildHand();
+}
+
+// ---------- 시뮬레이션 (20tick/s) ----------
+function tick(dt) {
+  if (G.res !== undefined || PAUSE) return;
+  G.t += dt;
+  let s = CFG.elixir[0]; for (const e of CFG.elixir) if (G.t >= e.from) s = e;
+  G.elixir = Math.min(10, G.elixir + dt / s.sec);
+  if (s !== G.cur) { G.cur = s; if (s.label) say(s.label); }
+  if (G.net && G.net.role === 'guest') return;   // 게스트는 스냅샷으로만 갱신
+  if (G.o) G.o.el = Math.min(10, G.o.el + dt / s.sec);
+  aiTick(dt);
+  for (const e of G.ents) { e.px = e.x; e.py = e.y; }
+  for (const e of G.ents) if (e.hp > 0) think(e, dt);
+  collide(); projs(dt); fxs(dt);
+  for (const e of G.ents) if (e.hp <= 0 && e.kind === 'tower' && !e.dead) {
+    e.dead = true;
+    if (e.tk === 'princess') G.ents.find(k => k.team === e.team && k.tk === 'king').active = true;
+  }
+  G.ents = G.ents.filter(e => e.hp > 0 || e.kind === 'tower');
+  judge();
+  if (G.net && !(G.net.sc++ & 1)) sendSnap(G.net);   // 10회/초
+}
+
+// ---------- 2단계: 크라운 / 승패 / 포켓 ----------
+const POCKET = 11; // 상대 프린세스 타워를 부순 레인에서 소환 가능한 최전방 y
+function okSpotT(t, x, y) { const ym = t ? H - y : y; return ym <= 31.5 && x >= 0.5 && x <= W - 0.5 && (ym >= 17.5 || (ym >= POCKET && pkT(t, x < 9 ? 0 : 1))); }
+function pkT(t, i) { return G.ents.some(e => e.team === 1 - t && e.tk === 'princess' && e.hp <= 0 && (i === 0 ? e.x < 9 : e.x > 9)); }
+const okSpot = (x, y) => okSpotT(0, x, y), pk = i => pkT(0, i);
+function crowns(t) { const o = G.ents.filter(e => e.team !== t && e.kind === 'tower' && e.hp <= 0); return o.some(e => e.tk === 'king') ? 3 : o.length; }
+function judge() {
+  const a = crowns(0), b = crowns(1);
+  if (a === 3 || b === 3) return end(a === b ? -1 : a > b ? 0 : 1);          // 킹 타워 파괴 = 즉시 승리
+  if (G.t >= 180 && !G.ot) { if (a !== b) return end(a > b ? 0 : 1); G.ot = 1; say('연장전!'); return; } // 3:00 크라운 비교
+  if (G.ot && a !== b) return end(a > b ? 0 : 1);                             // 서든데스
+  if (G.t >= 300) { const L = G.ents.filter(e => e.kind === 'tower' && e.hp > 0).sort((p, q) => p.hp - q.hp); end(L[0].team === 0 ? 1 : 0); } // 5:00 최저 체력 타워 쪽 패배
+}
+// ---------- 저장 데이터 / 메인 화면 ----------
+let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70 }, PASS = { xp: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
+const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
+const DEFP = () => ({ name: '플레이어', exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, log: [], hist: [], owned: ['blue'], skin: 'blue', code: newCode() });
+const LS = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const REW = [{ t: '골드 300', g: 300 }, { t: '보석 10', m: 10 }, { t: '골드 500', g: 500 }, { t: '보석 20', m: 20 }, { t: '골드 1,000', g: 1000 },
+  { t: '보석 30', m: 30 }, { t: '골드 1,500', g: 1500 }, { t: '보석 40', m: 40 }, { t: '골드 2,000', g: 2000 }, { t: '보석 100', m: 100 }];
+const SKINS = [{ id: 'blue', n: '기본 파랑', c: '#3b82f6' }, { id: 'green', n: '에메랄드', c: '#10b981', gold: 1500 }, { id: 'purple', n: '보라', c: '#a855f7', gold: 1500 }, { id: 'gold', n: '황금', c: '#f5b301', gems: 50 }];
+const SHOP = [{ n: '골드 주머니', sub: '골드 1,000', m: 20, g: 1000 }, { n: '골드 상자', sub: '골드 5,000', m: 90, g: 5000 }, { n: '골드 금고', sub: '골드 10,000', m: 160, g: 10000 }];
+const fmt = n => n.toLocaleString('ko-KR');
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+const title = () => P.exp < 450 ? '신입 지휘관' : P.exp < 1200 ? '숙련 지휘관' : '왕국 수호자';
+
+function loadStore() {
+  DEFDECK = [...CFG.playerDeck]; ST = { ...ST, ...LS.get('cf_st', {}) }; PASS = { ...PASS, ...LS.get('cf_pass', {}) };
+  P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(2, Math.max(0, LS.get('cf_diff', 1) | 0));
+  loadDecks();
+}
+const okDeck = d => Array.isArray(d) && d.length === 8 && new Set(d).size === 8 && d.every(i => CARDS[i]);
+const starters = () => [[...DEFDECK], ['goblins', 'skeleton_army', 'hog_rider', 'cannon', 'archers', 'knight', 'arrows', 'fireball'],
+  ['wizard', 'baby_dragon', 'giant', 'valkyrie', 'archers', 'prince', 'fireball', 'arrows'], ['prince', 'knight', 'goblins', 'skeleton_army', 'wizard', 'cannon', 'arrows', 'fireball'], [...DEFDECK]];
+function loadDecks() { // 덱 프리셋 5개 (자동 저장)
+  const st = starters(), v = LS.get('cf_decks', null); DK = { cur: 0, list: st };
+  if (v && Array.isArray(v.list)) { DK.cur = Math.min(4, Math.max(0, v.cur | 0)); DK.list = st.map((x, i) => okDeck(v.list[i]) ? v.list[i] : x); }
+  else { const d = LS.get('cf_deck', null); if (okDeck(d)) DK.list[0] = d; }
+  CFG.playerDeck = [...DK.list[DK.cur]]; deck = [...CFG.playerDeck]; LS.set('cf_decks', DK);
+}
+const saveP = () => LS.set('cf_prof', P);
+const applySkin = () => { TC[0] = (SKINS.find(k => k.id === P.skin) || SKINS[0]).c; };
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => e.classList.remove('show'), 1800); }
+function earn(g, m, why) { P.gold += g; P.gems += m; P.log.unshift({ t: why, g, m, at: Date.now() }); P.log.length = Math.min(P.log.length, 20); saveP(); refreshTop(); }
+function evSync() { if (P.evDay !== today()) { P.evDay = today(); P.evWins = 0; P.evDone = 0; saveP(); } }
+function setBadge(id, v) { const e = $(id); e.textContent = v; e.style.display = v ? 'grid' : 'none'; }
+function refreshTop() {
+  $('t-gold').textContent = fmt(P.gold); $('t-gem').textContent = fmt(P.gems);
+  $('lv-t').textContent = 'Lv ' + (1 + Math.floor(P.exp / 150)); $('lv-b').style.width = (P.exp % 150) / 1.5 + '%';
+}
+
+const DRAW = { home: () => drawHome(), shop: () => drawShop(), deck: () => { deck = [...DK.list[DK.cur]]; drawDeck(); }, social: () => drawSocial(), wallet: () => drawWallet(),
+  pass: () => drawPass(), mode: () => drawMode(), set: () => drawSet(), stats: () => drawStats(), profile: () => drawProfile() };
+function showMenu(p) {
+  $('menu').style.display = 'flex';
+  document.querySelectorAll('.pg').forEach(e => e.style.display = e.id === 'pg-' + p ? 'flex' : 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.p === p));
+  if (p !== 'mode' && NET && NET.state !== 'play') pvLeave();
+  refreshTop(); if (DRAW[p]) DRAW[p]();
+}
+
+function drawHome() {
+  evSync();
+  $('h-name').textContent = P.name; $('h-title').textContent = title();
+  const t = Math.floor(PASS.xp / 100), n = REW.reduce((s, r, i) => s + (i < t && !PASS.claimed.includes(i) ? 1 : 0), 0);
+  $('h-pass').textContent = '티어 ' + t + '/10'; setBadge('h-pb', n);
+  const can = P.daily !== today(); $('h-daily').textContent = can ? '골드 +300' : '내일 다시'; setBadge('h-db', can ? '!' : 0);
+  $('h-rec').textContent = P.w + '승 ' + P.l + '패'; $('h-fsub').textContent = 'AI 대전 · ' + AIP[DIFF].n;
+  $('h-evt').textContent = P.evDone ? '오늘의 이벤트 완료!' : '오늘의 이벤트 · 3승하면 보석 +20';
+  $('h-ev').innerHTML = [0, 1, 2].map(i => `<div class="slot${i < P.evWins ? ' on' : ''}">${i < P.evWins ? '✓' : ''}</div>`).join('');
+  const av = CFG.playerDeck.reduce((s, i) => s + CARDS[i].cost, 0) / 8;
+  $('h-deck').innerHTML = '덱 ' + (DK.cur + 1) + '<small>평균 ' + av.toFixed(1) + '</small>';
+}
+
+// 상점
+function drawShop() {
+  $('sh-list').innerHTML = SHOP.map((s, i) => `<div class="item"><em>${s.n}<small>${s.sub}</small></em><button class="btn" onclick="buy(${i})">보석 ${s.m}</button></div>`).join('');
+  $('sh-skin').innerHTML = SKINS.map(k => {
+    const own = P.owned.includes(k.id), on = P.skin === k.id, price = k.gold ? '골드 ' + fmt(k.gold) : '보석 ' + k.gems;
+    return `<div class="item"><span class="sw" style="background:${k.c}"></span><em>${k.n}</em><button class="btn" ${on ? 'disabled' : ''} onclick="${own ? `equip('${k.id}')` : `buySkin('${k.id}')`}">${on ? '사용 중' : own ? '사용' : price}</button></div>`;
+  }).join('');
+}
+function buy(i) {
+  const s = SHOP[i]; if (P.gems < s.m) return toast('보석이 부족해요');
+  earn(s.g, -s.m, s.n + ' 구매'); toast(s.sub + ' 획득'); drawShop();
+}
+function buySkin(id) {
+  const k = SKINS.find(x => x.id === id);
+  if (k.gold ? P.gold < k.gold : P.gems < k.gems) return toast((k.gold ? '골드' : '보석') + '가 부족해요');
+  earn(-(k.gold || 0), -(k.gems || 0), '타워 색상 구매: ' + k.n); P.owned.push(id); equip(id);
+}
+function equip(id) { P.skin = id; saveP(); applySkin(); drawShop(); toast('타워 색상을 바꿨어요'); }
+
+// 덱
+const mc = (i, cls) => { const c = CARDS[i]; return `<div class="mc ${cls}" onclick="tgl('${i}')" style="border-color:${c.color}"><b>${c.cost}</b><i>${c.initial}</i><small>${c.name}</small></div>`; };
+function drawDeck() {
+  $('dk-tabs').innerHTML = [0, 1, 2, 3, 4].map(i => `<button class="ptab${i === DK.cur ? ' on' : ''}" onclick="pickDeck(${i})">${i + 1}</button>`).join('');
+  const av = deck.reduce((s, i) => s + CARDS[i].cost, 0) / (deck.length || 1);
+  $('dk-slots').innerHTML = deck.map(i => mc(i, '')).join('') + '<div class="mc empty"></div>'.repeat(8 - deck.length);
+  $('dk-info').textContent = deck.length + '/8 · 평균 엘릭서 ' + av.toFixed(1);
+  $('dk-all').innerHTML = Object.keys(CARDS).map(i => mc(i, deck.includes(i) ? 'used' : '')).join('');
+  $('dk-st').textContent = deck.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장됨' : '8장을 채우면 자동 저장돼요';
+}
+function saveDecks() { CFG.playerDeck = [...DK.list[DK.cur]]; LS.set('cf_decks', DK); }
+function pickDeck(i) {
+  if (deck.length !== 8) return toast('덱을 8장으로 채우면 다른 덱으로 바꿀 수 있어요');
+  DK.cur = i; deck = [...DK.list[i]]; saveDecks(); drawDeck();
+}
+function tgl(i) {
+  const k = deck.indexOf(i); if (k >= 0) deck.splice(k, 1); else if (deck.length < 8) deck.push(i);
+  if (deck.length === 8) { DK.list[DK.cur] = [...deck]; saveDecks(); }
+  drawDeck();
+}
+
+// 소셜
+function drawSocial() { $('so-code').textContent = P.code; }
+function copyCode() { try { navigator.clipboard.writeText(P.code).then(() => toast('코드를 복사했어요'), () => toast('내 코드: ' + P.code)); } catch (e) { toast('내 코드: ' + P.code); } }
+
+// 재화
+const when = at => new Date(at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+function drawWallet() {
+  $('w-gold').textContent = fmt(P.gold); $('w-gem').textContent = fmt(P.gems);
+  const can = P.daily !== today(); $('w-daily').disabled = !can; $('w-daily').textContent = can ? '일일 보상 받기 · 골드 300' : '일일 보상 완료 · 내일 다시 받을 수 있어요';
+  const d = (n, u) => n ? (n > 0 ? '+' : '') + fmt(n) + ' ' + u : '';
+  $('w-log').innerHTML = P.log.length ? P.log.map(x => `<div class="item"><em>${x.t}<small>${when(x.at)}</small></em><b>${[d(x.g, '골드'), d(x.m, '보석')].filter(Boolean).join(' ')}</b></div>`).join('') : '<p>아직 내역이 없어요. 대전을 하면 골드를 받아요.</p>';
+}
+function claimDaily() { if (P.daily === today()) return; P.daily = today(); earn(300, 0, '일일 보상'); toast('골드 +300'); if (curIs('wallet')) drawWallet(); }
+const curIs = p => { const e = $('pg-' + p); return e && e.style.display === 'flex'; };
+
+// 로얄패스
+function addXp(n) { PASS.xp = Math.min(1000, PASS.xp + n); LS.set('cf_pass', PASS); }
+function drawPass() {
+  const t = Math.floor(PASS.xp / 100);
+  $('ps-bar').style.width = PASS.xp / 10 + '%'; $('ps-info').textContent = '티어 ' + t + '/10 · ' + PASS.xp + '/1000 XP';
+  $('ps-list').innerHTML = REW.map((r, i) => { const open = t > i, got = PASS.claimed.includes(i);
+    return `<div class="item${open ? '' : ' dim'}"><b style="width:24px">${i + 1}</b><em>${r.t}</em><button class="btn${open && !got ? ' gold' : ''}" ${open && !got ? '' : 'disabled'} onclick="claim(${i})">${got ? '받음' : open ? '받기' : '잠김'}</button></div>`; }).join('');
+}
+function claim(i) {
+  if (i >= Math.floor(PASS.xp / 100) || PASS.claimed.includes(i)) return;
+  PASS.claimed.push(i); LS.set('cf_pass', PASS); const r = REW[i]; earn(r.g || 0, r.m || 0, '로얄패스 티어 ' + (i + 1)); toast(r.t + ' 획득'); drawPass();
+}
+
+// 설정 / 전적 / 프로필
+function setST(k, v) { ST[k] = v; LS.set('cf_st', ST); }
+function drawSet() {
+  const row = (k, n) => `<label class="item"><em>${n}</em><input type="checkbox" ${ST[k] ? 'checked' : ''} onchange="setST('${k}',this.checked?1:0)"></label>`;
+  $('st-list').innerHTML = row('grid', '소환 격자 표시') + row('banner', '엘릭서 배율 알림') + row('lift', '터치 시 소환 위치 위로 띄우기') +
+    `<label class="item"><em>소리 크기<small>효과음은 6단계에서 추가</small></em><input type="range" min="0" max="100" value="${ST.vol}" oninput="setST('vol',+this.value)"></label>`;
+}
+function resetAll(btn) {
+  if (!rsArm) { rsArm = 1; btn.textContent = '한 번 더 누르면 모두 초기화돼요'; setTimeout(() => { rsArm = 0; btn.textContent = '저장 데이터 초기화'; }, 3000); return; }
+  rsArm = 0; try { ['cf_st', 'cf_pass', 'cf_deck', 'cf_decks', 'cf_prof', 'cf_diff'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  ST = { grid: 1, banner: 1, lift: 1, vol: 70 }; PASS = { xp: 0, claimed: [] }; P = DEFP(); DIFF = 1; saveP(); loadDecks(); applySkin(); refreshTop(); drawSet(); btn.textContent = '저장 데이터 초기화'; toast('초기화했어요');
+}
+function drawStats() {
+  $('s-w').textContent = P.w; $('s-l').textContent = P.l; $('s-d').textContent = P.d;
+  const n = P.w + P.l + P.d; $('s-rate').textContent = n ? '승률 ' + Math.round(P.w / n * 100) + '% · 총 ' + n + '경기' : '아직 경기가 없어요';
+  $('s-hist').innerHTML = P.hist.length ? P.hist.map(h => `<div class="item"><b style="width:28px">${['승', '패', '무'][h.r === 0 ? 0 : h.r === 1 ? 1 : 2]}</b><em>👑 ${h.c}${h.f ? ' · 기권' : ''}<small>${when(h.at)}</small></em></div>`).join('') : '<p>대전을 마치면 기록이 쌓여요.</p>';
+}
+function drawProfile() {
+  const i = $('p-name'); i.value = P.name; i.onchange = () => { P.name = i.value.trim() || '플레이어'; i.value = P.name; saveP(); toast('이름을 저장했어요'); };
+  $('p-lv').textContent = 'Lv ' + (1 + Math.floor(P.exp / 150)) + ' · ' + title(); $('p-exp').textContent = '경험치 ' + P.exp + ' (150마다 레벨 업)';
+}
+
+// ---------- 대전 시작 / 종료 ----------
+function showRes(t, s, btns) { $('rt').textContent = t; $('rs').textContent = s; $('rb').innerHTML = btns; $('res').style.display = 'flex'; }
+const GOLD_CROWN = '<svg viewBox="0 0 100 84"><path d="M6 18L28 42L50 6L72 42L94 18L86 64H14Z" fill="url(#gg)" stroke="#9a6200" stroke-width="3" stroke-linejoin="round"/><rect x="12" y="54" width="76" height="20" rx="5" fill="#d6293e" stroke="#7d1020" stroke-width="2"/><path d="M50 57l7 7-7 7-7-7z" fill="#ffd24d" stroke="#9a6200" stroke-width="1.5"/></svg>';
+const cushion = c => `<svg viewBox="0 0 100 60"><path d="M6 52Q2 22 28 18Q50 6 72 18Q98 22 94 52Z" fill="${c}" stroke="rgba(0,0,0,.35)" stroke-width="2.5"/><path d="M28 18Q50 30 72 18" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="3"/></svg>`;
+const crownRow = (n, c) => [0, 1, 2].map(i => i < n ? GOLD_CROWN : cushion(c)).join('');
+function confetti() {
+  const f = $('fin'); f.querySelectorAll('.pt').forEach(e => e.remove());
+  for (let i = 0; i < 16; i++) { const e = document.createElement('i'); e.className = 'pt'; e.style.left = Math.random() * 100 + '%'; e.style.background = ['#ff6b8b', '#e5445a', '#ffd24d', '#ff9ab0'][i % 4];
+    e.style.animationDuration = 3 + Math.random() * 3 + 's'; e.style.animationDelay = -Math.random() * 5 + 's'; f.appendChild(e); }
+}
+function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상대/내 이름표 · 보상
+  $('res').style.display = 'none';
+  $('fin').className = w === 0 ? 'win' : w === 1 ? 'lose' : 'draw';
+  $('fn-title').textContent = forfeit ? '기권패' : w === 0 ? '승리!' : w === 1 ? '패배' : '무승부';
+  $('fn-ec').innerHTML = crownRow(crowns(1), '#e5445a'); $('fn-pc').innerHTML = crownRow(crowns(0), '#3b82f6');
+  const nt = G.net; $('fn-es').textContent = nt ? '1대1 친구 대전' : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = title();
+  $('fn-rw').innerHTML = rw.length ? rw.map(r => `<div class="rb2">${r.i}<span>${r.t}</span></div>`).join('') : '<p>받은 보상이 없어요</p>';
+  $('fin').style.display = 'flex'; $('fin').querySelectorAll('.pt').forEach(e => e.remove()); if (w === 0) confetti();
+}
+function end(w) {
+  G.res = w; evSync(); const g = Math.round((w === 0 ? 100 : w === 1 ? 30 : 50) * (G.net ? 1 : AIP[DIFF].gold)); let m = 0, ex = '';
+  if (w === 0) { P.w++; P.evWins++; if (P.evWins >= 3 && !P.evDone) { P.evDone = 1; m = 20; ex = ' · 이벤트 보석 +20'; } } else if (w === 1) P.l++; else P.d++;
+  P.exp += w === 0 ? 30 : 10; P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
+  earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); addXp(w === 0 ? 30 : 10);
+  const rw = [{ i: '<span class="dot g"></span>', t: '+' + fmt(g) }]; if (m) rw.push({ i: '<span class="dot m"></span>', t: '+' + m });
+  rw.push({ i: '<i>★</i>', t: '+' + (w === 0 ? 30 : 10) + ' XP' }); showFinal(w, rw, false);
+}
+function restart() { pvLeave(); newGame(); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false; }
+function askForfeit() {
+  if (G.res !== undefined || PAUSE) return;
+  if (!G.net) PAUSE = true;   // 온라인 대전은 멈출 수 없음
+  showRes('기권할까요?', '패배로 기록되고 보상은 받을 수 없어요', '<button onclick="resume()">계속하기</button><button class="red" onclick="forfeit()">기권하기</button>');
+}
+function resume() { $('res').style.display = 'none'; PAUSE = false; }
+function forfeit() {
+  if (G.res !== undefined) return;
+  G.res = 1; evSync(); P.l++; P.hist.unshift({ r: 1, c: crowns(0) + ':' + crowns(1), at: Date.now(), f: 1 }); P.hist.length = Math.min(P.hist.length, 10); saveP();
+  showFinal(1, [], true);
+  const n = G.net; if (n && n.role === 'guest') { const f = () => n.room.emit('ff', {}).catch(() => {}); f(); setTimeout(f, 300); setTimeout(f, 800); }
+}
+function menu() { $('res').style.display = 'none'; $('fin').style.display = 'none'; PAUSE = true; pvLeave(); showMenu('home'); }
+
+// ---------- 3단계: AI 상대 ----------
+const AIP = [
+  { n: '쉬움', d: '반응이 느리고 자주 실수해요 · 골드 ×0.6', gold: 0.6, think: [3, 4.6], react: 2.4, off: 10, err: 0.4, spells: 0, jit: 2.5, zone: 13.5 },
+  { n: '보통', d: '적당히 방어하고 공격해요 · 골드 ×1', gold: 1, think: [1.6, 2.6], react: 1.1, off: 9, err: 0.15, spells: 1, jit: 1.2, zone: 16 },
+  { n: '어려움', d: '빠르게 반응하고 스펠도 써요 · 골드 ×1.5', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, jit: 0.3, zone: 19 }
+];
+let DIFF = 1;
+const rnd = a => a[Math.random() * a.length | 0];
+function setDiff(i) { DIFF = i; LS.set('cf_diff', i); drawMode(); }
+function drawMode() {
+  pvUI();
+  $('md-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:96px" onclick="setDiff(${i})">${p.n}</button>`).join('');
+  $('md-sub').textContent = AIP[DIFF].d;
+}
+function newAI() { // AI 덱 (프리셋 4개 중 하나) · 손패 4장 + 다음 카드
+  const q = [...rnd(starters().slice(0, 4))].sort(() => Math.random() - 0.5), hand = q.splice(0, 4), nxt = q.shift();
+  return { hand, nxt, q, el: CFG.startElixir, wait: 2 + Math.random() * 2, threatT: -1, push: null, p: AIP[DIFF] };
+}
+function aiTick(dt) {
+  const a = G.ai; if (!a || G.noAI) return;
+  a.el = Math.min(10, a.el + dt / G.cur.sec);               // 플레이어와 같은 엘릭서 속도 (속임수 없음)
+  a.wait -= dt; if (a.wait > 0) return;
+  a.wait = a.p.think[0] + Math.random() * (a.p.think[1] - a.p.think[0]);
+  const foes = G.ents.filter(e => e.team === 0 && e.kind === 'unit' && e.hp > 0 && e.dep <= 0 && e.y < a.p.zone).sort((m, n) => m.y - n.y);
+  if (foes.length) { if (a.threatT < 0) a.threatT = G.t; if (G.t - a.threatT >= a.p.react) aiDefend(a, foes); return; }
+  a.threatT = -1; aiAttack(a);
+}
+function aiSafe(x, y) { // 아군 타워 위에 소환하지 않도록 비켜 놓기
+  for (const t of G.ents) if (t.team === 1 && t.kind === 'tower' && t.hp > 0 && hyp(t.x - x, t.y - y) < t.r + 0.8) y = t.y + t.r + 0.9;
+  return [Math.min(17.3, Math.max(0.7, x)), Math.min(14.3, Math.max(1.5, y))];
+}
+function aiPlay(a, i, x, y) {
+  const id = a.hand[i], c = CARDS[id]; if (a.el < c.cost) return false;
+  a.el -= c.cost;
+  if (c.type === 'spell') spawn(id, 1, x + (Math.random() - 0.5), y + (Math.random() - 0.5));
+  else { const [sx, sy] = aiSafe(x + (Math.random() - 0.5) * 2 * a.p.jit, y); spawn(id, 1, sx, sy); }
+  a.q.push(id); a.hand[i] = a.nxt; a.nxt = a.q.shift(); return true;
+}
+function aiScore(c, T, cl, p) { // 위협에 대한 카드 점수 (0이면 쓰지 않음)
+  const n = cl.length, hp = cl.reduce((s, e) => s + e.hp, 0), tank = T.card.targets === 'buildings' || T.max >= 1500, swarm = n >= 4 && T.max < 400;
+  if (c.type === 'spell') {
+    if (!p.spells) return 0;
+    if (c.id === 'arrows') return swarm ? 12 : 0;
+    if (c.id === 'fireball') return hp > 1800 ? 9 : n >= 3 ? 7 : 0;
+    return 0;
+  }
+  if (T.fly && c.targets !== 'air_ground') return 0;        // 공중 유닛은 공중을 칠 수 있는 카드만
+  let s = 3 - c.cost * 0.25;
+  const dps = c.damage * (c.count || 1) / c.hitSpeed;
+  if (c.type === 'building') s += tank ? 7 : 2;
+  if (c.targets === 'buildings') s -= 4;                    // 건물 전용 유닛은 방어에 부적합
+  if (tank) s += dps / 120 + (c.count >= 3 ? 2 : 0);
+  if (swarm && c.splash) s += 6;
+  if (T.fly && c.range >= 3) s += 3;
+  return s;
+}
+function aiDefend(a, thr) {
+  const p = a.p, T = thr[0], cl = thr.filter(e => hyp(e.x - T.x, e.y - T.y) < 2.5), power = cl.reduce((s, e) => s + e.hp, 0);
+  if (Math.random() < p.err) return;                         // 실수: 못 본 척
+  if (power < 450 && a.el < 9) return;                       // 약한 적은 타워에게 맡김
+  let best = -1, bs = 0;
+  a.hand.forEach((id, i) => { const c = CARDS[id]; if (c.cost > a.el) return; const s = aiScore(c, T, cl, p) + Math.random() * 0.5; if (s > bs) { bs = s; best = i; } });
+  if (best < 0) return;
+  const c = CARDS[a.hand[best]];
+  if (c.type === 'spell') aiPlay(a, best, cl.reduce((s, e) => s + e.x, 0) / cl.length, cl.reduce((s, e) => s + e.y, 0) / cl.length);
+  else if (c.type === 'building') aiPlay(a, best, T.x, Math.max(8, Math.min(11, T.y - 4)));
+  else if (c.range >= 3) aiPlay(a, best, T.x, Math.max(5, Math.min(11, T.y - 5)));
+  else aiPlay(a, best, T.x, Math.max(4.5, Math.min(13, T.y - 2.5)));
+}
+function aiAttack(a) {
+  const p = a.p, A = a.hand.map((id, i) => ({ i, c: CARDS[id] })).filter(o => o.c.cost <= a.el && o.c.type !== 'spell' && o.c.type !== 'building');
+  if (!A.length) return;
+  if (Math.random() < p.err && a.el >= 5) { const o = rnd(A); aiPlay(a, o.i, 1 + Math.random() * 16, 6 + Math.random() * 7); return; } // 실수: 엉뚱한 소환
+  if (a.push && !a.push.sup && G.t - a.push.t > 2.5 && G.t - a.push.t < 9) {  // 탱커 뒤에 지원 유닛
+    const sup = A.filter(o => o.c.targets !== 'buildings' && !o.c.charge);
+    if (sup.length && a.el >= 3) { a.push.sup = 1; aiPlay(a, rnd(sup).i, a.push.x, 7.5); return; }
+  }
+  if (a.el < p.off) return;
+  const pr = G.ents.filter(e => e.team === 0 && e.tk === 'princess' && e.hp > 0);
+  const lane = DIFF === 2 && pr.length ? pr.sort((m, n) => m.hp - n.hp)[0].x : rnd([3.5, 14.5]);
+  const wins = A.filter(o => o.c.targets === 'buildings' || o.c.charge);
+  if (wins.length) { const o = rnd(wins); a.push = { t: G.t, x: lane, sup: 0 }; aiPlay(a, o.i, lane, o.c.speed >= 120 ? 12.5 : 7.5); return; }
+  const fill = A.filter(o => o.c.type === 'troop');
+  if (fill.length && a.el >= p.off + 1) aiPlay(a, rnd(fill).i, lane, 9);
+}
+
+// ---------- 4단계: 1대1 온라인 (호스트가 계산 → 게스트는 화면만 받음) ----------
+// 방 = 이 페이지를 동시에 열어 둔 사람들 (named room). 호스트가 20tick/s로 시뮬레이션하고 10회/초 스냅샷을 보냄.
+// 게스트는 좌표를 뒤집어서(x→18-x, y→32-y, 팀 반전) 자기 진영이 항상 아래쪽으로 보이게 함.
+let NET = null;
+const r1 = v => Math.round(v * 10);
+// 연결 방식: PeerJS(브라우저끼리 직접 연결, 방 코드 = 피어 ID)가 있으면 그것을, 없으면 Claude 룸을 씀
+const PEERROOM = {
+  join(name, role) {
+    return new Promise((ok, fail) => {
+      const h = {}; let conn = null, peer, done = false;
+      const deliver = m => { if (m && typeof m.t === 'string') for (const f of (h[m.t] || [])) f({ topic: m.t, data: m.d, isMe: false }); };
+      const room = {
+        emit: async (t, d) => { if (conn && conn.open) conn.send({ t, d: d ?? null }); },
+        on: (t, f) => { (h[t] ||= []).push(f); return () => { h[t] = (h[t] || []).filter(x => x !== f); }; },
+        leave: async () => { try { peer.destroy(); } catch (e) {} } };
+      const bind = c => { c.on('data', deliver); c.on('close', () => { if (conn === c) { conn = null; deliver({ t: 'peerleft' }); } }); c.on('error', () => {}); };
+      const fin = (f, v) => { if (!done) { done = true; f(v); } };
+      const id = 'clashfriends-' + name;
+      peer = role === 'host' ? new Peer(id, { debug: 0 }) : new Peer({ debug: 0 });
+      peer.on('error', e => { fin(fail, e); });
+      if (role === 'host') {
+        peer.on('open', () => fin(ok, room));
+        peer.on('connection', c => {
+          if (conn && conn.open) { c.on('open', () => { c.send({ t: 'full', d: { any: 1 } }); setTimeout(() => c.close(), 600); }); return; }
+          conn = c; bind(c);
+        });
+      } else {
+        peer.on('open', () => {
+          const c = peer.connect(id, { serialization: 'json', reliable: true });
+          c.on('open', () => { conn = c; bind(c); fin(ok, room); });
+          setTimeout(() => { if (!done) { try { peer.destroy(); } catch (e) {} fin(fail, new Error('timeout')); } }, 9000);
+        });
+      }
+    });
+  } };
+async function pvRoom() {
+  try {
+    if (typeof Peer !== 'undefined') return PEERROOM;
+    return (typeof claude !== 'undefined' && claude.use) ? await claude.use('room') : null;
+  } catch (e) { return null; }
+}
+function pvName() { const v = $('pv-name').value.trim(); if (!v) { toast('닉네임을 입력해 주세요'); return; } P.name = v; saveP(); toast('닉네임을 저장했어요'); }
+function pvUI() {
+  if ($('pv-name') && document.activeElement !== $('pv-name')) $('pv-name').value = P.name === '플레이어' ? '' : P.name;
+  const n = NET, sub = $('pv-sub'), b = $('pv-make'); if (!sub) return;
+  sub.textContent = !n ? '방을 만들고 코드를 친구에게 알려주세요' : n.state === 'wait' ? '방 코드 ' + n.code + ' · 친구를 기다리는 중…' : n.state === 'join' ? '방 ' + n.code + ' 입장 중…' : '대전 중';
+  b.textContent = n && n.role === 'host' ? '취소' : '방 만들기'; b.disabled = !!n && n.role === 'guest';
+}
+async function pvHost() {
+  if (NET) { pvLeave(); pvUI(); return; }
+  toast('방을 만드는 중…');
+  const R = await pvRoom(); if (!R) { toast('온라인 연결을 쓸 수 없어요 · 초대받은 사람만 이 링크로 연결돼요'); return; }
+  let code, room;
+  for (let t = 0; t < 3 && !room; t++) {
+    code = Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
+    try { room = await R.join(code.toLowerCase(), 'host'); } catch (e) { room = null; }
+  }
+  if (!room) { toast('방을 만들지 못했어요. 잠시 뒤 다시 해 주세요'); return; }
+  const n = NET = { role: 'host', code, room, state: 'wait', unsubs: [], lastPing: Date.now() };
+  n.unsubs.push(room.on('hello', m => hostHello(n, m)), room.on('play', m => hostPlay(n, m)),
+    room.on('ff', m => { if (!m.isMe && G.net === n && G.res === undefined) end(0); }), room.on('ping', m => { if (!m.isMe) n.lastPing = Date.now(); }), room.on('peerleft', () => { n.lastPing = 0; }));
+  pvUI(); try { navigator.clipboard.writeText(code); } catch (e) {}
+}
+function hostHello(n, m) {
+  if (m.isMe || NET !== n) return; const d = m.data || {};
+  if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
+  const deck = Array.isArray(d.deck) ? d.deck.map(i => CIDS[i]) : [];
+  if (deck.length !== 8 || deck.some(x => !x) || new Set(deck).size !== 8) return;
+  n.tok = String(d.tok); n.opp = String(d.name || '친구').slice(0, 12); n.oppDeck = deck; n.state = 'play'; n.lastPing = Date.now();
+  n.room.emit('start', { tok: n.tok, host: P.name }).catch(() => {});
+  pvBegin(n);
+}
+async function pvJoin() {
+  if (NET) return;
+  const code = $('pv-code').value.trim().toUpperCase(); if (code.length !== 5) { toast('방 코드 5자리를 입력해 주세요'); return; }
+  toast('입장 중…');
+  const R = await pvRoom(); if (!R) { toast('온라인 연결을 쓸 수 없어요 · 초대받은 사람만 이 링크로 연결돼요'); return; }
+  let room; try { room = await R.join(code.toLowerCase(), 'guest'); } catch (e) { toast('방을 찾지 못했어요. 코드를 다시 확인해 주세요'); return; }
+  const n = NET = { role: 'guest', code, room, state: 'join', unsubs: [], tok: Math.random().toString(36).slice(2, 10), lastSnap: Date.now() };
+  n.unsubs.push(
+    room.on('start', m => { const d = m.data || {}; if (m.isMe || n.state !== 'join' || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); clearTimeout(n.t1); pvBegin(n); }),
+    room.on('full', m => { const d = m.data || {}; if (m.isMe || n.state !== 'join' || !(d.any || d.tok === n.tok)) return; toast('이미 가득 찬 방이에요'); pvLeave(); pvUI(); }),
+    room.on('snap', m => { if (!m.isMe) onSnap(n, m.data); }), room.on('peerleft', () => { n.lastSnap = 0; }));
+  let tries = 0;
+  const hello = () => {
+    if (n.state !== 'join') return;
+    if (++tries > 6) { toast('방을 찾지 못했어요. 코드를 다시 확인해 주세요'); pvLeave(); pvUI(); return; }
+    room.emit('hello', { tok: n.tok, name: P.name, deck: CFG.playerDeck.map(id => CIDS.indexOf(id)) }).catch(() => {}); n.t1 = setTimeout(hello, 1500);
+  };
+  hello(); pvUI();
+}
+function pvBegin(n) {
+  newGame(n); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false;
+  n.dog = setInterval(() => watchdog(n), 1000);
+  if (n.role === 'host') n.timer = setInterval(() => { if (G.net === n && G.res !== undefined) sendSnap(n); }, 100);
+  else n.ping = setInterval(() => n.room.emit('ping', {}).catch(() => {}), 2000);
+}
+function watchdog(n) {
+  if (G.net !== n || n.closing || G.res !== undefined) return;
+  if (n.role === 'host' && Date.now() - n.lastPing > 10000) { toast('상대의 연결이 끊겨서 승리했어요'); end(0); }
+  else if (n.role === 'guest' && Date.now() - n.lastSnap > 10000) { G.res = 9; showRes('연결이 끊겼어요', '호스트와 연결할 수 없어요', '<button onclick="menu()">확인</button>'); }
+}
+function pvLeave() {
+  const n = NET; if (!n) return; NET = null; n.closing = true; clearTimeout(n.t1); clearInterval(n.dog); clearInterval(n.ping);
+  setTimeout(() => { clearInterval(n.timer); n.unsubs.forEach(u => { try { u(); } catch (e) {} }); try { n.room.leave(); } catch (e) {} }, 1500); // 마지막 결과 전송 시간
+}
+function sendSnap(n) {
+  if (G.net !== n || !n.room) return;
+  const s = ++n.seq, E = [], o = G.o;
+  for (const e of G.ents) {
+    const hp = e.hp > 0 ? Math.max(1, Math.round(e.hp)) : 0;
+    E.push(e.kind === 'tower' ? [e.id, e.tk === 'king' ? -2 : -1, e.team, r1(e.x), r1(e.y), hp, e.active ? 1 : 0] : [e.id, CIDS.indexOf(e.card.id), e.team, r1(e.x), r1(e.y), hp, Math.round(Math.max(0, e.dep) * 10)]);
+  }
+  const N = 70, cn = Math.max(1, Math.ceil(E.length / N));
+  for (let i = 0; i < cn; i++) {
+    const d = { s, i, c: cn, E: E.slice(i * N, i * N + N) };
+    if (i === 0) Object.assign(d, { t: Math.round(G.t * 100), ot: G.ot ? 1 : 0, r: G.res === undefined ? -2 : G.res, a: n.ack, el: Math.round(o.el * 100), h: o.hand.map(x => CIDS.indexOf(x)), nx: CIDS.indexOf(o.nxt),
+      P: G.projs.map(p => [r1(p.x), r1(p.y)]), F: G.fx.map(f => [r1(f.x), r1(f.y), r1(f.r), Math.round(f.t * 100), Math.round(f.max * 100), f.vis ? 1 : 0, f.c ? CIDS.indexOf(f.c.id) : -1, f.team]) });
+    n.room.emit('snap', d).catch(() => {});
+  }
+}
+function guestPlay(n, i, id, c, x, y) {
+  x = Math.min(W, Math.max(0, x)); y = Math.min(H, Math.max(0, y));
+  const q = ++n.pq; n.pending.push({ seq: q, cost: c.cost }); G.elixir = Math.max(0, G.elixir - c.cost);
+  const d = { q, i, id: CIDS.indexOf(id), x: r1(W - x), y: r1(H - y) };   // 호스트 좌표계로 변환
+  const send = () => { if (G.net === n) n.room.emit('play', d).catch(() => {}); };
+  send(); setTimeout(send, 120); setTimeout(send, 320);                   // 유실 대비 재전송 (호스트가 번호로 중복 제거)
+}
+function hostPlay(n, m) {
+  if (m.isMe || G.net !== n || G.res !== undefined) return;
+  const d = m.data || {}, q = d.q | 0; if (n.seen.has(q)) return; n.seen.add(q); if (q > n.ack) n.ack = q;
+  const id = CIDS[d.id], o = G.o, i = d.i | 0, c = CARDS[id];
+  if (!c || i < 0 || i > 3 || o.hand[i] !== id || o.el < c.cost) return;
+  let x = Math.min(W, Math.max(0, +d.x / 10)), y = Math.min(H, Math.max(0, +d.y / 10)); if (!(x >= 0 && y >= 0)) return;
+  if (c.type !== 'spell') { x = Math.floor(x) + 0.5; y = Math.floor(y) + 0.5; if (!okSpotT(1, x, y)) return; }
+  o.el -= c.cost; spawn(id, 1, x, y); o.q.push(id); o.hand[i] = o.nxt; o.nxt = o.q.shift();
+}
+function onSnap(n, d) {
+  if (!d || G.net !== n || d.s < n.lastS) return;
+  n.lastSnap = Date.now();
+  let b = n.buf; if (!b || b.s !== d.s) { if (b && d.s < b.s) return; b = n.buf = { s: d.s, c: d.c, got: {} }; }
+  b.got[d.i] = d; if (Object.keys(b.got).length < b.c) return;
+  n.lastS = d.s; n.buf = null; applySnap(n, b);
+}
+function applySnap(n, b) {
+  const m = b.got[0]; if (!m) return;
+  const now = performance.now(), a = Math.min(1, (now - n.snapAt) / n.snapDt);
+  n.snapDt = Math.min(250, Math.max(60, now - n.snapAt)); n.snapAt = now;
+  const seen = new Set();
+  for (let k = 0; k < b.c; k++) for (const r of b.got[k].E) {
+    const [hid, ci, ht, X, Y, hp, f] = r, x = W - X / 10, y = H - Y / 10; seen.add(hid);
+    let e = G.gm.get(hid);
+    if (!e) {
+      e = ci < 0 ? mkTower(1 - ht, ci === -2 ? 'king' : 'princess', x, y) : mkUnit(CIDS[ci], 1 - ht, x, y);
+      e.hid = hid; G.gm.set(hid, e); G.ents.push(e);
+    } else { e.px += (e.x - e.px) * a; e.py += (e.y - e.py) * a; e.x = x; e.y = y; }
+    e.hp = hp; if (e.kind === 'tower') e.active = !!f; else e.dep = f / 10;
+  }
+  for (const [hid] of G.gm) if (!seen.has(hid)) G.gm.delete(hid);
+  G.ents = G.ents.filter(e => seen.has(e.hid));
+  G.projs = (m.P || []).map(p => ({ x: W - p[0] / 10, y: H - p[1] / 10 }));
+  G.fx = (m.F || []).map(f => ({ x: W - f[0] / 10, y: H - f[1] / 10, r: f[2] / 10, t: f[3] / 100, max: f[4] / 100, vis: f[5], c: f[6] >= 0 ? CARDS[CIDS[f[6]]] : null, team: 1 - f[7] }));
+  G.t = m.t / 100; if (m.ot && !G.ot) { G.ot = 1; say('연장전!'); }
+  n.pending = n.pending.filter(p => p.seq > m.a);
+  G.elixir = Math.max(0, m.el / 100 - n.pending.reduce((s, p) => s + p.cost, 0));
+  const hand = m.h.map(i => CIDS[i]), nxt = CIDS[m.nx];
+  if (hand.join() !== G.hand.join() || nxt !== G.nxt) { G.hand = hand; G.nxt = nxt; buildHand(); }
+  if (m.r !== -2 && G.res === undefined) end(m.r === -1 ? -1 : 1 - m.r);
+}
+
+const gap = (a, b) => hyp(a.x - b.x, a.y - b.y) - a.r - b.r;
+function ok(c, t) { if (t.fly) return c.targets === 'air_ground'; if (c.targets === 'buildings') return t.kind !== 'unit'; return true; }
+
+function think(e, dt) {
+  const c = e.card;
+  if (e.dep > 0) { e.dep -= dt; return; }                       // 소환 지연
+  if (e.kind === 'building') e.hp -= e.max / c.lifetime * dt;   // 수명
+  if (e.kind === 'tower' && !e.active) return;
+  const t0 = e.tgt;
+  if (!(t0 && t0.hp > 0 && (c.targets === 'buildings' || gap(e, t0) <= c.sight))) { // 죽었거나 범위 밖이면 재탐색
+    e.tgt = find(e); if (e.tgt !== t0) e.cd = c.firstHit ?? 0.5; // 타겟이 바뀌면 공격 리셋
+  }
+  const t = e.tgt;
+  if (t && gap(e, t) <= c.range) { e.cd -= dt; if (e.cd <= 0) { strike(e, t); e.cd = c.hitSpeed; } return; }
+  if (e.kind !== 'unit') return;
+  const g = t || goal(e); if (g) move(e, g, dt);
+}
+
+function find(e) {
+  const c = e.card; let best = null, bd = 1e9;
+  for (const t of G.ents) {
+    if (t.team === e.team || t.hp <= 0 || !ok(c, t)) continue;
+    const d = gap(e, t);
+    if (c.targets !== 'buildings' && d > c.sight) continue;
+    if (d < bd) { bd = d; best = t; }
+  }
+  return best;
+}
+
+function goal(e) { // 기본 이동 목표 = 가장 가까운 적 타워
+  let best = null, bd = 1e9;
+  for (const t of G.ents) if (t.team !== e.team && t.kind === 'tower' && t.hp > 0) { const d = hyp(t.x - e.x, t.y - e.y); if (d < bd) { bd = d; best = t; } }
+  return best;
+}
+
+function move(e, g, dt) {
+  const c = e.card; let ax = g.x, ay = g.y;
+  if (!e.fly && !c.canJumpRiver) { // 지상 유닛은 다리로만 강을 건넘
+    const inR = e.y > RIV[0] - 0.3 && e.y < RIV[1] + 0.3, need = (e.y - 16) * (g.y - 16) < 0 || inR;
+    if (need) {
+      const bx = BR.reduce((a, b) => Math.abs(b - e.x) < Math.abs(a - e.x) ? b : a), dir = g.y > e.y ? 1 : -1;
+      if (inR) { ax = bx; ay = e.y + dir * 3; }
+      else if (Math.abs(e.x - bx) > 0.4) { ax = bx; ay = e.y < 16 ? RIV[0] - 0.8 : RIV[1] + 0.8; }
+      else { ax = bx; ay = g.y; }
+    }
+  }
+  const d = hyp(ax - e.x, ay - e.y); if (d < 1e-3) return;
+  const ch = c.charge, charging = ch && (e.chg || 0) >= ch.dist; // 프린스: 일정 거리 달리면 돌진(속도·피해 증가)
+  const sp = Math.min(c.speed * (charging ? ch.speedMult : 1) / 60 * dt, d); // 속도 단위: 분당 타일 → 초당
+  e.x += (ax - e.x) / d * sp; e.y += (ay - e.y) / d * sp; if (ch) e.chg = (e.chg || 0) + sp;
+}
+
+function hurt(t, d) { t.hp -= d; if (t.tk === 'king') t.active = true; }
+
+function area(x, y, r, d, team, c, tr = 1) {
+  for (const t of G.ents) if (t.team !== team && t.hp > 0 && ok(c, t) && hyp(t.x - x, t.y - y) - t.r <= r) hurt(t, t.kind === 'tower' ? d * tr : d);
+  G.fx.push({ x, y, r, t: 0.25, max: 0.25, vis: 1, team });
+}
+
+function strike(e, t) {
+  const c = e.card; let d = c.damage * e.m;
+  if (c.charge) { if ((e.chg || 0) >= c.charge.dist) d *= c.charge.dmgMult; e.chg = 0; } // 돌진 피해 후 초기화
+  if (c.projSpeed) G.projs.push({ x: e.x, y: e.y, t, tx: t.x, ty: t.y, team: e.team, d, sp: c.projSpeed, rad: c.splash || 0, c });
+  else if (c.splash) area(e.x, e.y, c.splash, d, e.team, c); else hurt(t, d);
+}
+
+function projs(dt) {
+  for (const p of G.projs) {
+    if (p.t.hp > 0) { p.tx = p.t.x; p.ty = p.t.y; }
+    const dx = p.tx - p.x, dy = p.ty - p.y, d = hyp(dx, dy), s = p.sp * dt;
+    if (d <= s + p.t.r * 0.5) { p.done = 1; if (p.rad) area(p.tx, p.ty, p.rad, p.d, p.team, p.c); else if (p.t.hp > 0) hurt(p.t, p.d); }
+    else { p.x += dx / d * s; p.y += dy / d * s; }
+  }
+  G.projs = G.projs.filter(p => !p.done);
+}
+
+function fxs(dt) { // 스펠: 범위 표시 후 delay 뒤에 적용
+  for (const f of G.fx) {
+    f.t -= dt;
+    if (f.c && f.left > 0 && f.t <= 0) { f.left--; area(f.x, f.y, f.r, f.c.damage * f.m, f.team, f.c, f.c.towerRatio); f.t = f.left > 0 ? (f.c.waveGap || 0.2) : 0; }
+  }
+  G.fx = G.fx.filter(f => f.t > 0);
+}
+
+function collide() { // 질량 기반 밀어내기 + 강/경계 처리
+  const A = G.ents;
+  for (let i = 0; i < A.length; i++) {
+    const a = A[i]; if (a.hp <= 0) continue;
+    for (let j = i + 1; j < A.length; j++) {
+      const b = A[j]; if (b.hp <= 0 || a.fly !== b.fly || (a.kind !== 'unit' && b.kind !== 'unit')) continue;
+      let dx = b.x - a.x, dy = b.y - a.y, d = hyp(dx, dy); const o = a.r + b.r - d; if (o <= 0) continue;
+      if (d < 1e-4) { dx = 1; dy = 0; d = 1; }
+      const ma = a.kind === 'unit' ? a.card.mass : 1e6, mb = b.kind === 'unit' ? b.card.mass : 1e6, wa = mb / (ma + mb), wb = 1 - wa;
+      a.x -= dx / d * o * wa; a.y -= dy / d * o * wa; b.x += dx / d * o * wb; b.y += dy / d * o * wb;
+    }
+  }
+  for (const e of A) {
+    if (e.kind !== 'unit') continue;
+    e.x = Math.min(W - e.r, Math.max(e.r, e.x)); e.y = Math.min(H - e.r, Math.max(e.r, e.y));
+    if (!e.fly && !e.card.canJumpRiver && e.y > RIV[0] && e.y < RIV[1] && BR.every(b => Math.abs(e.x - b) > BRW)) e.y = e.y < 16 ? RIV[0] : RIV[1];
+  }
+}
+
+// ---------- UI ----------
+let bt; function say(t) { if (!ST.banner) return; const b = $('banner'); b.textContent = t; b.classList.add('show'); clearTimeout(bt); bt = setTimeout(() => b.classList.remove('show'), 2500); }
+
+function buildHand() {
+  const h = $('hand'); h.innerHTML = '';
+  G.hand.forEach((id, i) => {
+    const c = CARDS[id], d = document.createElement('div');
+    d.className = 'card'; d.innerHTML = `<div class="c">${c.cost}</div><div class="i">${c.initial}</div><small>${c.name}</small>`;
+    d.style.borderColor = c.color;
+    d.onpointerdown = e => { drag = { i, x: null, y: null }; d.classList.add('sel'); e.preventDefault(); };
+    h.appendChild(d);
+  });
+  const n = CARDS[G.nxt]; $('next').innerHTML = `다음<b>${n.initial}</b>${n.cost}`;
+}
+
+function arena(e) {
+  const r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left) / S, (e.clientY - r.top) / S - (e.pointerType === 'touch' && ST.lift ? 1.5 : 0)];
+}
+addEventListener('pointermove', e => { if (drag) { const [x, y] = arena(e); drag.x = x; drag.y = y; drag.in = e.clientY < cv.getBoundingClientRect().bottom; } });
+addEventListener('pointerup', () => {
+  if (drag && drag.x != null && drag.in) play(drag.i, drag.x, drag.y);
+  drag = null; document.querySelectorAll('.card.sel').forEach(c => c.classList.remove('sel'));
+});
+
+function ui() {
+  const rem = G.t < 180 ? 180 - G.t : Math.max(0, 300 - G.t);
+  $('time').textContent = (G.t < 180 ? '' : '연장 ') + (rem / 60 | 0) + ':' + String(Math.floor(rem % 60)).padStart(2, '0');
+  $('mode').textContent = '엘릭서 ×' + G.cur.mult;
+  $('crown').textContent = '👑 ' + crowns(0) + ' : ' + crowns(1);
+  $('ef').style.width = G.elixir * 10 + '%'; $('en').textContent = Math.floor(G.elixir);
+  [...$('hand').children].forEach((el, i) => el.classList.toggle('off', CARDS[G.hand[i]].cost > G.elixir));
+}
+
+function resize() {
+  dpr = devicePixelRatio || 1;
+  const avail = innerHeight - $('hud').offsetHeight - $('bottom').offsetHeight;
+  S = Math.min(innerWidth / W, avail / H, 30);
+  cv.style.width = W * S + 'px'; cv.style.height = H * S + 'px';
+  cv.width = W * S * dpr; cv.height = H * S * dpr; $('bottom').style.width = W * S + 'px'; buildBG();
+}
+
+// ---------- 아레나 배경 (크기가 바뀔 때만 다시 그림) ----------
+let BG = null;
+function buildBG() {
+  BG = document.createElement('canvas'); BG.width = Math.round(W * S * dpr); BG.height = Math.round(H * S * dpr);
+  const g = BG.getContext('2d'); g.setTransform(BG.width / W, 0, 0, BG.height / H, 0, 0);
+  const y0 = RIV[0], y1 = RIV[1], RED = 'rgba(239,83,104,.72)', BLU = 'rgba(66,133,244,.72)';
+  // 바닥: 분홍/크림 타일
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { g.fillStyle = (x + y) & 1 ? '#f7e4e8' : '#fcf2f4'; g.fillRect(x, y, 1, 1); }
+  g.strokeStyle = 'rgba(190,140,160,.22)'; g.lineWidth = 0.03; g.beginPath();
+  for (let i = 0; i <= W; i++) { g.moveTo(i, 0); g.lineTo(i, H); } for (let i = 0; i <= H; i++) { g.moveTo(0, i); g.lineTo(W, i); } g.stroke();
+  // 진영 색 띠: 타워 → 다리 길 (위 빨강 / 아래 파랑)
+  const strip = (x, y, w, h, red) => { g.fillStyle = red ? RED : BLU; g.fillRect(x, y, w, h); g.strokeStyle = red ? '#ff9aa8' : '#9cc3ff'; g.lineWidth = 0.1; g.strokeRect(x, y, w, h); };
+  for (const red of [true, false]) {
+    const vy = red ? 7.9 : y1 + 0.1, vh = red ? y0 - 0.1 - 7.9 : 24.1 - (y1 + 0.1), hy = red ? 3.4 : 27.0;
+    for (const b of BR) strip(b - 0.9, vy, 1.8, vh, red);
+    strip(BR[0] - 0.9, hy, BR[1] - BR[0] + 1.8, 1.6, red);
+  }
+  // 강 자리의 돌담 + 다리
+  g.fillStyle = '#6e7490'; g.fillRect(0, y0 + 0.05, W, y1 - y0 - 0.1);
+  g.fillStyle = '#9097b3'; g.fillRect(0, y0 + 0.05, W, 0.45);
+  g.fillStyle = '#585d77'; g.fillRect(0, y1 - 0.5, W, 0.45);
+  g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 0.06; g.beginPath();
+  for (let x = 0.75; x < W; x += 1.5) { g.moveTo(x, y0 + 0.5); g.lineTo(x, y1 - 0.5); } g.stroke();
+  for (const b of BR) {
+    g.fillStyle = '#f0dcc0'; g.fillRect(b - BRW, y0 - 0.2, BRW * 2, y1 - y0 + 0.4);
+    g.fillStyle = RED; g.fillRect(b - 0.9, y0 - 0.2, 1.8, 1.2); g.fillStyle = BLU; g.fillRect(b - 0.9, y1 - 1, 1.8, 1.2);
+    g.strokeStyle = 'rgba(120,80,40,.3)'; g.lineWidth = 0.05; g.beginPath(); for (let y = y0; y <= y1; y += 0.5) { g.moveTo(b - BRW, y); g.lineTo(b + BRW, y); } g.stroke();
+    g.fillStyle = '#d9a441'; for (const sx of [b - BRW - 0.3, b + BRW]) g.fillRect(sx, y0 - 0.35, 0.3, y1 - y0 + 0.7);
+  }
+  // 테두리 벽 (위쪽은 분홍, 아래쪽은 파랑 빛)
+  const wl = g.createLinearGradient(0, 0, 0, H); wl.addColorStop(0, '#d79ab0'); wl.addColorStop(0.46, '#9a9fb8'); wl.addColorStop(0.54, '#9a9fb8'); wl.addColorStop(1, '#78a2dd');
+  g.fillStyle = wl; g.fillRect(0, 0, 0.6, H); g.fillRect(W - 0.6, 0, 0.6, H); g.fillRect(0, 0, W, 0.5); g.fillRect(0, H - 0.5, W, 0.5);
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 0.06; g.strokeRect(0.6, 0.5, W - 1.2, H - 1);
+  g.fillStyle = '#d9a441'; g.fillRect(0, y0 - 0.4, 0.9, y1 - y0 + 0.8); g.fillRect(W - 0.9, y0 - 0.4, 0.9, y1 - y0 + 0.8);
+  // 모서리 은은한 빛
+  for (const [gx, gy, c] of [[0, 0, 'rgba(255,120,150,.35)'], [W, 0, 'rgba(255,120,150,.35)'], [0, H, 'rgba(90,150,255,.35)'], [W, H, 'rgba(90,150,255,.35)']]) {
+    const rg = g.createRadialGradient(gx, gy, 0, gx, gy, 5); rg.addColorStop(0, c); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  }
+}
+
+function crown(x, y, w) { cx.beginPath(); cx.moveTo(x - w / 2, y + w * 0.35); cx.lineTo(x - w / 2, y - w * 0.2); cx.lineTo(x - w / 4, y + w * 0.05); cx.lineTo(x, y - w * 0.35); cx.lineTo(x + w / 4, y + w * 0.05); cx.lineTo(x + w / 2, y - w * 0.2); cx.lineTo(x + w / 2, y + w * 0.35); cx.closePath(); cx.fill(); }
+function drawTower(e, x, y) {
+  const r = e.r, s = r * 2, king = e.tk === 'king', col = TC[e.team];
+  if (e.hp <= 0) { cx.fillStyle = '#7b7f8d'; cx.fillRect(x - r, y - r * 0.4, s, r * 0.8); cx.fillStyle = '#5d6170'; cx.fillRect(x - r * 0.6, y - r * 0.7, r * 0.55, r * 0.5); cx.fillRect(x + r * 0.1, y - r * 0.55, r * 0.5, r * 0.4); return; }
+  cx.fillStyle = 'rgba(0,0,0,.18)'; cx.fillRect(x - r + 0.15, y - r + 0.25, s, s);
+  const gr = cx.createLinearGradient(x - r, 0, x + r, 0); gr.addColorStop(0, '#b8b2a4'); gr.addColorStop(0.5, '#e3ddcf'); gr.addColorStop(1, '#9d978a');
+  cx.fillStyle = gr; cx.fillRect(x - r, y - r, s, s);
+  const n = king ? 5 : 4, w = s / (n * 2 - 1); cx.fillStyle = '#cfc9ba'; for (let i = 0; i < n; i++) cx.fillRect(x - r + i * 2 * w, y - r - 0.3, w, 0.35);
+  cx.lineWidth = 0.14; cx.strokeStyle = '#d9a441'; cx.strokeRect(x - r + 0.07, y - r + 0.07, s - 0.14, s - 0.14);
+  cx.fillStyle = col; cx.fillRect(x - r * 0.72, y + r * 0.2, r * 1.44, r * 0.34);
+  cx.fillStyle = '#f6b21b'; if (king) crown(x, y - r * 0.15, r * 0.9); else { cx.beginPath(); cx.arc(x, y - r * 0.15, r * 0.3, 0, 7); cx.fill(); cx.lineWidth = 0.1; cx.strokeStyle = col; cx.stroke(); }
+}
+function towerBar(e, x, y) {
+  const r = e.r, by = y + r + (e.tk === 'king' ? 0.28 : 0.5), lv = e.team ? CFG.enemyLevel : CFG.playerLevel;
+  cx.fillStyle = 'rgba(0,0,0,.55)'; cx.fillRect(x - r, by, r * 2, 0.24);
+  cx.fillStyle = TC[e.team]; cx.fillRect(x - r, by, r * 2 * Math.max(0, e.hp / e.max), 0.24);
+  cx.font = 'bold 0.62px sans-serif'; cx.lineJoin = 'round'; cx.lineWidth = 0.14; cx.strokeStyle = 'rgba(0,0,0,.7)'; cx.fillStyle = '#fff';
+  const t = String(Math.ceil(e.hp)); cx.strokeText(t, x, by - 0.3); cx.fillText(t, x, by - 0.3);
+  cx.fillStyle = '#f6b21b'; cx.beginPath(); cx.arc(x - r - 0.05, by + 0.12, 0.34, 0, 7); cx.fill();
+  cx.fillStyle = '#4a2f00'; cx.font = 'bold 0.4px sans-serif'; cx.fillText(lv, x - r - 0.05, by + 0.12);
+}
+
+// ---------- 렌더 (이전/현재 위치 보간) ----------
+const IM = {};
+function img(p) { // 스프라이트가 있으면 이미지, 없으면 도형+이니셜 플레이스홀더
+  if (!p) return null;
+  if (!(p in IM)) { const i = new Image(); i.onerror = () => IM[p] = null; i.src = p; IM[p] = i; }
+  const i = IM[p]; return i && i.complete && i.naturalWidth ? i : null;
+}
+const TC = ['#3b82f6', '#ef4444'];
+
+function render(a) {
+  cx.setTransform(S * dpr, 0, 0, S * dpr, 0, 0);
+  cx.drawImage(BG, 0, 0, W, H);
+  const dc = drag && drag.x != null ? CARDS[G.hand[drag.i]] : null;
+  if (dc && dc.type !== 'spell') { cx.fillStyle = 'rgba(200,30,30,.22)'; cx.fillRect(0, 0, 9, pk(0) ? POCKET : 17.5); cx.fillRect(9, 0, 9, pk(1) ? POCKET : 17.5);
+    if (ST.grid) for (let gy = 0; gy < H; gy++) for (let gx = 0; gx < W; gx++) if (okSpot(gx + 0.5, gy + 0.5)) { // 소환 가능한 칸 표시
+      cx.fillStyle = 'rgba(255,255,255,.1)'; cx.fillRect(gx, gy, 1, 1); cx.strokeStyle = 'rgba(255,255,255,.3)'; cx.lineWidth = 0.04; cx.strokeRect(gx, gy, 1, 1);
+    }
+    const tx = Math.floor(drag.x), ty = Math.floor(drag.y); // 소환될 칸 강조
+    if (tx >= 0 && tx < W && ty >= 0 && ty < H) {
+      cx.fillStyle = okSpot(tx + 0.5, ty + 0.5) ? 'rgba(80,255,120,.55)' : 'rgba(255,60,60,.5)'; cx.fillRect(tx, ty, 1, 1);
+      cx.strokeStyle = '#fff'; cx.lineWidth = 0.08; cx.strokeRect(tx, ty, 1, 1);
+    }
+  }
+  cx.textAlign = 'center'; cx.textBaseline = 'middle';
+  for (const e of [...G.ents].sort((p, q) => (p.fly - q.fly) || (p.y - q.y))) {
+    const x = e.px + (e.x - e.px) * a, y = e.py + (e.y - e.py) * a, c = e.card, r = e.r;
+    cx.globalAlpha = e.dep > 0 || (e.tk === 'king' && !e.active) ? 0.6 : 1;
+    if (e.kind === 'tower') {
+      drawTower(e, x, y);
+    } else {
+      let dy = y; if (c.canJumpRiver && y > RIV[0] - 0.6 && y < RIV[1] + 0.6) dy = y - 0.5;
+      if (e.fly) { cx.fillStyle = 'rgba(0,0,0,.25)'; cx.beginPath(); cx.ellipse(x, y + 0.3, r, r * 0.5, 0, 0, 7); cx.fill(); dy = y - 0.5; }
+      const im = img(c.sprite);
+      if (im) cx.drawImage(im, x - r * 1.3, dy - r * 1.3, r * 2.6, r * 2.6);
+      else {
+        cx.beginPath(); if (e.kind === 'building') cx.rect(x - r, dy - r, r * 2, r * 2); else cx.arc(x, dy, r, 0, 7);
+        cx.fillStyle = c.color; cx.fill(); cx.lineWidth = 0.12; cx.strokeStyle = TC[e.team]; cx.stroke();
+        cx.fillStyle = '#111'; cx.font = `bold ${Math.max(0.5, r * 1.1)}px sans-serif`; cx.fillText(c.initial, x, dy);
+      }
+    }
+    cx.globalAlpha = 1;
+    if (e.kind === 'tower') { if (e.hp > 0) towerBar(e, x, y); } else if (e.hp > 0 && e.hp < e.max) {
+      const yy = y - r - (e.fly ? 0.9 : 0.45);
+      cx.fillStyle = '#000'; cx.fillRect(x - r, yy, r * 2, 0.22);
+      cx.fillStyle = TC[e.team]; cx.fillRect(x - r, yy, r * 2 * Math.max(0, e.hp / e.max), 0.22);
+    }
+  }
+  cx.fillStyle = '#222'; for (const p of G.projs) { cx.beginPath(); cx.arc(p.x, p.y, 0.15, 0, 7); cx.fill(); }
+  for (const f of G.fx) {
+    cx.globalAlpha = f.vis ? f.t / f.max * 0.5 : 0.35; cx.fillStyle = f.vis ? '#fff' : (f.c.color || '#f80');
+    cx.beginPath(); cx.arc(f.x, f.y, f.r, 0, 7); cx.fill(); cx.globalAlpha = 1;
+  }
+  if (dc) { // 드래그 미리보기
+    const sp = dc.type === 'spell', px = sp ? drag.x : Math.floor(drag.x) + 0.5, py = sp ? drag.y : Math.floor(drag.y) + 0.5, good = sp || okSpot(px, py);
+    if (dc.type === 'building') { // 건물: 공격 범위 표시
+      cx.fillStyle = good ? 'rgba(255,255,255,.16)' : 'rgba(255,80,80,.16)'; cx.strokeStyle = good ? 'rgba(255,255,255,.8)' : 'rgba(255,120,120,.85)'; cx.lineWidth = 0.1;
+      cx.beginPath(); cx.arc(px, py, dc.range + dc.radius, 0, 7); cx.fill(); cx.stroke();
+    }
+    cx.globalAlpha = 0.5; cx.fillStyle = dc.color; cx.beginPath();
+    if (dc.type === 'building') cx.rect(px - dc.radius, py - dc.radius, dc.radius * 2, dc.radius * 2); else cx.arc(px, py, sp ? dc.radius : Math.max(dc.radius, 0.5), 0, 7);
+    cx.fill(); cx.globalAlpha = 1;
+    if (!sp) { // 카드 이름 + 레벨
+      cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.lineJoin = 'round'; cx.lineWidth = 0.16; cx.strokeStyle = 'rgba(0,0,0,.75)'; cx.fillStyle = '#fff';
+      cx.font = 'bold 0.8px sans-serif'; cx.strokeText(dc.name, px, py - dc.radius - 1.2); cx.fillText(dc.name, px, py - dc.radius - 1.2);
+      cx.font = 'bold 0.6px sans-serif'; const lt = 'Lvl. ' + CFG.playerLevel; cx.strokeText(lt, px, py - dc.radius - 0.55); cx.fillText(lt, px, py - dc.radius - 0.55);
+    }
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
