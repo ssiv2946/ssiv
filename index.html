@@ -918,6 +918,12 @@ function passPick(i, id) {
 
 // 설정 / 전적 / 프로필
 function setST(k, v) { ST[k] = v; LS.set('cf_st', ST); if (k === 'hs') resize(); if (k === 'wake') wakeUpdate(); if (k === 'mus') bgmApply(); }
+// 테스트용: 주소 끝에 ?dev=1 을 붙여 한 번 열면 이 기기 설정 화면에 '테스트 지원' 버튼이 생겨요 (?dev=0 으로 끄기)
+try { const q = new URLSearchParams(location.search).get('dev'); if (q === '1') localStorage.setItem('cf_dev', '1'); else if (q === '0') localStorage.removeItem('cf_dev'); } catch (e) {}
+const DEV = () => { try { return !!localStorage.getItem('cf_dev'); } catch (e) { return false; } };
+function devGrant() {
+  P.gold = 1000000; P.gems = 1000000; PASS.w = 10; LS.set('cf_pass', PASS); saveP(); refreshTop(); toast('골드·보석 100만, 로얄패스 10단계 완료');
+}
 function drawSet() {
   const row = (k, n) => `<label class="item"><em>${n}</em><input type="checkbox" ${ST[k] ? 'checked' : ''} onchange="setST('${k}',this.checked?1:0)"></label>`;
   const sm = 'padding:7px 12px;font-size:13px';
@@ -928,6 +934,7 @@ function drawSet() {
     row('grid', '소환 격자 표시') + row('banner', '엘릭서 배율 알림') + row('lift', '터치 시 소환 위치 위로 띄우기') + row('wake', '플레이 중 화면 꺼짐 방지') +
     `<div class="item"><em>손패 크기</em><span style="display:flex;gap:6px">${['작게', '보통', '크게'].map((n, i) => `<button class="btn${(ST.hs ?? 1) === i ? ' gold' : ''}" style="${sm}" onclick="setST('hs',${i});drawSet()">${n}</button>`).join('')}</span></div>` +
     `<div class="item"><em>전체화면<small>패드에서 주소창을 숨겨요</small></em><button class="btn" style="${sm}" onclick="toggleFS()">전환</button></div>` +
+    (DEV() ? `<div class="item"><em>테스트 지원<small>골드·보석 100만, 로얄패스 10단계</small></em><button class="btn gold" style="${sm}" onclick="devGrant()">받기</button></div>` : '') +
     (AUTH ? `<div class="item"><em>로그아웃</em><button class="btn" style="${sm}" onclick="logout(this)">로그아웃</button></div>` +
       `<div class="item"><em>계정 삭제<small>되돌릴 수 없어요</small></em><button class="btn" style="${sm};background:#9b2c3a;box-shadow:0 3px 0 #5e1a23" onclick="delModal()">삭제</button></div>` : '');
 }
