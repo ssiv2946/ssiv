@@ -232,6 +232,11 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .dc .lv{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);font-size:11px;font-weight:800;text-align:center;padding:2px 0}
 .dc.used{opacity:.4}.dc.used::after{content:'\2713';position:absolute;right:5px;top:2px;color:#38d46a;font-weight:900;font-size:18px}
 .dc.lk{filter:grayscale(.85) brightness(.75)}
+.dc{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.dc.lift{transform:scale(1.06);box-shadow:0 0 0 3px #fff8,0 8px 18px rgba(0,0,0,.5)}
+.dc.dd-src{opacity:.3!important}
+.dc.dd-over{outline:3px solid #fff;outline-offset:-2px;box-shadow:0 0 14px #fff}
+.dd-ghost{position:fixed;z-index:300;pointer-events:none;opacity:1!important;margin:0;transform:translate(-50%,-58%) scale(1.1);box-shadow:0 12px 26px rgba(0,0,0,.65);animation:none!important}
 .dc.evo{border-color:#c38bff}.dc.hero{border-color:#ffd24d}
 .dc.evo .lv{color:#dcb8ff}.dc.hero .lv{color:#ffd24d}
 /* 진화=보라, 영웅=황금: 테두리 빛 + 흐르는 광택 + 반짝이는 별 */
@@ -421,7 +426,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="dpre" id="dk-tabs"></div>
         <div class="dgrid" id="dk-slots"></div>
         <div class="dbar" id="dk-bar"><div class="elx"><i></i><b id="dk-av">0.0</b></div><span id="dk-st" style="text-align:right;font-size:12px;color:#a9c4e6"></span></div>
-        <div id="dk-colw" style="display:none;flex-direction:column;gap:8px"><p style="text-align:center;margin:0">카드를 누르면 정보창이 떠요 · 일반/진화/영웅 칸을 골라 덱에 넣어요</p>
+        <div id="dk-colw" style="display:none;flex-direction:column;gap:8px"><p style="text-align:center;margin:0">눌러서 덱에 넣고 빼요 · 길게 누르면 정보 · 끌어서 원하는 칸에 놓을 수 있어요</p>
           <div class="sortbar"><select id="dk-sk" onchange="setSort(this.value)" aria-label="정렬 기준"><option value="cost">엘릭서 기준</option><option value="rar">희귀도 기준</option><option value="name">이름순 (ㄱ~ㅎ)</option></select><button id="dk-sd" type="button" onclick="flipSort()" aria-label="정렬 방향">▲</button></div>
           <div class="dgrid" id="dk-all"></div></div>
       </div>
@@ -1048,7 +1053,7 @@ function equip(id) { P.skin = id; saveP(); applySkin(); drawShop(); toast('타�
 const dcard = (id, cls, k) => {   // k: 덱 칸 번호 (있으면 그 칸에서 실제로 나올 모습으로 표시)
   const e = k == null ? id : effOf(id, k), c = CARDS[e], lk = !have(id), ev = k == null && EVO[id] && have('evo_' + id), hr = k == null && HERO[id] && have('hero_' + id);
   const tag = lk ? priceTxt(id) : k == null ? (ev ? '진화' : '') + (ev && hr ? '·' : '') + (hr ? '영웅' : '') : c.evoOf ? '진화 적용' : c.heroOf ? '영웅 적용' : SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : '';
-  return `<div class="dc r${rarOf(id)} ${cls}${lk ? ' lk' : ''}${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span>${tag ? `<span class="lv">${tag}</span>` : ''}</div>`;
+  return `<div class="dc r${rarOf(id)} ${cls}${lk ? ' lk' : ''}${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" data-id="${id}" data-k="${k == null ? -1 : k}" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span>${tag ? `<span class="lv">${tag}</span>` : ''}</div>`;
 };
 let DTAB = 0;
 // 카드 정렬: 엘릭서 · 희귀도 · 이름(ㄱ→ㅎ), 위(▲ 오름차순)/아래(▼ 내림차순)
@@ -1066,7 +1071,7 @@ function drawDeck() {
   $('dk-colw').style.display = DTAB === 1 ? 'flex' : 'none';
   $('dk-tabs').innerHTML = '<button class="hb" onclick="deckMenu()" aria-label="덱 메뉴">☰</button>' + DK.list.map((_, i) => `<button class="${i === DK.cur ? 'on' : ''}" onclick="pickDeck(${i})">${i + 1}</button>`).join('');
   const f = deck.filter(Boolean), av = f.reduce((s, i) => s + CARDS[i].cost, 0) / (f.length || 1);
-  $('dk-slots').innerHTML = deck.map((id, k) => id ? dcard(id, 'sl-' + SLOT(k), k) : `<div class="dc empty sl-${SLOT(k)}" onclick="deckTab(1)">${SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : ''}</div>`).join('');
+  $('dk-slots').innerHTML = deck.map((id, k) => id ? dcard(id, 'sl-' + SLOT(k), k) : `<div class="dc empty sl-${SLOT(k)}" data-k="${k}" onclick="deckTab(1)">${SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : ''}</div>`).join('');
   $('dk-av').textContent = av.toFixed(1);
   $('dk-sk').value = SORT.k; $('dk-sd').textContent = SORT.d === 1 ? '▲' : '▼';
   $('dk-all').innerHTML = sortedColl().map(i => dcard(i, deck.includes(i) ? 'used' : '')).join('');
@@ -1147,6 +1152,69 @@ function ciBtn() {
   H.push('<small class="hint">' + (k < 0 && deck.every(Boolean) ? '덱이 가득 찼어요 · 다른 카드를 먼저 빼 주세요<br>' : '') + '진화·영웅 칸에 두면, 진화·영웅을 보유한 카드만 그 모습으로 나와요</small>');
   box.innerHTML = H.join('');
 }
+// ── 덱 편집: 탭 = 장착/해제 · 길게 = 정보 · 끌어서 = 원하는 칸
+const champOk = (id, k) => !(CARDS[id].champ && deck.some((x, j) => x && j !== k && x !== id && CARDS[x].champ));
+function putAt(id, k) {   // id를 k칸에 놓기: 이미 덱에 있으면 자리 교환, 칸이 차 있으면 그 카드는 덱에서 빠져요
+  if (!champOk(id, k)) return toast('챔피언은 덱에 1장만 넣을 수 있어요');
+  const j = deck.indexOf(id); if (j === k) return;
+  if (j >= 0) deck[j] = deck[k]; deck[k] = id; commitDeck();
+}
+function tapCard(id, k) {
+  if (k >= 0) { deck[k] = null; commitDeck(); return; }                 // 덱 칸을 누르면 바로 해제
+  if (!have(id)) return cardInfo(id);                                    // 잠긴 카드는 정보창(해금)
+  const j = deck.indexOf(id); if (j >= 0) { deck[j] = null; commitDeck(); return; }
+  const f = deck.findIndex(x => !x); if (f < 0) return toast('덱이 가득 찼어요 · 덱의 카드를 눌러 빼거나 끌어서 바꿔요');
+  putAt(id, f);                                                          // 비어 있는 첫 칸으로
+}
+const DD = { st: null, ghost: null, over: null, raf: 0, y: 0 };
+function ddClean() {
+  const st = DD.st; if (!st) return; clearTimeout(st.t); cancelAnimationFrame(DD.raf);
+  st.el.classList.remove('lift', 'dd-src'); if (DD.ghost) DD.ghost.remove(); if (DD.over) DD.over.classList.remove('dd-over');
+  DD.st = DD.ghost = DD.over = null; for (const ev of ['pointermove', 'pointerup', 'pointercancel']) window.removeEventListener(ev, DD[ev]);
+}
+function ddScroll() {
+  if (!DD.st || !DD.st.drag) return; const pg = $('pg-deck'), r = pg.getBoundingClientRect(), y = DD.y;
+  if (y < r.top + 80) pg.scrollTop -= Math.min(16, (r.top + 80 - y) / 4 + 2); else if (y > r.bottom - 80) pg.scrollTop += Math.min(16, (y - (r.bottom - 80)) / 4 + 2);
+  DD.raf = requestAnimationFrame(ddScroll);
+}
+function ddStart(x, y) {
+  const st = DD.st; st.drag = true; st.el.classList.remove('lift'); st.el.classList.add('dd-src');
+  const g = st.el.cloneNode(true); g.classList.remove('dd-src', 'lift', 'used'); g.classList.add('dd-ghost'); g.style.width = st.el.offsetWidth + 'px'; document.body.appendChild(g); DD.ghost = g;
+  DD.y = y; DD.raf = requestAnimationFrame(ddScroll);
+}
+DD.pointermove = e => {
+  const st = DD.st; if (!st || e.pointerId !== st.pid) return; const dx = e.clientX - st.x0, dy = e.clientY - st.y0, far = Math.hypot(dx, dy) > (st.touch ? 10 : 6);
+  if (!st.drag) {
+    if (!far) return;
+    if (st.touch && !st.lift) return ddClean();                          // 손가락이 먼저 움직이면 스크롤로 보고 취소
+    if (!st.canDrag) { if (st.touch) return ddClean(); return; }
+    clearTimeout(st.t); ddStart(e.clientX, e.clientY);
+  }
+  DD.y = e.clientY; const g = DD.ghost; g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px';
+  const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('#dk-slots .dc'); if (t !== DD.over) { DD.over?.classList.remove('dd-over'); DD.over = t; t?.classList.add('dd-over'); }
+};
+DD.pointerup = e => {
+  const st = DD.st; if (!st || e.pointerId !== st.pid) return; const { id, k } = st;
+  if (st.drag) {
+    const tk = DD.over ? +DD.over.dataset.k : null, onCol = !DD.over && document.elementFromPoint(e.clientX, e.clientY)?.closest('#dk-colw');
+    ddClean(); if (tk != null) putAt(id, tk); else if (k >= 0 && onCol) { deck[k] = null; commitDeck(); } return;
+  }
+  const info = st.lift || st.long; ddClean(); if (st.long) return; info ? cardInfo(id) : tapCard(id, k);
+};
+DD.pointercancel = e => { if (DD.st && e.pointerId === DD.st.pid) ddClean(); };
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest?.('#dk-slots .dc[data-id], #dk-all .dc[data-id]'); if (!el || (e.pointerType === 'mouse' && e.button !== 0) || DD.st) return;
+  const id = el.dataset.id, k = +el.dataset.k, touch = e.pointerType !== 'mouse';
+  const st = DD.st = { el, id, k, x0: e.clientX, y0: e.clientY, pid: e.pointerId, touch, lift: false, long: false, drag: false, canDrag: have(id) };
+  st.t = setTimeout(() => {
+    if (!DD.st || st.drag) return;
+    if (touch) { st.lift = true; if (st.canDrag) el.classList.add('lift'); try { navigator.vibrate && navigator.vibrate(12); } catch (x) {} }
+    else { st.long = true; cardInfo(id); }                               // 마우스: 길게 누르면 바로 정보
+  }, touch ? 350 : 450);
+  for (const ev of ['pointermove', 'pointerup', 'pointercancel']) window.addEventListener(ev, DD[ev]);
+});
+document.addEventListener('touchmove', e => { if (DD.st && (DD.st.lift || DD.st.drag)) e.preventDefault(); }, { passive: false });
+document.addEventListener('contextmenu', e => { if (e.target.closest?.('.dc')) e.preventDefault(); });
 function commitDeck() { DK.list[DK.cur] = [...deck]; saveDecks(); drawDeck(); }
 function place(kind) {
   const id = CI; if (!id) return; if (CARDS[id].champ && deck.some(x => x && x !== id && CARDS[x].champ)) return toast('챔피언은 덱에 1장만 넣을 수 있어요');
