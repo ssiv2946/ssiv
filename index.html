@@ -541,10 +541,10 @@ const RAR = { knight: 0, archers: 0, goblins: 0, spear_goblins: 0, bomber: 0, ba
   goblin_gang: 0, wall_breakers: 1, hunter: 1, rune_giant: 2, cannoneer: 2, ram_rider: 2, goblin_cage: 1 };
 const RARN = ['일반', '희귀', '영웅', '전설', '챔피언'];
 const RARC = ['#9fb1c9', '#ff9a2e', '#b25cff', '#4fe8d6', '#ffd24d'];   // 일반 · 희귀 · 영웅 · 전설 테두리 색
-const RARG = [600, 1000, 1500, 2500, 4000];                      // 희귀도별 해금 골드 (일반 · 희귀 · 영웅 · 전설)
+const RARG = [300, 500, 750, 1250, 2000];                      // 희귀도별 해금 골드 (일반 · 희귀 · 영웅 · 전설)
 const rarOf = id => RAR[baseOf(id)] ?? 0;
 const LOCK = Object.fromEntries(['mega_minion','royal_giant','pekka','golem','mega_knight','sparky','lightning','giant_skeleton','lava_hound','night_witch','elite_barbarians','royal_recruits','tornado','inferno_tower','bowler','miner','goblin_giant','lumberjack','magic_archer','mother_witch','cannon_cart','phoenix','royal_ghost','guards','x_bow','electro_giant','electro_dragon','goblin_drill','vines','skeleton_king','golden_knight','mighty_miner','archer_queen','boss_bandit','monk','little_prince','goblin_gang','wall_breakers','hunter','rune_giant','cannoneer','ram_rider','goblin_cage'].map(id => [id, RARG[RAR[id] ?? 0]]));   // 잠긴 카드 = 골드 (가격은 희귀도로 통일 · 새 카드를 잠그려면 목록에 추가)
-const EVOP = 40, HEROP = 70;                                         // 진화 · 히어로 = 보석 가격
+const EVOP = 20, HEROP = 35;                                         // 진화 · 히어로 = 보석 가격
 const EVO = {   // cy: 이 횟수만큼 낸 뒤부터 진화 (원작의 '사이클')
   knight: { cy: 2, hpX: 1.15, dmgX: 1.15, dr: 0.6, desc: '체력·공격력 +15% · 이동 중에는 받는 피해 60% 감소' },
   archers: { cy: 2, range: 6, longShot: 4.5, longMult: 1.25, desc: '사거리 6칸 · 4.5칸 이상 먼 적에게 파워샷 (140 피해)' },
@@ -767,7 +767,7 @@ function judge() {
 // ---------- 저장 데이터 / 메인 화면 ----------
 let PAUSE = true, ST = { grid: 1, banner: 1, lift: 0, vol: 70, mus: 40, wake: 1, hs: 1, afs: 1 }, PASS = { w: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
 const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
-const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, evOpen: [], wc: [], log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
+const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 3000, gems: 100, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, evOpen: [], wc: [], log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
 
 // ---------- 로그인 (Firebase REST: 아이디 → 가짜 이메일로 계정 생성, 데이터는 Firestore users/<uid>) ----------
 const FB = { apiKey: 'AIzaSyB78UUQkJZuQcdXUlUuDHR2ZI0x5sBytYk', projectId: 'clash-friends' };   // ← Firebase 웹 앱 설정의 apiKey, projectId 를 여기에 넣으면 로그인이 켜져요 (비워 두면 이 기기에만 저장)
@@ -1364,7 +1364,7 @@ function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
 }
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
 function end(w) {
-  G.res = w; evSync(); const g = Math.round((w === 0 ? 100 : w === 1 ? 30 : 50) * (G.net ? 1 : AIP[DIFF].gold)); let m = 0, evNew = 0;
+  G.res = w; evSync(); const g = Math.round((w === 0 ? 200 : w === 1 ? 60 : 100) * (G.net ? 1 : AIP[DIFF].gold)); let m = w === 0 ? 3 : 0, evNew = 0;   // 이기면 보석 +3 (학교용: 바로바로 보상)
   let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF === 2 ? 2 : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
   if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
   P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
