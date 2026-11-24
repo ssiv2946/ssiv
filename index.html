@@ -263,6 +263,59 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .dbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .elx{display:flex;align-items:center;gap:8px;background:rgba(5,20,40,.5);padding:6px 14px;border-radius:12px;font-weight:900;font-size:22px}
 .elx i{width:20px;height:24px;background:var(--elx);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;display:block;border:2px solid #fff}
+
+/* ── 희귀도 테두리 · 표시 ── */
+.rchip{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:900;margin-left:7px;color:#10131a;vertical-align:2px;letter-spacing:.2px;text-shadow:none}
+.rchip.r0{background:#b9c7da}.rchip.r1{background:linear-gradient(#ffb85c,#ff8a1a)}.rchip.r2{background:linear-gradient(#cf8cff,#9b45f0);color:#fff}.rchip.r3{background:linear-gradient(110deg,#4fe8d6,#ffe27a 55%,#ff9ad0);box-shadow:0 0 8px rgba(120,255,230,.6)}
+.dc.r0{border-color:#9fb1c9}.dc.r1{border-color:#ff9a2e;box-shadow:inset 0 0 0 2px rgba(255,154,46,.55)}.dc.r2{border-color:#b25cff;box-shadow:inset 0 0 0 2px rgba(178,92,255,.6),0 0 8px rgba(178,92,255,.35)}
+.dc.r3{border-color:#4fe8d6;box-shadow:inset 0 0 0 2px #ffd24d,0 0 10px rgba(79,232,214,.6);animation:lgd 2.4s ease-in-out infinite}
+@keyframes lgd{50%{box-shadow:inset 0 0 0 2px #ffe27a,0 0 16px rgba(255,210,120,.85)}}
+.card.r0{border-color:#9fb1c9}.card.r1{border-color:#ff9a2e}.card.r2{border-color:#b25cff}.card.r3{border-color:#4fe8d6;box-shadow:0 0 8px rgba(79,232,214,.55)}
+.item em .rchip{margin-left:6px}
+
+/* ── 메인 화면 꾸미기 ── */
+#menu{background-color:#0a2748;background-image:radial-gradient(circle at 50% 24%,rgba(110,200,255,.42),transparent 52%),radial-gradient(circle at 8% 88%,rgba(150,80,255,.30),transparent 42%),radial-gradient(circle at 96% 62%,rgba(255,180,70,.22),transparent 40%),linear-gradient(45deg,rgba(255,255,255,.035) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.035) 75%),linear-gradient(45deg,rgba(255,255,255,.035) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.035) 75%),linear-gradient(#08254a,#14609a 70%,#1a77b3);background-size:100% 100%,100% 100%,100% 100%,56px 56px,56px 56px,100% 100%;background-position:0 0,0 0,0 0,0 0,28px 28px,0 0}
+#menu::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(2px 2px at 12% 82%,#fff9,transparent 60%),radial-gradient(3px 3px at 28% 64%,#bfe6ff99,transparent 60%),radial-gradient(2px 2px at 46% 90%,#fff8,transparent 60%),radial-gradient(3px 3px at 63% 72%,#ffe9a499,transparent 60%),radial-gradient(2px 2px at 78% 86%,#fff9,transparent 60%),radial-gradient(3px 3px at 90% 58%,#d9c2ff99,transparent 60%);background-size:100% 100%;animation:mtf 9s linear infinite;opacity:.9}
+@keyframes mtf{from{transform:translateY(0)}to{transform:translateY(-70px)}}
+#menu::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(2,10,28,.55) 100%)}
+#mcol{position:relative;z-index:1}
+.cur{background:linear-gradient(#10325c,#091d38);border:2px solid #2c64a6;box-shadow:0 2px 0 #04101f,inset 0 1px 0 rgba(255,255,255,.14);font-size:15px;text-shadow:0 1px 2px #000}
+.dot.g{box-shadow:inset 0 0 0 3px #c58f0a,0 0 8px rgba(246,192,38,.65)}.dot.m{box-shadow:inset 0 0 0 3px #0f9f6e,0 0 8px rgba(52,211,153,.65)}
+.prof{display:flex;align-items:center;gap:10px;background:linear-gradient(#10325c,#0a2140);border:2px solid #2c64a6;border-radius:16px;padding:6px 16px 6px 7px;box-shadow:0 3px 0 #04101f,inset 0 1px 0 rgba(255,255,255,.14)}
+.prof .av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:900;color:#3a2600;background:radial-gradient(circle at 35% 30%,#ffe9a0,#f0a30a);border:3px solid #fff3c4;box-shadow:0 2px 0 #a56b00,0 0 12px rgba(255,200,80,.5);flex:none}
+.prof .pn b{display:block;font-size:17px;max-width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 0 rgba(0,0,0,.5)}.prof .pn small{display:inline-block;margin-top:2px;padding:1px 9px;border-radius:9px;background:rgba(0,0,0,.35);color:#ffe9a8;font-weight:800}
+.ib{background:linear-gradient(#2f78c6,#1b4f86);border:2px solid #0b2a4d;box-shadow:0 3px 0 #08203b,inset 0 1px 0 rgba(255,255,255,.28)}.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #08203b}
+.passbtn{position:relative;overflow:hidden;background:linear-gradient(#ffe06b,#f2a20c);border:2px solid #fff0b8;box-shadow:0 4px 0 #a56b00,0 0 16px rgba(255,200,60,.45);text-shadow:0 1px 0 rgba(255,255,255,.4)}
+.passbtn::after,.fight::after{content:'';position:absolute;top:0;bottom:0;width:38%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);transform:skewX(-18deg);animation:swp 3.6s ease-in-out infinite}
+.passbtn:active,.sb:active,.sq:active,.fight:active{transform:translateY(2px)}
+@keyframes swp{0%,55%{left:-60%}100%{left:130%}}
+.sb{display:flex;flex-direction:column;align-items:center;gap:1px;background:linear-gradient(#2a6fb8,#16477c);border:2px solid #7fb7f2;box-shadow:0 4px 0 #08203b,inset 0 1px 0 rgba(255,255,255,.25);width:82px;padding:9px 4px}
+.sb .si{font-style:normal;font-size:22px;line-height:1.1;filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
+.frame{position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 78%,rgba(255,218,120,.42),transparent 58%),linear-gradient(#123e72,#0a2547);border:3px solid transparent;border-radius:20px;background-clip:padding-box;box-shadow:0 0 0 3px #e9b84a,0 0 0 6px #7a4f08,0 10px 22px rgba(0,0,0,.45),inset 0 0 40px rgba(0,0,0,.45)}
+.frame .rays{position:absolute;left:50%;top:44%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);background:repeating-conic-gradient(from 0deg,rgba(255,236,170,.2) 0 8deg,transparent 8deg 24deg);-webkit-mask:radial-gradient(circle,#000 8%,transparent 66%);mask:radial-gradient(circle,#000 8%,transparent 66%);animation:rot 40s linear infinite;pointer-events:none}
+@keyframes rot{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.frame .spk{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(2px 2px at 20% 30%,#fff,transparent 60%),radial-gradient(2px 2px at 78% 24%,#ffe9a4,transparent 60%),radial-gradient(3px 3px at 70% 62%,#fff9,transparent 60%),radial-gradient(2px 2px at 26% 68%,#bfe6ff,transparent 60%),radial-gradient(2px 2px at 50% 14%,#fff,transparent 60%);animation:twk 2.8s ease-in-out infinite}
+@keyframes twk{50%{opacity:.35}}
+.frame svg{position:relative;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45))}
+.frame .tw{animation:bob 3.8s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.frame .tc{animation:flk 1.3s ease-in-out infinite;transform-origin:50% 90%}.frame .tc:nth-of-type(2){animation-delay:.5s}
+@keyframes flk{50%{opacity:.7}}
+.frame .cg{animation:cgp 2.6s ease-in-out infinite}@keyframes cgp{50%{opacity:.45}}
+.event{position:relative;background:linear-gradient(#8250d4,#5a2fa6);border:2px solid #c7a6ff;border-radius:16px;box-shadow:0 4px 0 #2e1660,inset 0 1px 0 rgba(255,255,255,.3);padding:7px 8px 9px;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+.event::before{content:'✦';margin-right:6px;color:#ffe27a}.event>span{display:inline}
+.event .slots{background:linear-gradient(#24143f,#1b0f33);box-shadow:inset 0 3px 8px rgba(0,0,0,.55);border:1px solid #4b2f82}
+.h-bat{height:80px}
+.sq{background:linear-gradient(#4a9bf2,#246ac4);border:2px solid #a5d0ff;box-shadow:0 4px 0 #123c7a,inset 0 1px 0 rgba(255,255,255,.35);text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.fight{position:relative;overflow:hidden;background:linear-gradient(#ffe36a,#ffb21a 55%,#f08c00);border:3px solid #fff1b0;color:#4a2c00;font-size:34px;letter-spacing:1px;box-shadow:0 5px 0 #a05f00,0 0 22px rgba(255,190,50,.55),inset 0 2px 0 rgba(255,255,255,.6);text-shadow:0 2px 0 rgba(255,255,255,.55);animation:fpl 2.4s ease-in-out infinite}
+@keyframes fpl{50%{box-shadow:0 5px 0 #a05f00,0 0 34px rgba(255,205,70,.9),inset 0 2px 0 rgba(255,255,255,.6)}}
+.fight small{letter-spacing:0}
+#nav{background:linear-gradient(#0f2c52,#07182f);border-top:2px solid #2c64a6;box-shadow:0 -6px 16px rgba(0,0,0,.35)}
+.tab{position:relative;transition:color .15s}.tab.on{background:linear-gradient(#ffe06b,#e8960a);color:#3a2600;box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 -2px 14px rgba(255,190,50,.5);text-shadow:0 1px 0 rgba(255,255,255,.4)}
+.tab.on svg{filter:drop-shadow(0 2px 0 rgba(255,255,255,.4));transform:translateY(-1px) scale(1.06)}
+#pg-home>*{animation:rise .5s both}#pg-home>*:nth-child(2){animation-delay:.06s}#pg-home>*:nth-child(3){animation-delay:.12s}#pg-home>*:nth-child(4){animation-delay:.18s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@media (prefers-reduced-motion:reduce){#menu::before,.frame .rays,.frame .spk,.frame .tw,.frame .tc,.frame .cg,.fight,.passbtn::after,.fight::after,.dc.r3,#pg-home>*{animation:none!important}}
 </style>
 </head>
 <body>
@@ -296,7 +349,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
     <div id="mbody">
       <div class="pg" id="pg-home">
         <div class="h-top">
-          <div class="prof"><b id="h-name"></b><small id="h-title"></small></div>
+          <div class="prof"><div class="av" id="h-av">?</div><div class="pn"><b id="h-name"></b><small id="h-title"></small></div></div>
           <div class="h-r">
             <div class="icons">
               <button class="ib" aria-label="프로필" onclick="showMenu('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-7 8-7s8 2.5 8 7"/></svg></button>
@@ -308,22 +361,34 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         </div>
         <div class="h-mid">
           <div class="side">
-            <button class="sb" onclick="showMenu('wallet')">일일 보상<small id="h-daily"></small><span class="badge" id="h-db"></span></button>
-            <button class="sb" onclick="showMenu('stats')">전적<small id="h-rec"></small></button>
+            <button class="sb" onclick="showMenu('wallet')"><i class="si">🎁</i>일일 보상<small id="h-daily"></small><span class="badge" id="h-db"></span></button>
+            <button class="sb" onclick="showMenu('stats')"><i class="si">⚔️</i>전적<small id="h-rec"></small></button>
           </div>
-          <div class="frame">
-            <svg viewBox="0 0 200 240" role="img" aria-label="타워">
-              <defs><linearGradient id="st" x1="0" x2="1"><stop offset="0" stop-color="#a9a393"/><stop offset=".5" stop-color="#d9d4c7"/><stop offset="1" stop-color="#8f897b"/></linearGradient></defs>
-              <rect x="10" y="196" width="180" height="34" rx="10" fill="#17233b"/>
-              <rect x="24" y="186" width="152" height="18" rx="7" fill="#33466b"/>
-              <rect x="55" y="76" width="90" height="112" fill="url(#st)"/>
-              <rect x="45" y="64" width="110" height="14" rx="2" fill="#a29c8d"/>
-              <g fill="#cfc9ba"><rect x="45" y="46" width="14" height="20"/><rect x="69" y="46" width="14" height="20"/><rect x="93" y="46" width="14" height="20"/><rect x="117" y="46" width="14" height="20"/><rect x="141" y="46" width="14" height="20"/></g>
-              <rect x="55" y="130" width="90" height="12" fill="#2f7de1"/>
-              <rect x="94" y="96" width="12" height="24" rx="6" fill="#2c2a28"/>
-              <path d="M87 188v-26a13 13 0 0126 0v26z" fill="#4a3a2a"/>
-              <g stroke="rgba(0,0,0,.14)" stroke-width="2" fill="none"><path d="M55 108h28M117 108h28M55 160h26M119 160h26M70 76v14M130 76v14"/></g>
-              <path d="M82 46l6-24 12 14 12-14 6 24z" fill="#f6b21b" stroke="#b07a05" stroke-width="2" stroke-linejoin="round"/>
+          <div class="frame"><div class="rays"></div><div class="spk"></div>
+            <svg viewBox="0 0 200 250" role="img" aria-label="타워">
+              <defs>
+                <linearGradient id="st" x1="0" x2="1"><stop offset="0" stop-color="#9e9887"/><stop offset=".45" stop-color="#e3decf"/><stop offset="1" stop-color="#857f70"/></linearGradient>
+                <linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#e59a0b"/></linearGradient>
+                <radialGradient id="gl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9a0" stop-opacity=".9"/><stop offset="1" stop-color="#ffe9a0" stop-opacity="0"/></radialGradient>
+                <radialGradient id="gr" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0b2347" stop-opacity=".85"/><stop offset="1" stop-color="#0b2347" stop-opacity="0"/></radialGradient>
+              </defs>
+              <ellipse cx="100" cy="226" rx="92" ry="16" fill="url(#gr)"/>
+              <ellipse cx="100" cy="212" rx="84" ry="19" fill="#1a2c4c"/><ellipse cx="100" cy="207" rx="84" ry="19" fill="#3b5688"/><ellipse cx="100" cy="205" rx="70" ry="14" fill="#4a69a3"/>
+              <g class="tw">
+                <rect x="55" y="82" width="90" height="124" fill="url(#st)"/>
+                <rect x="55" y="82" width="10" height="124" fill="rgba(255,255,255,.18)"/><rect x="135" y="82" width="10" height="124" fill="rgba(0,0,0,.14)"/>
+                <path d="M47 82h106l-6 -14H53z" fill="#aaa493"/><rect x="45" y="66" width="110" height="14" rx="3" fill="#bdb7a6"/>
+                <g fill="#d8d2c2"><rect x="45" y="46" width="14" height="22" rx="2"/><rect x="69" y="46" width="14" height="22" rx="2"/><rect x="93" y="46" width="14" height="22" rx="2"/><rect x="117" y="46" width="14" height="22" rx="2"/><rect x="141" y="46" width="14" height="22" rx="2"/></g>
+                <rect id="tw-band" x="55" y="136" width="90" height="13" fill="#2f7de1"/><rect x="55" y="136" width="90" height="4" fill="rgba(255,255,255,.35)"/>
+                <g stroke="rgba(0,0,0,.16)" stroke-width="2" fill="none"><path d="M55 104h26M119 104h26M65 118h30M105 118h30M55 164h24M121 164h24M70 82v14M130 82v14M80 150v14M110 150v14M92 178v12"/></g>
+                <rect x="93" y="98" width="14" height="26" rx="7" fill="#262321"/><rect x="95" y="100" width="4" height="22" rx="2" fill="rgba(255,200,90,.45)"/>
+                <path d="M86 206v-28a14 14 0 0128 0v28z" fill="#4e3b28"/><path d="M92 206v-26a8 8 0 0116 0v26z" fill="#6a5238"/><circle cx="106" cy="194" r="1.8" fill="#f6c026"/>
+                <g class="tc"><circle cx="50" cy="120" r="14" fill="url(#gl)"/><rect x="47.5" y="124" width="5" height="9" rx="1.5" fill="#4a3a2a"/><path d="M50 114c4 4 3 8 0 10c-3-2-4-6 0-10z" fill="#ffb02e"/></g>
+                <g class="tc"><circle cx="150" cy="120" r="14" fill="url(#gl)"/><rect x="147.5" y="124" width="5" height="9" rx="1.5" fill="#4a3a2a"/><path d="M150 114c4 4 3 8 0 10c-3-2-4-6 0-10z" fill="#ffb02e"/></g>
+                <circle cx="100" cy="38" r="30" fill="url(#gl)" class="cg"/>
+                <path d="M80 48l5-26 15 16 15-16 5 26z" fill="url(#gd)" stroke="#a86d00" stroke-width="2.4" stroke-linejoin="round"/>
+                <circle cx="85" cy="21" r="3.6" fill="#fff3b0" stroke="#a86d00"/><circle cx="100" cy="35" r="3.6" fill="#ff5a5a" stroke="#a86d00"/><circle cx="115" cy="21" r="3.6" fill="#fff3b0" stroke="#a86d00"/>
+              </g>
             </svg>
           </div>
           <div class="side" style="visibility:hidden"><button class="sb">　</button></div>
@@ -459,7 +524,15 @@ const cv = $('cv'), cx = cv.getContext('2d');
 let CARDS = {}, CIDS = [], CFG, G, S = 20, dpr = 1, drag = null, sel = -1, hov = null;
 
 // ---------- 해금 · 진화 · 히어로 ----------
-const LOCK = { mega_minion: 600, royal_giant: 900, pekka: 1500, golem: 1200, mega_knight: 1500, sparky: 1500, lightning: 1000, giant_skeleton: 1200, lava_hound: 1800, night_witch: 1000, elite_barbarians: 1200, royal_recruits: 1000, tornado: 900, inferno_tower: 1000 };   // 잠긴 카드 = 골드 가격 (새 카드를 잠그려면 여기에 추가)
+const RAR = { knight: 0, archers: 0, goblins: 0, spear_goblins: 0, bomber: 0, barbarians: 0, minions: 0, skeletons: 0, bats: 0, fire_spirit: 0, ice_spirit: 0, electro_spirit: 0, royal_giant: 0, cannon: 0, arrows: 0, zap: 0, giant_snowball: 0, royal_recruits: 0, elite_barbarians: 0, firecracker: 0, skeleton_dragons: 0,
+  giant: 1, valkyrie: 1, wizard: 1, mini_pekka: 1, musketeer: 1, hog_rider: 1, mega_minion: 1, dart_goblin: 1, flying_machine: 1, royal_hogs: 1, fireball: 1, rocket: 1, tombstone: 1, bomb_tower: 1, inferno_tower: 1, ice_golem: 1,
+  baby_dragon: 2, skeleton_army: 2, prince: 2, dark_prince: 2, witch: 2, balloon: 2, golem: 2, pekka: 2, executioner: 2, giant_skeleton: 2, barbarian_barrel: 2, goblin_barrel: 2, rage: 2, poison: 2, freeze: 2, lightning: 2, tornado: 2,
+  princess: 3, ice_wizard: 3, electro_wizard: 3, bandit: 3, mega_knight: 3, sparky: 3, inferno_dragon: 3, night_witch: 3, lava_hound: 3, the_log: 3 };
+const RARN = ['일반', '희귀', '영웅', '전설'];
+const RARC = ['#9fb1c9', '#ff9a2e', '#b25cff', '#4fe8d6'];   // 일반 · 희귀 · 영웅 · 전설 테두리 색
+const RARG = [600, 1000, 1500, 2500];                      // 희귀도별 해금 골드 (일반 · 희귀 · 영웅 · 전설)
+const rarOf = id => RAR[baseOf(id)] ?? 0;
+const LOCK = Object.fromEntries(['mega_minion','royal_giant','pekka','golem','mega_knight','sparky','lightning','giant_skeleton','lava_hound','night_witch','elite_barbarians','royal_recruits','tornado','inferno_tower'].map(id => [id, RARG[RAR[id] ?? 0]]));   // 잠긴 카드 = 골드 (가격은 희귀도로 통일 · 새 카드를 잠그려면 목록에 추가)
 const EVOP = 40, HEROP = 70;                                         // 진화 · 히어로 = 보석 가격
 const EVO = {   // cy: 이 횟수만큼 낸 뒤부터 진화 (원작의 '사이클')
   knight: { cy: 2, hpX: 1.15, dmgX: 1.15, dr: 0.6, desc: '체력·공격력 +15% · 이동 중에는 받는 피해 60% 감소' },
@@ -877,7 +950,7 @@ function showMenu(p) {
 
 function drawHome() {
   evSync();
-  $('h-name').textContent = P.name; $('h-title').textContent = '🏆 ' + (P.tr | 0);
+  $('h-name').textContent = P.name; $('h-av').textContent = [...(P.name || '?')][0]; const tb = $('tw-band'); if (tb) tb.setAttribute('fill', TC[0]); $('h-title').textContent = '🏆 ' + (P.tr | 0);
   const t = passTier(), n = REW.reduce((s, r, i) => s + (i < t && !PASS.claimed.includes(i) ? 1 : 0), 0);
   $('h-pass').textContent = '단계 ' + t + '/10'; setBadge('h-pb', n);
   const can = P.daily !== today(); $('h-daily').textContent = can ? '골드 +300' : '내일 다시'; setBadge('h-db', can ? '!' : 0);
@@ -892,7 +965,7 @@ function drawHome() {
 // 상점
 function shopRow(id) {
   const c = CARDS[id], own = have(id), p = price(id);
-  return `<div class="item${own ? ' dim' : ''}"><span class="sw" style="background:${c.color};display:grid;place-items:center;font-weight:900;font-size:13px;color:#111">${c.initial}</span><em>${c.name}<small>${c.desc || '엘릭서 ' + c.cost}</small></em><button class="btn${own ? '' : ' gold'}" ${own ? 'disabled' : ''} onclick="unlock('${id}')">${own ? '보유 중' : p.g ? '골드 ' + fmt(p.g) : '보석 ' + p.m}</button></div>`;
+  return `<div class="item${own ? ' dim' : ''}"><span class="sw" style="background:${c.color};display:grid;place-items:center;font-weight:900;font-size:13px;color:#111">${c.initial}</span><em>${c.name}<span class="rchip r${rarOf(id)}">${RARN[rarOf(id)]}</span><small>${c.desc || '엘릭서 ' + c.cost}</small></em><button class="btn${own ? '' : ' gold'}" ${own ? 'disabled' : ''} onclick="unlock('${id}')">${own ? '보유 중' : p.g ? '골드 ' + fmt(p.g) : '보석 ' + p.m}</button></div>`;
 }
 function unlock(id) {
   const c = CARDS[id]; if (!c || have(id)) return; const p = price(id);
@@ -927,15 +1000,10 @@ function equip(id) { P.skin = id; saveP(); applySkin(); drawShop(); toast('타�
 const dcard = (id, cls, k) => {   // k: 덱 칸 번호 (있으면 그 칸에서 실제로 나올 모습으로 표시)
   const e = k == null ? id : effOf(id, k), c = CARDS[e], lk = !have(id), ev = k == null && EVO[id] && have('evo_' + id), hr = k == null && HERO[id] && have('hero_' + id);
   const tag = lk ? priceTxt(id) : k == null ? (ev ? '진화' : '') + (ev && hr ? '·' : '') + (hr ? '영웅' : '') : c.evoOf ? '진화 적용' : c.heroOf ? '영웅 적용' : SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : '';
-  return `<div class="dc ${cls}${lk ? ' lk' : ''}${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span>${tag ? `<span class="lv">${tag}</span>` : ''}</div>`;
+  return `<div class="dc r${rarOf(id)} ${cls}${lk ? ' lk' : ''}${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span>${tag ? `<span class="lv">${tag}</span>` : ''}</div>`;
 };
 let DTAB = 0;
 // 카드 정렬: 엘릭서 · 희귀도 · 이름(ㄱ→ㅎ), 위(▲ 오름차순)/아래(▼ 내림차순)
-const RAR = { knight: 0, archers: 0, goblins: 0, spear_goblins: 0, bomber: 0, barbarians: 0, minions: 0, skeletons: 0, bats: 0, fire_spirit: 0, ice_spirit: 0, electro_spirit: 0, royal_giant: 0, cannon: 0, arrows: 0, zap: 0, giant_snowball: 0, royal_recruits: 0, elite_barbarians: 0, firecracker: 0, skeleton_dragons: 0,
-  giant: 1, valkyrie: 1, wizard: 1, mini_pekka: 1, musketeer: 1, hog_rider: 1, mega_minion: 1, dart_goblin: 1, flying_machine: 1, royal_hogs: 1, fireball: 1, rocket: 1, tombstone: 1, bomb_tower: 1, inferno_tower: 1, ice_golem: 1,
-  baby_dragon: 2, skeleton_army: 2, prince: 2, dark_prince: 2, witch: 2, balloon: 2, golem: 2, pekka: 2, executioner: 2, giant_skeleton: 2, barbarian_barrel: 2, goblin_barrel: 2, rage: 2, poison: 2, freeze: 2, lightning: 2, tornado: 2,
-  princess: 3, ice_wizard: 3, electro_wizard: 3, bandit: 3, mega_knight: 3, sparky: 3, inferno_dragon: 3, night_witch: 3, lava_hound: 3, the_log: 3 };
-const RARN = ['일반', '희귀', '영웅', '전설'];
 let SORT = { k: 'cost', d: 1 }; try { const q = JSON.parse(localStorage.getItem('cf_sort') || 'null'); if (q && ['cost', 'rar', 'name'].includes(q.k)) SORT = { k: q.k, d: q.d === -1 ? -1 : 1 }; } catch (e) {}
 function sortedColl() {
   const key = i => SORT.k === 'cost' ? CARDS[i].cost : SORT.k === 'rar' ? (RAR[i] ?? 0) : 0;
@@ -1009,7 +1077,7 @@ function cardInfo(id) {
   if (c.death) ft.push('죽으면 ' + (c.death.r ? (c.death.delay ? c.death.delay + '초 뒤 ' : '') + '반지름 ' + c.death.r + '칸에 ' + n(c.death.dmg * m) + ' 피해' + (c.death.slow ? ' + 둔화' : '') : '') + (c.death.spawn ? (c.death.r ? ' + ' : '') + CARDS[c.death.spawn].name + ' ' + c.death.n + '마리' : ''));
   if (c.charge) ft.push('돌진: 달리다가 첫 공격은 2배 피해'); if (c.suicide) ft.push('적에 닿으면 자폭'); if (c.canJumpRiver) ft.push('강을 뛰어넘음'); if (c.lifetime) ft.push('지속 시간 ' + c.lifetime + '초'); if (EVO[id]) ft.push('★ 진화 ' + (have('evo_' + id) ? '(보유)' : '(보석 ' + EVOP + ')') + ': ' + EVO[id].desc + ' · ' + EVO[id].cy + '번 낸 뒤부터');
   if (HERO[id]) ft.push('★ 영웅 ' + (have('hero_' + id) ? '(보유)' : '(보석 ' + HEROP + ')') + ': 「' + HERO[id].name + '」 엘릭서 ' + HERO[id].cost + ' · ' + HERO[id].desc);
-  $('ci-head').innerHTML = `<div class="cic" style="background:${c.color}">${c.initial}</div><div><b>${c.name}</b><small>${SPCT(c)}</small></div><i class="cic2">${c.cost}</i>`;
+  $('ci-head').innerHTML = `<div class="cic" style="background:${c.color}">${c.initial}</div><div><b>${c.name}<span class="rchip r${rarOf(id)}">${RARN[rarOf(id)]}</span></b><small>${SPCT(c)}</small></div><i class="cic2">${c.cost}</i>`;
   $('ci-body').innerHTML = R.join('') + (ft.length ? `<div class="ft">${ft.join('<br>')}</div>` : '');
   ciBtn(); $('ci').style.display = 'flex';
 }
@@ -1981,8 +2049,8 @@ function buildHand() {
   const h = $('hand'); h.innerHTML = '';
   G.hand.forEach((id, i) => {
     const c = CARDS[id], d = document.createElement('div');
-    d.className = 'card' + (i === sel ? ' sel' : '') + (c.evoOf ? ' evo' : c.heroOf ? ' hero' : ''); d.innerHTML = `<div class="c">${c.cost}</div><div class="i">${c.initial}</div><small>${c.name}</small>${c.evoOf || c.heroOf ? '<em class="tg"></em>' : ''}`;
-    d.style.borderColor = c.evoOf ? '#c38bff' : c.heroOf ? '#ffd24d' : c.color;
+    d.className = 'card r' + rarOf(id) + (i === sel ? ' sel' : '') + (c.evoOf ? ' evo' : c.heroOf ? ' hero' : ''); d.innerHTML = `<div class="c">${c.cost}</div><div class="i">${c.initial}</div><small>${c.name}</small>${c.evoOf || c.heroOf ? '<em class="tg"></em>' : ''}`;
+    d.style.borderColor = c.evoOf ? '#c38bff' : c.heroOf ? '#ffd24d' : RARC[rarOf(id)];
     d.onpointerdown = e => { drag = { i, x: null, y: null, card: 1, lift: 1 }; d.classList.add('sel'); e.preventDefault(); };
     h.appendChild(d);
   });
