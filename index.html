@@ -189,8 +189,9 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .dtabs{display:flex;gap:8px}.dtabs button{flex:1;height:44px;border:0;border-radius:12px;background:#17497d;color:#cfe0f5;font:inherit;font-weight:800;font-size:17px;cursor:pointer;position:relative}
 .dtabs button.on{background:linear-gradient(#3b8cf0,#1b5fb8);color:#fff}
 .dtabs .cnt{position:absolute;right:6px;top:-7px;background:#e5445a;border-radius:10px;padding:1px 7px;font-size:12px}
-.dpre{display:flex;gap:6px;justify-content:center}
-.dpre button{width:52px;height:42px;border-radius:10px;border:2px solid #0b3a2a;background:linear-gradient(#35c47a,#1f9a5b);color:#fff;font:inherit;font-weight:900;font-size:19px;cursor:pointer;padding:0;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.dpre{display:flex;gap:4px;justify-content:center}
+.dpre button.hb{background:linear-gradient(#5a6b82,#3b4a60);border-color:#1b2433;font-size:22px;padding:0}
+.dpre button{flex:1 1 0;max-width:52px;min-width:26px;height:42px;border-radius:10px;border:2px solid #0b3a2a;background:linear-gradient(#35c47a,#1f9a5b);color:#fff;font:inherit;font-weight:900;font-size:19px;cursor:pointer;padding:0;text-shadow:0 2px 0 rgba(0,0,0,.35)}
 .dpre button.on{background:linear-gradient(#ffd24d,#f6a01b);color:#3a2600;border-color:#a56b00;transform:translateY(-2px);text-shadow:none}
 .dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .dc{aspect-ratio:3/4;border-radius:12px;position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.28);background:linear-gradient(160deg,var(--cc),#10233d 92%);overflow:hidden;padding-bottom:16px}
@@ -694,6 +695,12 @@ function loadStore() {
   P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(2, Math.max(0, LS.get('cf_diff', 1) | 0));
   loadDecks();
 }
+const MAXDK = 10, blankDeck = () => Array(8).fill(null);
+const okSlots = d => { const f = Array.isArray(d) && d.length === 8 ? d.filter(Boolean) : null; return !!f && new Set(f).size === f.length && f.every(i => CARDS[i] && !CARDS[i].hidden && !CARDS[i].evoOf && !CARDS[i].heroOf && have(i)) && deckRules(f); };
+function refreshPlay() {   // 전투에 쓰는 덱: 지금 덱이 8장이면 그 덱, 아니면 완성된 첫 덱
+  let d = DK.list[DK.cur]; if (!d.every(Boolean)) d = DK.list.find(x => x.every(Boolean)) || starters()[0];
+  CFG.playerDeck = effDeck(d);
+}
 const okDeck = d => Array.isArray(d) && d.length === 8 && new Set(d).size === 8 && d.every(i => CARDS[i] && !CARDS[i].hidden && !CARDS[i].evoOf && !CARDS[i].heroOf && have(i)) && deckRules(d);
 const starters = () => [[...DEFDECK], ['goblins', 'skeleton_army', 'hog_rider', 'cannon', 'archers', 'knight', 'arrows', 'fireball'],
   ['wizard', 'baby_dragon', 'giant', 'valkyrie', 'archers', 'prince', 'fireball', 'arrows'], ['prince', 'knight', 'goblins', 'skeleton_army', 'wizard', 'cannon', 'arrows', 'fireball'],
@@ -701,9 +708,11 @@ const starters = () => [[...DEFDECK], ['goblins', 'skeleton_army', 'hog_rider', 
 const AIDECKS = () => [...starters().slice(0, 4), ['pekka', 'dart_goblin', 'bats', 'fire_spirit', 'mega_minion', 'spear_goblins', 'fireball', 'arrows'], ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'royal_giant', 'bomber', 'rocket', 'arrows']];
 function loadDecks() { // 덱 프리셋 5개 (자동 저장)
   const st = starters(), v = LS.get('cf_decks', null); DK = { cur: 0, list: st };
-  if (v && Array.isArray(v.list)) { DK.cur = Math.min(4, Math.max(0, v.cur | 0)); DK.list = st.map((x, i) => okDeck(v.list[i]) ? v.list[i] : x); }
-  else { const d = LS.get('cf_deck', null); if (okDeck(d)) DK.list[0] = d; }
-  CFG.playerDeck = effDeck(DK.list[DK.cur]); deck = [...DK.list[DK.cur]]; LS.set('cf_decks', DK);
+  if (v && Array.isArray(v.list) && v.list.length >= 1) {   // 프리셋은 1~10개, 덱은 빈 칸(null)이 있어도 저장돼요
+    DK.list = v.list.slice(0, MAXDK).map((d, i) => okSlots(d) ? [...d] : okDeck(d) ? [...d] : i < st.length ? st[i] : blankDeck());
+    DK.cur = Math.min(DK.list.length - 1, Math.max(0, v.cur | 0));
+  } else { const d = LS.get('cf_deck', null); if (okDeck(d)) DK.list[0] = d; }
+  refreshPlay(); deck = [...DK.list[DK.cur]]; LS.set('cf_decks', DK);
 }
 const saveP = () => LS.set('cf_prof', P);
 const applySkin = () => { TC[0] = (SKINS.find(k => k.id === P.skin) || SKINS[0]).c; };
@@ -750,7 +759,7 @@ function unlock(id) {
   if (p.g ? P.gold < p.g : P.gems < p.m) return toast((p.g ? '골드' : '보석') + '가 부족해요');
   earn(-(p.g || 0), -(p.m || 0), '해금: ' + c.name);
   (c.evoOf ? P.evo : c.heroOf ? P.hero : P.buy).push(c.evoOf || c.heroOf || id); saveP(); sfx('elixir'); toast(c.name + ' 해금!');
-  if (DK) CFG.playerDeck = effDeck(DK.list[DK.cur]);
+  if (DK) refreshPlay();
   if (CURP === 'shop') drawShop(); if (CURP === 'deck') drawDeck(); if (CI) ciBtn();
 }
 function drawShop() {
@@ -786,17 +795,38 @@ function drawDeck() {
   while (deck.length < 8) deck.push(null); deck.length = 8;
   $('dt-deck').classList.toggle('on', DTAB === 0); $('dt-col').classList.toggle('on', DTAB === 1); $('dt-cnt').textContent = COLL().filter(have).length + '/' + COLL().length;
   $('dk-colw').style.display = DTAB === 1 ? 'flex' : 'none';
-  $('dk-tabs').innerHTML = [0, 1, 2, 3, 4].map(i => `<button class="${i === DK.cur ? 'on' : ''}" onclick="pickDeck(${i})">${i + 1}</button>`).join('');
+  $('dk-tabs').innerHTML = '<button class="hb" onclick="deckMenu()" aria-label="덱 메뉴">☰</button>' + DK.list.map((_, i) => `<button class="${i === DK.cur ? 'on' : ''}" onclick="pickDeck(${i})">${i + 1}</button>`).join('');
   const f = deck.filter(Boolean), av = f.reduce((s, i) => s + CARDS[i].cost, 0) / (f.length || 1);
   $('dk-slots').innerHTML = deck.map((id, k) => id ? dcard(id, 'sl-' + SLOT(k), k) : `<div class="dc empty sl-${SLOT(k)}" onclick="deckTab(1)">${SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : ''}</div>`).join('');
   $('dk-av').textContent = av.toFixed(1);
   $('dk-all').innerHTML = COLL().map(i => dcard(i, deck.includes(i) ? 'used' : '')).join('');
-  $('dk-st').textContent = f.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장' : f.length + '/8 · 컬렉션에서 카드를 골라 8칸을 채워 주세요';
+  $('dk-st').textContent = f.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장' : f.length + '/8 · 8장을 채워야 전투에 쓸 수 있어요';
 }
-function saveDecks() { CFG.playerDeck = effDeck(DK.list[DK.cur]); LS.set('cf_decks', DK); }
-function pickDeck(i) {
-  if (!deck.every(Boolean)) return toast('덱을 8장으로 채우면 다른 덱으로 바꿀 수 있어요');
-  DK.cur = i; deck = [...DK.list[i]]; saveDecks(); drawDeck();
+function saveDecks() { refreshPlay(); LS.set('cf_decks', DK); }
+function pickDeck(i) { DK.cur = i; deck = [...DK.list[i]]; saveDecks(); drawDeck(); }
+let DCLIP = null; try { DCLIP = JSON.parse(localStorage.getItem('cf_dclip') || 'null'); } catch (e) {}
+function deckMenu() {   // 햄버거: 덱 추가 · 삭제 · 복사 · 붙여넣기
+  const n = DK.list.length;
+  smOpen(`<h3>덱 ${DK.cur + 1} 관리</h3>
+    <button class="btn gold" ${n >= MAXDK ? 'disabled' : ''} onclick="dkAdd()">덱 추가 ${n >= MAXDK ? '(최대 ' + MAXDK + '개)' : '(' + n + '/' + MAXDK + ')'}</button>
+    <button class="btn" style="background:linear-gradient(#f05252,#c92a2a);box-shadow:0 3px 0 #7a1414" ${n <= 1 ? 'disabled' : ''} onclick="dkDel()">🗑 이 덱 삭제</button>
+    <div class="row"><button class="btn" onclick="dkCopy()">복사</button><button class="btn" ${DCLIP ? '' : 'disabled'} onclick="dkPaste()">붙여넣기</button></div>
+    <button class="btn" onclick="smClose()">닫기</button>`);
+}
+function dkAdd() {
+  if (DK.list.length >= MAXDK) return toast('덱은 최대 ' + MAXDK + '개까지 만들 수 있어요');
+  DK.list.push(blankDeck()); DK.cur = DK.list.length - 1; deck = blankDeck(); DTAB = 1; saveDecks(); smClose(); drawDeck(); toast('덱 ' + DK.list.length + ' 추가 · 카드를 채워 주세요');
+}
+function dkDel() {
+  if (DK.list.length <= 1) return toast('덱은 최소 1개가 있어야 해요');
+  const k = DK.cur; DK.list.splice(k, 1); DK.cur = Math.min(k, DK.list.length - 1); deck = [...DK.list[DK.cur]]; saveDecks(); smClose(); drawDeck(); toast('덱 ' + (k + 1) + ' 삭제');
+}
+function dkCopy() { DCLIP = [...deck]; try { localStorage.setItem('cf_dclip', JSON.stringify(DCLIP)); } catch (e) {} smClose(); toast('덱을 복사했어요'); }
+function dkPaste() {
+  if (!DCLIP) return toast('복사한 덱이 없어요');
+  const seen = new Set(); let miss = 0;
+  deck = DCLIP.map(id => { if (id && CARDS[id] && !CARDS[id].hidden && have(id) && !seen.has(id)) { seen.add(id); return id; } if (id) miss++; return null; });
+  DK.list[DK.cur] = [...deck]; saveDecks(); smClose(); drawDeck(); toast(miss ? '붙여넣었어요 · 보유하지 않은 ' + miss + '장은 빠졌어요' : '덱을 붙여넣었어요');
 }
 const SPCT = c => [EVO[c.id] ? '진화 가능' : '', HERO[c.id] ? '영웅 가능' : ''].filter(Boolean).join(' · ');
 let CI = null;
@@ -835,7 +865,7 @@ function ciBtn() {
   H.push('<small class="hint">' + (k < 0 && deck.every(Boolean) ? '덱이 가득 찼어요 · 다른 카드를 먼저 빼 주세요<br>' : '') + '진화·영웅 칸에 두면, 진화·영웅을 보유한 카드만 그 모습으로 나와요</small>');
   box.innerHTML = H.join('');
 }
-function commitDeck() { if (deck.every(Boolean)) { DK.list[DK.cur] = [...deck]; saveDecks(); } drawDeck(); }
+function commitDeck() { DK.list[DK.cur] = [...deck]; saveDecks(); drawDeck(); }
 function place(kind) {
   const id = CI; if (!id) return; const k = deck.indexOf(id); let j = SLOTR[kind].find(x => !deck[x]);
   if (j == null) { if (k < 0) return toast(SLOTN[kind] + '이 가득 찼어요'); j = SLOTR[kind][0]; }   // 이미 덱에 있으면 그 칸의 카드와 자리를 바꿔요
