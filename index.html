@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif;overflow:hidden;touch-action:none}
 #app{height:100dvh;padding-top:env(safe-area-inset-top,0px);display:flex;flex-direction:column;align-items:center;position:relative}
 #hud{height:36px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700;font-size:15px;width:100%;max-width:560px;padding:0 10px}
-#hud span:last-child{color:var(--elx)}
+#crown{font-size:16px}
 #cv{display:block;touch-action:none;border-radius:6px}
 #bottom{padding:6px 0 max(6px,env(safe-area-inset-bottom))}
 #bar{height:22px;background:#2a2f3a;border-radius:11px;position:relative;overflow:hidden;margin-bottom:6px}
@@ -323,7 +323,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 </head>
 <body>
 <div id="app">
-  <div id="hud"><button id="xb" onclick="askForfeit()">기권</button><span id="time">3:00</span><span id="crown">👑 0 : 0</span><span id="mode">엘릭서 ×1</span><button id="fs" onclick="toggleFS()" title="전체화면">⛶</button></div>
+  <div id="hud"><button id="xb" onclick="askForfeit()">기권</button><span id="crown">👑 0 : 0</span><button id="fs" onclick="toggleFS()" title="전체화면">⛶</button></div>
   <canvas id="cv"></canvas>
   <div id="bottom">
     <div id="bar"><i></i><div id="ef"></div><span id="en">8</span></div>
@@ -2287,8 +2287,6 @@ addEventListener('pointerup', () => {
 
 function ui() {
   const rem = G.t < 180 ? 180 - G.t : Math.max(0, 300 - G.t);
-  $('time').textContent = (G.t < 180 ? '' : '연장 ') + (rem / 60 | 0) + ':' + String(Math.floor(rem % 60)).padStart(2, '0');
-  $('mode').textContent = '엘릭서 ×' + G.cur.mult;
   $('crown').textContent = '👑 ' + crowns(0) + ' : ' + crowns(1);
   $('ef').style.width = G.elixir * 10 + '%'; $('en').textContent = Math.floor(G.elixir);
   [...$('hand').children].forEach((el, i) => { const c = CARDS[G.hand[i]]; el.classList.toggle('off', c.cost > G.elixir);
@@ -2434,6 +2432,31 @@ function drawProj(st, x, y, a, t) {   // 진행 방향(a)을 +x 로 보고 그�
   cx.restore();
 }
 
+// ---------- 인게임 시계 · 엘릭서 배율 (아레나 오른쪽 위) ----------
+function hudClock() {
+  const ot = G.t >= 180, rem = ot ? Math.max(0, 300 - G.t) : 180 - G.t, mm = rem / 60 | 0, ss = Math.floor(rem % 60), txt = mm + ':' + String(ss).padStart(2, '0'), low = !ot && rem <= 30;
+  cx.save(); cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.lineJoin = 'round';
+  const bx = W - 5.2, by = 0.35, bw = 4.9, bh = 2.4, r = 0.5;
+  cx.fillStyle = 'rgba(8,10,22,.82)'; cx.strokeStyle = low ? 'rgba(255,90,90,.9)' : 'rgba(255,255,255,.25)'; cx.lineWidth = 0.07;
+  cx.beginPath(); cx.moveTo(bx + r, by); cx.arcTo(bx + bw, by, bx + bw, by + bh, r); cx.arcTo(bx + bw, by + bh, bx, by + bh, r); cx.arcTo(bx, by + bh, bx, by, r); cx.arcTo(bx, by, bx + bw, by, r); cx.closePath(); cx.fill(); cx.stroke();
+  cx.fillStyle = '#c9d3ea'; cx.font = 'bold 0.62px sans-serif'; cx.fillText(ot ? '연장 시간' : '남은 시간', bx + bw / 2, by + 0.62);
+  cx.fillStyle = low ? '#ff6a6a' : '#fff'; cx.font = 'bold 1.35px sans-serif'; cx.fillText(txt, bx + bw / 2, by + 1.6);
+  const mu = G.cur.mult;
+  if (mu > 1) {   // 엘릭서 2배 · 3배: 보라 물방울
+    const px = W - 1.25, py = by + bh + 1.35, pr = 1.0; cx.beginPath(); cx.arc(px, py, pr, 0, 7); cx.moveTo(px - pr * 0.72, py - pr * 0.72); cx.lineTo(px + pr * 0.15, py - pr * 1.55); cx.lineTo(px + pr * 0.85, py - pr * 0.55); cx.closePath();
+    const g = cx.createLinearGradient(px, py - pr, px, py + pr); g.addColorStop(0, '#d56bff'); g.addColorStop(1, '#7d22c9'); cx.fillStyle = g; cx.fill(); cx.strokeStyle = '#fff'; cx.lineWidth = 0.1; cx.stroke();
+    cx.fillStyle = '#fff'; cx.strokeStyle = '#4a1180'; cx.lineWidth = 0.12; cx.font = 'italic bold 1.05px sans-serif'; cx.strokeText('x' + mu, px, py + 0.08); cx.fillText('x' + mu, px, py + 0.08);
+  }
+  // 마지막 10초 카운트다운 · 60초 남음 안내
+  const big = !ot && rem <= 10 && G.res === undefined ? Math.ceil(rem) : !ot && rem <= 60 && rem > 57 ? 60 : 0;
+  if (big > 0) {
+    const f = rem % 1, k = big === 60 ? Math.min(1, (60 - rem) / 0.4) * Math.min(1, (rem - 57) / 0.6) : 0.35 + 0.65 * f;
+    cx.globalAlpha = 0.78 * k; cx.fillStyle = '#ff5fd6'; cx.strokeStyle = '#5a1470'; cx.lineWidth = 0.28; cx.font = 'bold 6.4px sans-serif'; cx.textAlign = 'right';
+    cx.strokeText(String(big), W / 2 - 0.2, H / 2); cx.fillText(String(big), W / 2 - 0.2, H / 2);
+    cx.textAlign = 'left'; cx.font = 'bold 1.9px sans-serif'; cx.lineWidth = 0.18; cx.strokeText('초', W / 2 + 0.1, H / 2 - 1.4); cx.fillText('초', W / 2 + 0.1, H / 2 - 1.4); cx.strokeText('남음', W / 2 + 0.1, H / 2 + 1.2); cx.fillText('남음', W / 2 + 0.1, H / 2 + 1.2);
+  }
+  cx.restore();
+}
 function render(a) {
   const nowT = performance.now(), sk = G.shake > nowT ? (G.shake - nowT) / 450 * 5 : 0;
   cx.setTransform(S * dpr, 0, 0, S * dpr, (sk ? (Math.random() - 0.5) * sk : 0) * dpr, (sk ? (Math.random() - 0.5) * sk : 0) * dpr);
@@ -2531,6 +2554,7 @@ function render(a) {
       
     }
   }
+  hudClock();
 }
 
 boot();
