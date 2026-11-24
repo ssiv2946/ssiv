@@ -1355,7 +1355,7 @@ function sendSnap(n) {
   for (let i = 0; i < cn; i++) {
     const d = { s, i, c: cn, E: E.slice(i * N, i * N + N) };
     if (i === 0) Object.assign(d, { t: Math.round(G.t * 100), ot: G.ot ? 1 : 0, r: G.res === undefined ? -2 : G.res, a: n.ack, el: Math.round(o.el * 100), h: o.hand.map(x => CIDS.indexOf(x)), nx: CIDS.indexOf(o.nxt),
-      P: G.projs.map(p => [r1(p.x), r1(p.y)]), F: G.fx.map(f => [r1(f.x), r1(f.y), r1(f.r), Math.round(f.t * 100), Math.round(f.max * 100), f.vis ? 1 : 0, f.c ? CIDS.indexOf(f.c.id) : -1, f.team]) });
+      P: G.projs.map(p => [r1(p.x), r1(p.y), Math.max(0, PSN.indexOf(pstyle(p.c))), Math.round(Math.atan2(p.ty - p.y, p.tx - p.x) * 10)]), F: G.fx.map(f => [r1(f.x), r1(f.y), r1(f.r), Math.round(f.t * 100), Math.round(f.max * 100), f.vis ? 1 : 0, f.c ? CIDS.indexOf(f.c.id) : -1, f.team]) });
     n.room.emit('snap', d).catch(() => {});
   }
 }
@@ -1398,7 +1398,7 @@ function applySnap(n, b) {
   }
   for (const [hid, e] of G.gm) if (!seen.has(hid)) { if (e.kind === 'unit' && e.dep <= 0) fxDeath(e.x, e.y, false); G.gm.delete(hid); }
   G.ents = G.ents.filter(e => seen.has(e.hid));
-  G.projs = (m.P || []).map(p => ({ x: W - p[0] / 10, y: H - p[1] / 10 }));
+  G.projs = (m.P || []).map(p => ({ x: W - p[0] / 10, y: H - p[1] / 10, st: PSN[p[2] | 0] || 'dot', ang: (p[3] || 0) / 10 + Math.PI }));   // 게스트 화면은 180° 뒤집혀 있어요
   G.fx = (m.F || []).map(f => ({ x: W - f[0] / 10, y: H - f[1] / 10, r: f[2] / 10, t: f[3] / 100, max: f[4] / 100, vis: f[5], c: f[6] >= 0 ? CARDS[CIDS[f[6]]] : null, team: 1 - f[7] }));
   G.t = m.t / 100; if (m.ot && !G.ot) { G.ot = 1; say('연장전!'); }
   n.pending = n.pending.filter(p => p.seq > m.a);
@@ -2086,6 +2086,53 @@ function img(p) { // 스프라이트가 있으면 이미지, 없으면 도형+�
 }
 const TC = ['#3b82f6', '#ef4444'];
 
+// ---------- 투사체 모양 ----------
+const PSN = ['dot', 'arrow', 'farrow', 'spear', 'dart', 'axe', 'bomb', 'fire', 'dfire', 'ice', 'bolt', 'orb', 'spark', 'bullet', 'bullet2', 'ball', 'rball', 'tball', 'kball'];   // 스냅샷에는 이 번호로 보내요
+const PSTY = { archers: 'arrow', princess: 'farrow', spear_goblins: 'spear', dart_goblin: 'dart', executioner: 'axe', bomber: 'bomb', wizard: 'fire', baby_dragon: 'dfire', ice_wizard: 'ice', electro_wizard: 'bolt', witch: 'orb', sparky: 'spark', musketeer: 'bullet', flying_machine: 'bullet2', cannon: 'ball', royal_giant: 'rball', hero_turret: 'bullet2' };
+const pstyle = c => c.name === 'king' ? 'kball' : c.name === 'princess' ? 'tball' : (PSTY[c.evoOf || c.heroOf || c.id] || 'dot');   // 미니언 등은 점 그대로
+function drawProj(st, x, y, a, t) {   // 진행 방향(a)을 +x 로 보고 그려요
+  if (st === 'dot') { cx.fillStyle = '#222'; cx.beginPath(); cx.arc(x, y, 0.15, 0, 7); cx.fill(); return; }
+  cx.save(); cx.translate(x, y); cx.scale(1.4, 1.4); cx.lineCap = 'round'; cx.lineJoin = 'round';
+  const glow = (col, r, k = 1) => { cx.globalAlpha = 0.35 * k; cx.fillStyle = col; cx.beginPath(); cx.arc(0, 0, r, 0, 7); cx.fill(); cx.globalAlpha = 1; };
+  const trail = (col, r, n, step) => { for (let i = 1; i <= n; i++) { cx.globalAlpha = 0.4 * (1 - i / (n + 1)); cx.fillStyle = col; cx.beginPath(); cx.arc(-Math.cos(a) * step * i, -Math.sin(a) * step * i, r * (1 - i / (n + 2)), 0, 7); cx.fill(); } cx.globalAlpha = 1; };
+  const orb = (c1, c2, r) => { trail(c1, r, 4, r * 0.9); glow(c1, r * 1.9); cx.fillStyle = c1; cx.beginPath(); cx.arc(0, 0, r, 0, 7); cx.fill(); cx.fillStyle = c2; cx.beginPath(); cx.arc(0, 0, r * 0.5, 0, 7); cx.fill(); };
+  const shaft = (l0, l1, col, w) => { cx.strokeStyle = col; cx.lineWidth = w; cx.beginPath(); cx.moveTo(l0, 0); cx.lineTo(l1, 0); cx.stroke(); };
+  const tri = (x0, hw, x1, col) => { cx.fillStyle = col; cx.beginPath(); cx.moveTo(x0, -hw); cx.lineTo(x1, 0); cx.lineTo(x0, hw); cx.closePath(); cx.fill(); };
+  if (st === 'bomb') {   // 폭탄: 방향 상관없이 굴러가요 + 깜빡이는 심지
+    cx.rotate(t / 90); cx.fillStyle = '#1b1b1f'; cx.beginPath(); cx.arc(0, 0, 0.24, 0, 7); cx.fill(); cx.fillStyle = '#5a5a66'; cx.beginPath(); cx.arc(-0.08, -0.08, 0.07, 0, 7); cx.fill();
+    cx.strokeStyle = '#a77b4a'; cx.lineWidth = 0.05; cx.beginPath(); cx.moveTo(0, -0.22); cx.quadraticCurveTo(0.1, -0.4, 0.2, -0.38); cx.stroke();
+    cx.fillStyle = Math.floor(t / 70) % 2 ? '#ffd23f' : '#ff6a2b'; cx.beginPath(); cx.arc(0.2, -0.38, 0.07, 0, 7); cx.fill(); cx.restore(); return;
+  }
+  if (st === 'axe') {   // 원형 도끼: 빙글빙글 도는 고리 날
+    cx.rotate(t / 60); cx.fillStyle = '#c9ced6'; cx.beginPath(); cx.arc(0, 0, 0.36, 0, 7); cx.arc(0, 0, 0.15, 0, 7, true); cx.fill('evenodd');
+    cx.strokeStyle = '#6b7280'; cx.lineWidth = 0.05; cx.beginPath(); cx.arc(0, 0, 0.36, 0, 7); cx.stroke(); cx.beginPath(); cx.arc(0, 0, 0.15, 0, 7); cx.stroke();
+    cx.fillStyle = '#b03a2e'; for (let i = 0; i < 3; i++) { cx.save(); cx.rotate(i * 2.094); tri(0.3, 0.07, 0.5, '#d0463c'); cx.restore(); }
+    cx.restore(); return;
+  }
+  cx.rotate(a);
+  if (st === 'arrow') { shaft(-0.35, 0.25, '#8b5a2b', 0.055); tri(0.2, 0.09, 0.42, '#d7dbe2'); shaft(-0.35, -0.22, '#fff', 0.1); }
+  else if (st === 'farrow') { trail('#ff8a2b', 0.18, 4, 0.2); glow('#ff8a2b', 0.34); shaft(-0.5, 0.35, '#a0703a', 0.07); tri(0.3, 0.12, 0.58, '#ffd24d'); shaft(-0.5, -0.36, '#ff6a2b', 0.12); }
+  else if (st === 'spear') { shaft(-0.5, 0.35, '#c9a36b', 0.075); tri(0.32, 0.1, 0.62, '#e5e9ef'); }
+  else if (st === 'dart') { shaft(-0.2, 0.2, '#3a8f4f', 0.07); tri(0.16, 0.07, 0.34, '#c0392b'); tri(-0.2, 0.1, -0.08, '#7bd88f'); }
+  else if (st === 'fire') orb('#ff8a1f', '#ffe26a', 0.26);
+  else if (st === 'dfire') orb('#ff6a2b', '#ffd24d', 0.2);
+  else if (st === 'orb') orb('#9b4fc9', '#e6b8ff', 0.22);
+  else if (st === 'ice') { trail('#bfe9ff', 0.16, 3, 0.2); cx.fillStyle = '#8fd8ff'; cx.strokeStyle = '#e8f8ff'; cx.lineWidth = 0.05; cx.beginPath(); cx.moveTo(0.38, 0); cx.lineTo(0, -0.17); cx.lineTo(-0.28, 0); cx.lineTo(0, 0.17); cx.closePath(); cx.fill(); cx.stroke(); }
+  else if (st === 'bolt') {   // 일렉트로: 지직거리는 전기
+    cx.strokeStyle = '#7fd6ff'; cx.lineWidth = 0.1; cx.shadowColor = '#5aa9ff'; cx.shadowBlur = 8; const sd = Math.floor(t / 50);
+    for (let k = 0; k < 2; k++) { cx.strokeStyle = k ? '#fff' : '#7fd6ff'; cx.lineWidth = k ? 0.04 : 0.1; cx.beginPath(); cx.moveTo(-0.5, 0); for (let i = 1; i <= 5; i++) cx.lineTo(-0.5 + i * 0.2, (((sd * 7 + i * 13) % 5) - 2) * 0.06); cx.stroke(); }
+  }
+  else if (st === 'spark') {   // 스파키: 큰 전기 구
+    glow('#ffe44d', 0.7); cx.fillStyle = '#ffd23f'; cx.beginPath(); cx.arc(0, 0, 0.34, 0, 7); cx.fill(); cx.fillStyle = '#fff6c0'; cx.beginPath(); cx.arc(0, 0, 0.18, 0, 7); cx.fill();
+    cx.strokeStyle = '#fff6c0'; cx.lineWidth = 0.05; for (let i = 0; i < 5; i++) { const an = t / 50 + i * 1.257; cx.beginPath(); cx.moveTo(Math.cos(an) * 0.34, Math.sin(an) * 0.34); cx.lineTo(Math.cos(an + 0.3) * 0.56, Math.sin(an + 0.3) * 0.56); cx.stroke(); }
+  }
+  else if (st === 'bullet') { trail('#ffe9a8', 0.1, 3, 0.18); shaft(-0.12, 0.14, '#ffd23f', 0.1); shaft(0.02, 0.14, '#fff', 0.05); }
+  else if (st === 'bullet2') { trail('#bfe3ff', 0.08, 2, 0.15); shaft(-0.08, 0.1, '#9fd0ff', 0.08); shaft(0.0, 0.1, '#fff', 0.04); }
+  else if (st === 'ball' || st === 'rball') { const r = st === 'ball' ? 0.26 : 0.32; cx.fillStyle = '#2d3038'; cx.beginPath(); cx.arc(0, 0, r, 0, 7); cx.fill(); cx.fillStyle = '#707685'; cx.beginPath(); cx.arc(-r * 0.3, -r * 0.3, r * 0.35, 0, 7); cx.fill(); }
+  else if (st === 'tball' || st === 'kball') { const r = st === 'tball' ? 0.2 : 0.3; trail('#cfd6e6', r * 0.8, 2, r); cx.fillStyle = '#4a4f5c'; cx.beginPath(); cx.arc(0, 0, r, 0, 7); cx.fill(); cx.fillStyle = '#9aa3b8'; cx.beginPath(); cx.arc(-r * 0.3, -r * 0.3, r * 0.35, 0, 7); cx.fill(); }
+  cx.restore();
+}
+
 function render(a) {
   const nowT = performance.now(), sk = G.shake > nowT ? (G.shake - nowT) / 450 * 5 : 0;
   cx.setTransform(S * dpr, 0, 0, S * dpr, (sk ? (Math.random() - 0.5) * sk : 0) * dpr, (sk ? (Math.random() - 0.5) * sk : 0) * dpr);
@@ -2149,7 +2196,7 @@ function render(a) {
       cx.fillStyle = TC[e.team]; cx.fillRect(x - r, yy, r * 2 * Math.max(0, e.hp / e.max), 0.22);
     }
   }
-  cx.fillStyle = '#222'; for (const p of G.projs) { cx.beginPath(); cx.arc(p.x, p.y, 0.15, 0, 7); cx.fill(); }
+  for (const p of G.projs) { const a = p.ang != null ? p.ang : Math.atan2(p.ty - p.y, p.tx - p.x); drawProj(p.st || (p.c ? pstyle(p.c) : 'dot'), p.x, p.y, a, nowT); }
   for (const f of G.fx) {
     cx.globalAlpha = f.vis ? f.t / f.max * 0.5 : 0.35; cx.fillStyle = f.vis ? '#fff' : (f.c.color || '#f80');
     cx.beginPath(); cx.arc(f.x, f.y, f.r, 0, 7); cx.fill(); cx.globalAlpha = 1;
