@@ -428,7 +428,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="dgrid" id="dk-slots"></div>
         <div class="dbar" id="dk-bar"><div class="elx"><i></i><b id="dk-av">0.0</b></div><span id="dk-st" style="text-align:right;font-size:12px;color:#a9c4e6"></span></div>
         <div id="dk-colw" style="display:none;flex-direction:column;gap:8px"><p style="text-align:center;margin:0">눌러서 덱에 넣고 빼요 · 길게 누르면 정보 · 끌어서 원하는 칸에 놓을 수 있어요</p>
-          <div class="sortbar"><select id="dk-sk" onchange="setSort(this.value)" aria-label="정렬 기준"><option value="cost">엘릭서 기준</option><option value="rar">희귀도 기준</option><option value="name">이름순 (ㄱ~ㅎ)</option></select><button id="dk-sd" type="button" onclick="flipSort()" aria-label="정렬 방향">▲</button></div>
+          <div class="sortbar"><select id="dk-sk" onchange="setSort(this.value)" aria-label="정렬 기준"><option value="cost">엘릭서 기준</option><option value="rar">희귀도 기준</option><option value="kind">종류 기준 (진화·영웅·일반)</option><option value="name">이름순 (ㄱ~ㅎ)</option></select><button id="dk-sd" type="button" onclick="flipSort()" aria-label="정렬 방향">▲</button></div>
           <div class="dgrid" id="dk-all"></div></div>
       </div>
 
@@ -1072,10 +1072,12 @@ const dcard = (id, cls, k) => {   // k: 덱 칸 번호 (있으면 그 칸에서 
 };
 let DTAB = 0;
 // 카드 정렬: 엘릭서 · 희귀도 · 이름(ㄱ→ㅎ), 위(▲ 오름차순)/아래(▼ 내림차순)
-let SORT = { k: 'cost', d: 1 }; try { const q = JSON.parse(localStorage.getItem('cf_sort') || 'null'); if (q && ['cost', 'rar', 'name'].includes(q.k)) SORT = { k: q.k, d: q.d === -1 ? -1 : 1 }; } catch (e) {}
+let SORT = { k: 'cost', d: 1 }; try { const q = JSON.parse(localStorage.getItem('cf_sort') || 'null'); if (q && ['cost', 'rar', 'kind', 'name'].includes(q.k)) SORT = { k: q.k, d: q.d === -1 ? -1 : 1 }; } catch (e) {}
 function sortedColl() {
-  const key = i => SORT.k === 'cost' ? CARDS[i].cost : SORT.k === 'rar' ? (RAR[i] ?? 0) : 0;
-  return COLL().slice().sort((a, b) => (key(a) - key(b)) * SORT.d || (SORT.k === 'name' ? CARDS[a].name.localeCompare(CARDS[b].name, 'ko') * SORT.d : CARDS[a].name.localeCompare(CARDS[b].name, 'ko')));
+  // 종류: 진화+영웅 둘 다 있는 카드 → 진화 → 영웅 → 일반 (가진 것 기준, 카드에 붙는 표시와 같아요)
+  const kind = i => { const ev = EVO[i] && have('evo_' + i), hr = HERO[i] && have('hero_' + i); return ev && hr ? 0 : ev ? 1 : hr ? 2 : 3; };
+  const key = i => SORT.k === 'cost' ? CARDS[i].cost : SORT.k === 'rar' ? (RAR[i] ?? 0) : SORT.k === 'kind' ? kind(i) : 0;
+  return COLL().slice().sort((a, b) => (key(a) - key(b)) * SORT.d || (SORT.k === 'name' ? CARDS[a].name.localeCompare(CARDS[b].name, 'ko') * SORT.d : CARDS[a].cost - CARDS[b].cost || CARDS[a].name.localeCompare(CARDS[b].name, 'ko')));
 }
 function setSort(k) { SORT.k = k; try { localStorage.setItem('cf_sort', JSON.stringify(SORT)); } catch (e) {} drawDeck(); }
 function flipSort() { SORT.d = -SORT.d; try { localStorage.setItem('cf_sort', JSON.stringify(SORT)); } catch (e) {} drawDeck(); }
