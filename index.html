@@ -750,7 +750,7 @@ function judge() {
   if (G.t >= 300) { const L = G.ents.filter(e => e.kind === 'tower' && e.hp > 0).sort((p, q) => p.hp - q.hp); end(L[0].team === 0 ? 1 : 0); } // 5:00 최저 체력 타워 쪽 패배
 }
 // ---------- 저장 데이터 / 메인 화면 ----------
-let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }, PASS = { w: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
+let PAUSE = true, ST = { grid: 1, banner: 1, lift: 0, vol: 70, mus: 40, wake: 1, hs: 1, afs: 1 }, PASS = { w: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
 const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
 const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, evOpen: [], wc: [], log: [], hist: [], owned: ['blue'], skin: 'blue', buy: [], evo: [], hero: [], code: newCode() });
 
@@ -762,9 +762,14 @@ const SYNCT = { ok: '☁ 저장됨', wait: '☁ 저장 중…', off: '오프라�
 const IDURL = 'https://identitytoolkit.googleapis.com/v1/accounts:', STURL = 'https://securetoken.googleapis.com/v1/token';
 const fsUrl = uid => `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents/users/${uid}`;
 const JH = { 'Content-Type': 'application/json' };
+const QUOTA = { until: 0, told: 0 };   // 서버가 '한도 초과(429)'를 알리면 잠시 모든 폴링을 쉬어요
+const quotaHit = () => Date.now() < QUOTA.until;
+let LASTACT = Date.now();   // 마지막으로 화면을 만진 시각: 오래 방치하면 접속 표시·초대 확인을 멈춰 읽기/쓰기를 아껴요
+const IDLE_SLEEP = 20 * 60000, idleMs = () => Date.now() - LASTACT, asleep = () => idleMs() > IDLE_SLEEP;
 async function jf(url, opt) {
   let r; try { r = await fetch(url, opt); } catch (e) { const x = new Error('net'); x.net = 1; throw x; }
   let j = null; try { j = await r.json(); } catch (e) {}
+  if (r.status === 429) { QUOTA.until = Date.now() + 5 * 60000; if (!QUOTA.told) { QUOTA.told = 1; try { toast('서버 사용량이 많아 잠시 쉬어요 · 게임은 그대로 할 수 있어요'); } catch (e) {} } }
   if (!r.ok) { const x = new Error((j && j.error && (j.error.message || j.error.status)) || 'HTTP ' + r.status); x.code = r.status; throw x; }
   return j;
 }
@@ -808,13 +813,13 @@ async function mergeLogin() {
 function syncUi(st) { SYNC.st = st; const e = document.getElementById('sy'); if (e) e.textContent = SYNCT[st] || ''; }
 function cloudDirty() {
   if (!AUTH || !READY) return;
-  LS.set('cf_ts', Date.now(), 1); SYNC.dirty = 1; syncUi('wait'); clearTimeout(SYNC.t); SYNC.t = setTimeout(cloudFlush, 1500);
+  LS.set('cf_ts', Date.now(), 1); SYNC.dirty = 1; syncUi('wait'); clearTimeout(SYNC.t); SYNC.t = setTimeout(cloudFlush, 4000);
 }
 async function cloudFlush() {
   if (!AUTH || !SYNC.dirty) return; if (SYNC.busy) { SYNC.t = setTimeout(cloudFlush, 500); return; }
   SYNC.busy = 1; SYNC.dirty = 0; let ok = 1;
   try { await cloudPut(JSON.stringify({ p: P, pass: PASS, dk: DK }), LS.get('cf_ts', Date.now())); }
-  catch (e) { ok = 0; SYNC.dirty = 1; syncUi(e.net ? 'off' : 'err'); clearTimeout(SYNC.t); SYNC.t = setTimeout(cloudFlush, 10000); }
+  catch (e) { ok = 0; SYNC.dirty = 1; syncUi(e.net ? 'off' : 'err'); clearTimeout(SYNC.t); SYNC.t = setTimeout(cloudFlush, e.code === 429 ? 120000 : 10000); }
   SYNC.busy = 0; if (ok) { if (SYNC.dirty) { clearTimeout(SYNC.t); SYNC.t = setTimeout(cloudFlush, 500); } else syncUi('ok'); }
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden && SYNC.dirty) { clearTimeout(SYNC.t); cloudFlush(); } });
@@ -1295,7 +1300,7 @@ function drawSet() {
     `<div class="item"><em>이름<small>${esc(P.name)}</small></em><button class="btn" style="${sm}" onclick="nameModal()">변경</button></div>` +
     `<label class="item"><em>음악</em><input type="range" min="0" max="100" value="${ST.mus ?? 40}" oninput="setST('mus',+this.value)"></label>` +
     `<label class="item"><em>효과음</em><input type="range" min="0" max="100" value="${ST.vol}" oninput="setST('vol',+this.value)"></label>` +
-    row('grid', '소환 격자 표시') + row('banner', '엘릭서 배율 알림') + row('lift', '터치 시 소환 위치 위로 띄우기') + row('wake', '플레이 중 화면 꺼짐 방지') +
+    row('grid', '소환 격자 표시') + row('banner', '엘릭서 배율 알림') + row('lift', '터치 시 소환 위치 위로 띄우기') + row('wake', '플레이 중 화면 꺼짐 방지') + row('afs', '시작할 때 자동 전체화면') +
     `<div class="item"><em>손패 크기</em><span style="display:flex;gap:6px">${['작게', '보통', '크게'].map((n, i) => `<button class="btn${(ST.hs ?? 1) === i ? ' gold' : ''}" style="${sm}" onclick="setST('hs',${i});drawSet()">${n}</button>`).join('')}</span></div>` +
     `<div class="item"><em>전체화면<small>패드에서 주소창을 숨겨요</small></em><button class="btn" style="${sm}" onclick="toggleFS()">전환</button></div>` +
     (DEV() ? `<div class="item"><em>테스트 지원<small>골드·보석 100만, 로얄패스 10단계</small></em><button class="btn gold" style="${sm}" onclick="devGrant()">받기</button></div>` : '') +
@@ -1305,7 +1310,7 @@ function drawSet() {
 function resetAll(btn) {
   if (!rsArm) { rsArm = 1; btn.textContent = '한 번 더 누르면 모두 초기화돼요'; setTimeout(() => { rsArm = 0; btn.textContent = '저장 데이터 초기화'; }, 3000); return; }
   rsArm = 0; try { ['cf_st', 'cf_pass', 'cf_deck', 'cf_decks', 'cf_prof', 'cf_diff'].forEach(k => localStorage.removeItem(nk(k))); } catch (e) {}
-  ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }; PASS = { w: 0, claimed: [] }; P = DEFP(); DIFF = 1; saveP(); loadDecks(); applySkin(); refreshTop(); drawSet(); btn.textContent = '저장 데이터 초기화'; toast('초기화했어요');
+  ST = { grid: 1, banner: 1, lift: 0, vol: 70, mus: 40, wake: 1, hs: 1, afs: 1 }; PASS = { w: 0, claimed: [] }; P = DEFP(); DIFF = 1; saveP(); loadDecks(); applySkin(); refreshTop(); drawSet(); btn.textContent = '저장 데이터 초기화'; toast('초기화했어요');
 }
 function drawStats() {
   $('s-w').textContent = P.w; $('s-l').textContent = P.l; $('s-d').textContent = P.d;
@@ -2147,38 +2152,64 @@ const fsRoot = () => 'https://firestore.googleapis.com/v1/projects/' + FB.projec
 const fsDoc = (col, id) => fsRoot() + '/' + col + '/' + id;
 const hdr = () => ({ Authorization: 'Bearer ' + AUTH.idToken });
 let PUBX = { to: '', dc: '', inv: null }, FR = [], SOC = { t: 0, w: 0, busy: 0 }, INVS = { seen: {}, cur: null };
-const isOn = o => Date.now() - (o.seen || 0) < 75000;
+const isOn = o => Date.now() - (o.seen || 0) < 150000;
 const inPlay = () => $('menu').style.display === 'none';
-async function pubPush(off) {
-  if (!AUTH || !READY) return; await tokenOk();
-  const d = { n: P.name, id: AUTH.id, tr: P.tr | 0, w: P.w, l: P.l, d: P.d, seen: off ? 0 : Date.now(), st: inPlay() ? 'play' : 'idle', inv: PUBX.to ? PUBX.inv : null };
-  await jf(fsDoc('profiles', AUTH.uid) + '?updateMask.fieldPaths=d&updateMask.fieldPaths=to&updateMask.fieldPaths=dc', { method: 'PATCH', keepalive: true, headers: { ...JH, ...hdr() },
-    body: JSON.stringify({ fields: { d: { stringValue: JSON.stringify(d) }, to: { stringValue: PUBX.to || '' }, dc: { stringValue: PUBX.dc || '' } } }) });
+async function pubPush(off) {   // 내 공개 프로필 저장 (같은 내용이면 50초 안에는 다시 보내지 않아요)
+  if (!AUTH || !READY) return; if (!off && quotaHit()) return;
+  const st = inPlay() ? 'play' : 'idle', sig = JSON.stringify([P.name, P.tr | 0, P.w, P.l, P.d, st, PUBX.to, PUBX.dc, PUBX.to ? PUBX.inv : null, off ? 1 : 0]);
+  if (sig === PUBX.sig && Date.now() - PUBX.at < 50000) return;
+  PUBX.sig = sig; PUBX.at = Date.now(); PUBX.off = off ? 1 : 0; await tokenOk();
+  const seen = off ? 0 : Date.now(), d = { n: P.name, id: AUTH.id, tr: P.tr | 0, w: P.w, l: P.l, d: P.d, seen, st, inv: PUBX.to ? PUBX.inv : null };
+  await jf(fsDoc('profiles', AUTH.uid) + '?updateMask.fieldPaths=d&updateMask.fieldPaths=to&updateMask.fieldPaths=dc&updateMask.fieldPaths=s', { method: 'PATCH', keepalive: true, headers: { ...JH, ...hdr() },
+    body: JSON.stringify({ fields: { d: { stringValue: JSON.stringify(d) }, to: { stringValue: PUBX.to || '' }, dc: { stringValue: PUBX.dc || '' }, s: { integerValue: String(seen) } } }) });
 }
 let pubT = 0;
 function pubSoon() { if (!AUTH) return; clearTimeout(pubT); pubT = setTimeout(() => pubPush().catch(() => {}), 600); }
-async function profList() {
+const parseProf = d => { const o = JSON.parse(d.fields.d.stringValue); o.uid = d.name.split('/').pop(); o.to = (d.fields.to || {}).stringValue || ''; o.dc = (d.fields.dc || {}).stringValue || ''; return o; };
+async function profList() {   // 가입자 전체 (읽기 = 가입자 수만큼) → 되도록 아래 캐시/부분 갱신을 써요
   await tokenOk(); const out = []; let tok = '';
   do {
-    const j = await jf(fsRoot() + '/profiles?pageSize=300' + (tok ? '&pageToken=' + encodeURIComponent(tok) : ''), { headers: hdr() });
-    for (const d of j.documents || []) { try { const o = JSON.parse(d.fields.d.stringValue); o.uid = d.name.split('/').pop(); o.to = (d.fields.to || {}).stringValue || ''; o.dc = (d.fields.dc || {}).stringValue || ''; out.push(o); } catch (e) {} }
+    const j = await jf(fsRoot() + '/profiles?pageSize=300&mask.fieldPaths=d&mask.fieldPaths=to&mask.fieldPaths=dc' + (tok ? '&pageToken=' + encodeURIComponent(tok) : ''), { headers: hdr() });
+    for (const d of j.documents || []) { try { out.push(parseProf(d)); } catch (e) {} }
     tok = j.nextPageToken || '';
   } while (tok);
   return out;
 }
-function socStart() {
-  pubPush().catch(() => {}); setInterval(() => { if (!document.hidden) pubPush().catch(() => {}); }, 30000);
-  document.addEventListener('visibilitychange', () => { pubPush(document.hidden).catch(() => {}); });
-  setInterval(invPoll, 4000);
+let PLC = { t: 0, L: [] };
+async function profListCached(age) { if (Date.now() - PLC.t < age) return PLC.L; const L = await profList(); PLC = { t: Date.now(), L }; return L; }
+async function onlineList() {   // 최근 접속한 사람만 (읽기 = 온라인 인원수만큼)
+  await tokenOk(); const r = await jf(fsRoot() + ':runQuery', { method: 'POST', headers: { ...JH, ...hdr() }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'profiles' }], where: { fieldFilter: { field: { fieldPath: 's' }, op: 'GREATER_THAN_OR_EQUAL', value: { integerValue: String(Date.now() - 170000) } } }, limit: 100 } }) });
+  const out = []; for (const x of r) if (x.document) { try { out.push(parseProf(x.document)); } catch (e) {} } return out;
 }
+let INVT = 0, HIDT = 0;
+function invLoop() {   // 초대 확인: 평소 8초, 3분 이상 가만히 있으면 20초, 20분 방치하면 멈춤 (만지면 바로 다시 시작)
+  clearTimeout(INVT); if (!AUTH || asleep()) return;
+  INVT = setTimeout(async () => { try { if (!quotaHit()) await invPoll(); } catch (e) {} invLoop(); }, idleMs() > 180000 ? 20000 : 8000);
+}
+function socWake() { pubPush().catch(() => {}); invLoop(); }
+function socStart() {
+  pubPush().catch(() => {}); invLoop();
+  setInterval(() => { if (!document.hidden && !asleep()) pubPush().catch(() => {}); }, 60000);   // 접속 표시: 1분마다
+  document.addEventListener('visibilitychange', () => {
+    clearTimeout(HIDT);
+    if (document.hidden) HIDT = setTimeout(() => { if (document.hidden) pubPush(1).catch(() => {}); }, 20000);   // 20초 넘게 숨겨졌을 때만 '오프라인' 표시
+    else { if (PUBX.off) PUBX.sig = ''; pubPush().catch(() => {}); invLoop(); }
+  });
+  addEventListener('pagehide', () => { pubPush(1).catch(() => {}); });
+}
+for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { const was = asleep(); LASTACT = Date.now(); if (was && AUTH && READY) socWake(); }, { passive: true, capture: true });
 function drawSocial() {
   clearInterval(SOC.t);
   if (!AUTH) { $('so-msg').textContent = '로그인하면 친구 기능을 쓸 수 있어요'; $('so-on').innerHTML = $('so-off').innerHTML = ''; $('so-cnt').textContent = ''; return; }
-  renderFriends(); socLoad(); SOC.t = setInterval(() => { if (CURP === 'social' && !document.hidden) socLoad(); }, 10000);
+  renderFriends(); socLoad(); SOC.t = setInterval(() => { if (CURP === 'social' && !document.hidden && !asleep()) socLoad(); }, 20000);
 }
-async function socLoad() {
-  if (SOC.busy) return; SOC.busy = 1;
-  try { FR = (await profList()).filter(o => o.uid !== AUTH.uid); $('so-msg').textContent = ''; renderFriends(); }
+const SOCC = { full: 0, any: 0 };
+async function socLoad(force) {   // 처음·2분마다는 전체 목록, 그 사이에는 온라인인 사람만 읽어요
+  if (SOC.busy) return; if (quotaHit()) return renderFriends(); const now = Date.now(); if (!force && now - SOCC.any < 12000) return renderFriends(); SOC.busy = 1;
+  try {
+    if (force || !SOCC.full || now - SOCC.full > 120000) { FR = (await profListCached(0)).filter(o => o.uid !== AUTH.uid); SOCC.full = SOCC.any = Date.now(); }
+    else { const L = await onlineList(); FR = FR.slice(); for (const o of L) if (o.uid !== AUTH.uid) { const i = FR.findIndex(x => x.uid === o.uid); if (i >= 0) FR[i] = o; else FR.push(o); } SOCC.any = Date.now(); }
+    $('so-msg').textContent = ''; renderFriends(); }
   catch (e) { $('so-msg').textContent = e.net ? '인터넷 연결을 확인해 주세요' : '친구 목록을 불러오지 못했어요'; }
   SOC.busy = 0;
 }
@@ -2237,7 +2268,7 @@ async function drawRank() {
   if (!AUTH) { $('rk-msg').textContent = '로그인하면 순위표를 볼 수 있어요'; return; }
   $('rk-msg').textContent = '불러오는 중…';
   try {
-    const L = (await profList()).map(o => o.uid === AUTH.uid ? { ...o, n: P.name, tr: P.tr | 0, w: P.w } : o);
+    const L = (await profListCached(60000)).map(o => o.uid === AUTH.uid ? { ...o, n: P.name, tr: P.tr | 0, w: P.w } : o);
     if (!L.some(o => o.uid === AUTH.uid)) L.push({ uid: AUTH.uid, n: P.name, tr: P.tr | 0, w: P.w });
     L.sort((a, b) => (b.tr | 0) - (a.tr | 0) || (b.w | 0) - (a.w | 0) || String(a.n).localeCompare(String(b.n)));
     const me = L.findIndex(o => o.uid === AUTH.uid) + 1; $('rk-msg').textContent = '내 순위 ' + me + '위 · 전체 ' + L.length + '명';
@@ -2435,6 +2466,16 @@ function toggleFS() {
     else toast('이 브라우저는 전체화면을 지원하지 않아요. 홈 화면에 추가하면 전체화면으로 열려요');
   } catch (e) { toast('전체화면을 켤 수 없어요'); }
 }
+// 시작할 때 자동 전체화면: 브라우저는 '터치/클릭' 뒤에만 허용하므로 처음 누르는 순간에 켜요 (끄면 다시 안 켜요)
+let AFS = { n: 0, on: 1 };
+function autoFS() {
+  const d = document, el = d.documentElement, f = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!AFS.on || !ST.afs || !f || d.fullscreenElement || d.webkitFullscreenElement) { AFS.off(); return; }
+  if (++AFS.n > 3) return AFS.off();
+  try { const r = f.call(el); if (r && r.then) r.then(AFS.off, () => {}); else setTimeout(() => { if (d.fullscreenElement || d.webkitFullscreenElement) AFS.off(); }, 400); } catch (e) {}
+}
+AFS.off = () => { AFS.on = 0; for (const ev of ['pointerup', 'keydown']) removeEventListener(ev, autoFS, true); };
+for (const ev of ['pointerup', 'keydown']) addEventListener(ev, autoFS, true);
 const reFS = () => [100, 350, 800, 1500].forEach(t => setTimeout(resize, t));   // 폰은 전체화면 전환이 끝나야 실제 높이가 정해져요
 addEventListener('fullscreenchange', reFS); addEventListener('webkitfullscreenchange', reFS); if (window.visualViewport) visualViewport.addEventListener('resize', () => setTimeout(resize, 50));
 let wlock = null;
