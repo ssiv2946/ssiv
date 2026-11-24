@@ -709,9 +709,10 @@ function authGate() {
 const ACCT = ['cf_prof', 'cf_pass', 'cf_decks', 'cf_deck', 'cf_ts'], nk = k => AUTH && ACCT.includes(k) ? k + ':' + AUTH.uid : k;   // 계정 데이터는 계정별 키로 분리
 const LS = { get(k, d) { try { return JSON.parse(localStorage.getItem(nk(k))) ?? d; } catch (e) { return d; } },
   set(k, v, quiet) { try { localStorage.setItem(nk(k), JSON.stringify(v)); } catch (e) {} if (!quiet && k !== 'cf_ts' && ACCT.includes(k)) cloudDirty(); } };
-const REW = [{ t: '골드 300', g: 300 }, { t: '보석 10', m: 10 }, { t: '골드 500', g: 500 }, { t: '보석 20', m: 20 },
+const CHS = n => ({ t: n === 1 ? '📦 상자' : '📦 ★' + n + '+ 확정 상자', sub: n === 1 ? '★1~★5 중 하나가 나와요' : '★' + n + ' 이상이 확정으로 나와요', k: 'chest', min: n });
+const REW = [{ t: '골드 300', g: 300 }, { t: '보석 10', m: 10 }, CHS(1), { t: '보석 20', m: 20 },
   { t: '🎟 카드 해금권', sub: '없는 카드 1장 해금 · 다 있으면 골드 1,000', k: 'card' },
-  { t: '보석 30', m: 30 }, { t: '골드 1,500', g: 1500 }, { t: '보석 40', m: 40 }, { t: '골드 2,000', g: 2000 },
+  CHS(2), { t: '골드 1,500', g: 1500 }, CHS(3), { t: '골드 2,000', g: 2000 },
   { t: '🎟 진화·영웅 해금권', sub: '없는 진화·영웅 1개 해금 · 다 있으면 보석 50', k: 'evh' }];
 const passTier = () => Math.min(10, PASS.w | 0);   // 전투에서 승리할 때마다 1단계씩 (최대 10)
 const SKINS = [{ id: 'blue', n: '기본 파랑', c: '#3b82f6' }, { id: 'green', n: '에메랄드', c: '#10b981', gold: 1500 }, { id: 'purple', n: '보라', c: '#a855f7', gold: 1500 }, { id: 'gold', n: '황금', c: '#f5b301', gems: 50 }];
@@ -1007,9 +1008,15 @@ function passDone(i, r, txt) { PASS.claimed.push(i); LS.set('cf_pass', PASS); ea
 function claim(i) {
   if (i >= passTier() || PASS.claimed.includes(i)) return;
   const r = REW[i];
+  if (r.k === 'chest') return passChest(i, r.min);
   if (r.k === 'card') { const pool = Object.keys(LOCK).filter(id => CARDS[id] && !have(id)); return pool.length ? passPickModal(i, pool) : passDone(i, { g: 1000 }, '골드 1,000 (모든 카드 보유)'); }
   if (r.k === 'evh') { const pool = [...Object.keys(EVO).map(b => 'evo_' + b), ...Object.keys(HERO).map(b => 'hero_' + b)].filter(id => CARDS[id] && !have(id)); return pool.length ? passPickModal(i, pool) : passDone(i, { m: 50 }, '보석 50 (모든 진화·영웅 보유)'); }
   passDone(i, r, r.t);
+}
+function passChest(i, min) {   // 로얄패스 상자: 받는 즉시 보상 지급 후 열기 연출
+  const star = rollStar(min), rc = chestRoll(star);
+  PASS.claimed.push(i); LS.set('cf_pass', PASS); earn(rc.g, rc.m, '로얄패스 상자 ★' + star); saveP(); if (DK) refreshPlay();
+  if (CURP === 'pass') drawPass(); chestShow(min, star, rc, min === 1 ? '로얄패스 상자' : '로얄패스 상자 · ★' + min + '+ 확정');
 }
 function passPickModal(i, pool) {
   if (pool.length === 1) return passPick(i, pool[0]);
