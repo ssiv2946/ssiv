@@ -165,6 +165,44 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 #login input:focus{outline:0;border-color:#f6b21b}
 #lg-msg{min-height:18px;color:#ff8a8a;font-weight:700;font-size:13px}
 #login .row{display:flex;gap:8px}#login .row .btn{flex:1}
+#sm{position:absolute;inset:0;z-index:13;display:none;align-items:center;justify-content:center;background:rgba(5,10,20,.72)}
+#sm .box{width:min(92%,360px);max-height:92%;overflow-y:auto;background:#12304f;border:2px solid #2d6aa8;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;text-align:center;touch-action:pan-y}
+#sm h3{margin:0;font-size:20px}#sm p{margin:0;color:#a9c1de;font-size:13px}
+#sm input{font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:2px solid #2d6aa8;background:#0b1b30;color:#fff;-webkit-user-select:text;user-select:text;width:100%;text-align:center;touch-action:manipulation}
+#sm input:focus{outline:0;border-color:#f6b21b}
+#sm .row{display:flex;gap:8px}#sm .row .btn{flex:1}
+.fr{display:flex;align-items:center;gap:10px;background:rgba(5,20,40,.5);border-radius:12px;padding:10px 12px;width:100%;cursor:pointer;border:0;color:inherit;font:inherit;text-align:left}
+.fr em{flex:1;font-style:normal;font-weight:700;min-width:0}.fr em span{display:block;color:#a9c4e6;font-size:12px;font-weight:500}
+.fr.off{opacity:.5;cursor:default}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:17px;flex:none;border:2px solid rgba(255,255,255,.25)}
+.od{width:10px;height:10px;border-radius:50%;background:#38d46a;flex:none}.od.busy{background:#f6b21b}.od.x{background:#6b778a}
+.tr{font-weight:800;color:#ffd24d;white-space:nowrap}
+.pod{display:flex;align-items:flex-end;justify-content:center;gap:6px;padding-top:6px}
+.pc{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.pc .av{width:52px;height:52px;font-size:22px}.pc.p1 .av{width:62px;height:62px;font-size:27px;border-color:#ffd24d}
+.pc b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.pc .blk{width:100%;border-radius:10px 10px 0 0;display:grid;place-items:start center;padding-top:6px;font-weight:900;font-size:26px;color:#3a2600}
+.p1 .blk{height:104px;background:linear-gradient(#ffd24d,#e0900a)}.p2 .blk{height:80px;background:linear-gradient(#eef1f5,#a9b3c2)}.p3 .blk{height:60px;background:linear-gradient(#e8b07a,#b06a2c)}
+.crown{font-size:24px;line-height:1}
+.rk{width:30px;text-align:center;font-weight:900;color:#cfe0f5}
+.item.me{outline:2px solid #ffd24d}
+.dtabs{display:flex;gap:8px}.dtabs button{flex:1;height:44px;border:0;border-radius:12px;background:#17497d;color:#cfe0f5;font:inherit;font-weight:800;font-size:17px;cursor:pointer;position:relative}
+.dtabs button.on{background:linear-gradient(#3b8cf0,#1b5fb8);color:#fff}
+.dtabs .cnt{position:absolute;right:6px;top:-7px;background:#e5445a;border-radius:10px;padding:1px 7px;font-size:12px}
+.dpre{display:flex;gap:6px;justify-content:center}
+.dpre button{width:52px;height:42px;border-radius:10px;border:2px solid #0b3a2a;background:linear-gradient(#35c47a,#1f9a5b);color:#fff;font:inherit;font-weight:900;font-size:19px;cursor:pointer;padding:0;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.dpre button.on{background:linear-gradient(#ffd24d,#f6a01b);color:#3a2600;border-color:#a56b00;transform:translateY(-2px);text-shadow:none}
+.dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dc{aspect-ratio:3/4;border-radius:12px;position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.28);background:linear-gradient(160deg,var(--cc),#10233d 92%);overflow:hidden;padding-bottom:16px}
+.dc .art{width:62%;aspect-ratio:1;border-radius:50%;background:var(--cc);display:grid;place-items:center;font-size:clamp(20px,7vw,32px);font-weight:900;text-shadow:0 2px 3px rgba(0,0,0,.6);box-shadow:inset 0 -6px 0 rgba(0,0,0,.25),0 3px 8px rgba(0,0,0,.4);border:3px solid rgba(255,255,255,.35)}
+.dc .cost{position:absolute;left:3px;top:3px;width:26px;height:30px;background:var(--elx);border:2px solid #fff;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;display:grid;place-items:center;font-weight:900;font-size:14px}
+.dc .nm{font-size:12px;font-weight:700;margin-top:5px;text-shadow:0 1px 2px #000;max-width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dc .lv{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);font-size:11px;font-weight:800;text-align:center;padding:2px 0}
+.dc.used{opacity:.4}.dc.used::after{content:'\2713';position:absolute;right:5px;top:2px;color:#38d46a;font-weight:900;font-size:18px}
+.dc.empty{background:rgba(5,20,40,.4);border-style:dashed;cursor:default}
+.dbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.elx{display:flex;align-items:center;gap:8px;background:rgba(5,20,40,.5);padding:6px 14px;border-radius:12px;font-weight:900;font-size:22px}
+.elx i{width:20px;height:24px;background:var(--elx);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;display:block;border:2px solid #fff}
 </style>
 </head>
 <body>
@@ -176,6 +214,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
     <div id="row"><div id="next"></div><div id="hand"></div></div>
   </div>
   <div id="ci" onclick="if(event.target===this)ciClose()"><div class="box"><div id="ci-head"></div><div id="ci-body"></div><div class="cib"><button id="ci-btn" class="btn" onclick="ciToggle()"></button><button class="btn" onclick="ciClose()">닫기</button></div></div></div>
+  <div id="sm" onclick="if(event.target===this&&!SM.lock)smClose()"><div class="box" id="sm-box"></div></div>
   <div id="banner"></div><div id="lack">엘릭서가 부족합니다!</div>
   <div id="res"><h1 id="rt"></h1><p id="rs"></p><div id="rb"></div></div>
   <div id="fin">
@@ -201,7 +240,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
             <div class="icons">
               <button class="ib" aria-label="프로필" onclick="showMenu('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-7 8-7s8 2.5 8 7"/></svg></button>
               <button class="ib" aria-label="공지" onclick="showMenu('news')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></button>
-              <button class="ib" aria-label="설정" onclick="showMenu('set')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+              <button class="ib" aria-label="메뉴" onclick="openMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
             </div>
             <button class="passbtn" onclick="showMenu('pass')">로얄패스<small id="h-pass"></small><span class="badge" id="h-pb"></span></button>
           </div>
@@ -244,18 +283,25 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
       </div>
 
       <div class="pg" id="pg-deck">
-        <div class="sub"><h2>덱</h2></div><div class="ptabs" id="dk-tabs"></div><p id="dk-info" style="text-align:center"></p>
-        <div class="grid" id="dk-slots"></div>
-        <p style="text-align:center">카드를 누르면 정보가 떠요 · 정보창에서 덱에 넣고 뺄 수 있어요</p><div class="grid" id="dk-all"></div>
-        <p id="dk-st" style="text-align:center"></p>
+        <div class="dtabs"><button id="dt-deck" class="on" onclick="deckTab(0)">덱</button><button id="dt-col" onclick="deckTab(1)">컬렉션<span class="cnt" id="dt-cnt"></span></button></div>
+        <div class="dpre" id="dk-tabs"></div>
+        <div class="dgrid" id="dk-slots"></div>
+        <div class="dbar" id="dk-bar"><div class="elx"><i></i><b id="dk-av">0.0</b></div><span id="dk-st" style="text-align:right;font-size:12px;color:#a9c4e6"></span></div>
+        <div id="dk-colw" style="display:none;flex-direction:column;gap:8px"><p style="text-align:center;margin:0">카드를 누르면 정보가 떠요 · 정보창에서 덱에 넣고 뺄 수 있어요</p><div class="dgrid" id="dk-all"></div></div>
       </div>
 
       <div class="pg" id="pg-social">
-        <div class="sub"><h2>소셜</h2></div>
-        <div class="panel" style="align-items:center"><span>내 친구 코드</span><div class="code" id="so-code"></div><button class="btn" onclick="copyCode()">코드 복사</button><p style="font-size:12px">친구 접속 기능(4단계)에서 쓰여요</p></div>
-        <div class="panel"><b>친구 목록</b><p>아직 친구가 없어요. 친구 추가는 4단계에서 열려요.</p></div>
-        <div class="item"><em>1대1 친선전<small>방 코드로 입장 · 4단계 예정</small></em><button class="btn" disabled>준비 중</button></div>
-        <div class="item"><em>2대2 팀전<small>팀 구성 · 5단계 예정</small></em><button class="btn" disabled>준비 중</button></div>
+        <div class="sub"><h2>소셜</h2><small id="so-cnt" style="margin-left:auto;color:#a9c4e6"></small></div>
+        <p id="so-msg" style="text-align:center;margin:0"></p>
+        <div class="sect">온라인</div><div id="so-on" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="sect">오프라인</div><div id="so-off" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <div class="pg" id="pg-rank">
+        <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>순위표</h2></div>
+        <p id="rk-msg" style="text-align:center;margin:0"></p>
+        <div class="pod" id="rk-pod"></div>
+        <div id="rk-list" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
 
       <div class="pg" id="pg-wallet">
@@ -351,7 +397,7 @@ async function boot() {
   const c = CARDS_DATA, f = CFG_DATA;
   c.forEach(x => { CARDS[x.id] = x; if (x.towerDamage) x.towerRatio = x.towerDamage / x.damage; }); CFG = f; CIDS = Object.keys(CARDS);
   if (FBON()) await authGate();
-  loadStore(); READY = 1; if (AUTH && SYNC.first) cloudDirty(); newGame(); buildHand(); resize(); addEventListener('resize', resize); showMenu('home');
+  loadStore(); READY = 1; if (AUTH && SYNC.first) cloudDirty(); if (AUTH) socStart(); newGame(); buildHand(); resize(); addEventListener('resize', resize); showMenu('home');
   let last = performance.now(), acc = 0;
   (function loop(now) {
     acc += Math.min(0.25, (now - last) / 1000); last = now;
@@ -469,9 +515,9 @@ function judge() {
   if (G.t >= 300) { const L = G.ents.filter(e => e.kind === 'tower' && e.hp > 0).sort((p, q) => p.hp - q.hp); end(L[0].team === 0 ? 1 : 0); } // 5:00 최저 체력 타워 쪽 패배
 }
 // ---------- 저장 데이터 / 메인 화면 ----------
-let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70, wake: 1, hs: 1 }, PASS = { xp: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
+let PAUSE = true, ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }, PASS = { xp: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
 const newCode = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
-const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, log: [], hist: [], owned: ['blue'], skin: 'blue', code: newCode() });
+const DEFP = () => ({ name: AUTH ? AUTH.id.slice(0, 10) : '플레이어', tr: 0, exp: 0, gold: 1000, gems: 50, w: 0, l: 0, d: 0, daily: '', evDay: '', evWins: 0, evDone: 0, log: [], hist: [], owned: ['blue'], skin: 'blue', code: newCode() });
 
 // ---------- 로그인 (Firebase REST: 아이디 → 가짜 이메일로 계정 생성, 데이터는 Firestore users/<uid>) ----------
 const FB = { apiKey: 'AIzaSyB78UUQkJZuQcdXUlUuDHR2ZI0x5sBytYk', projectId: 'clash-friends' };   // ← Firebase 웹 앱 설정의 apiKey, projectId 를 여기에 넣으면 로그인이 켜져요 (비워 두면 이 기기에만 저장)
@@ -617,8 +663,9 @@ function refreshTop() {
 }
 
 const DRAW = { home: () => drawHome(), shop: () => drawShop(), deck: () => { deck = [...DK.list[DK.cur]]; drawDeck(); }, social: () => drawSocial(), wallet: () => drawWallet(),
-  pass: () => drawPass(), mode: () => drawMode(), set: () => drawSet(), stats: () => drawStats(), profile: () => drawProfile() };
+  pass: () => drawPass(), mode: () => drawMode(), set: () => drawSet(), stats: () => drawStats(), profile: () => drawProfile(), rank: () => drawRank() };
 function showMenu(p) {
+  CURP = p; if (p !== 'social') clearInterval(SOC.t);
   $('menu').style.display = 'flex';
   document.querySelectorAll('.pg').forEach(e => e.style.display = e.id === 'pg-' + p ? 'flex' : 'none');
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.p === p));
@@ -628,7 +675,7 @@ function showMenu(p) {
 
 function drawHome() {
   evSync();
-  $('h-name').textContent = P.name; $('h-title').textContent = title();
+  $('h-name').textContent = P.name; $('h-title').textContent = title() + ' · 🏆 ' + (P.tr | 0);
   const t = Math.floor(PASS.xp / 100), n = REW.reduce((s, r, i) => s + (i < t && !PASS.claimed.includes(i) ? 1 : 0), 0);
   $('h-pass').textContent = '티어 ' + t + '/10'; setBadge('h-pb', n);
   const can = P.daily !== today(); $('h-daily').textContent = can ? '골드 +300' : '내일 다시'; setBadge('h-db', can ? '!' : 0);
@@ -659,14 +706,18 @@ function buySkin(id) {
 function equip(id) { P.skin = id; saveP(); applySkin(); drawShop(); toast('타워 색상을 바꿨어요'); }
 
 // 덱
-const mc = (i, cls) => { const c = CARDS[i]; return `<div class="mc ${cls}" onclick="cardInfo('${i}')" style="border-color:${c.color}"><b>${c.cost}</b><i>${c.initial}</i><small>${c.name}</small></div>`; };
+const dcard = (id, cls) => { const c = CARDS[id]; return `<div class="dc ${cls}" onclick="cardInfo('${id}')" style="--cc:${c.color}"><b class="cost">${c.cost}</b><span class="art">${c.initial}</span><span class="nm">${c.name}</span><span class="lv">레벨 ${CFG.playerLevel}</span></div>`; };
+let DTAB = 0;
+function deckTab(i) { DTAB = i; drawDeck(); }
 function drawDeck() {
-  $('dk-tabs').innerHTML = [0, 1, 2, 3, 4].map(i => `<button class="ptab${i === DK.cur ? ' on' : ''}" onclick="pickDeck(${i})">${i + 1}</button>`).join('');
+  $('dt-deck').classList.toggle('on', DTAB === 0); $('dt-col').classList.toggle('on', DTAB === 1); $('dt-cnt').textContent = Object.keys(CARDS).length;
+  $('dk-colw').style.display = DTAB === 1 ? 'flex' : 'none';
+  $('dk-tabs').innerHTML = [0, 1, 2, 3, 4].map(i => `<button class="${i === DK.cur ? 'on' : ''}" onclick="pickDeck(${i})">${i + 1}</button>`).join('');
   const av = deck.reduce((s, i) => s + CARDS[i].cost, 0) / (deck.length || 1);
-  $('dk-slots').innerHTML = deck.map(i => mc(i, '')).join('') + '<div class="mc empty"></div>'.repeat(8 - deck.length);
-  $('dk-info').textContent = deck.length + '/8 · 평균 엘릭서 ' + av.toFixed(1);
-  $('dk-all').innerHTML = Object.keys(CARDS).map(i => mc(i, deck.includes(i) ? 'used' : '')).join('');
-  $('dk-st').textContent = deck.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장됨' : '8장을 채우면 자동 저장돼요';
+  $('dk-slots').innerHTML = deck.map(i => dcard(i, '')).join('') + '<div class="dc empty"></div>'.repeat(8 - deck.length);
+  $('dk-av').textContent = av.toFixed(1);
+  $('dk-all').innerHTML = Object.keys(CARDS).map(i => dcard(i, deck.includes(i) ? 'used' : '')).join('');
+  $('dk-st').textContent = deck.length === 8 ? '덱 ' + (DK.cur + 1) + ' 사용 중 · 자동 저장' : deck.length + '/8 · 컬렉션에서 카드를 골라 8장을 채워 주세요';
 }
 function saveDecks() { CFG.playerDeck = [...DK.list[DK.cur]]; LS.set('cf_decks', DK); }
 function pickDeck(i) {
@@ -707,8 +758,6 @@ function tgl(i) {
 }
 
 // 소셜
-function drawSocial() { $('so-code').textContent = P.code; }
-function copyCode() { try { navigator.clipboard.writeText(P.code).then(() => toast('코드를 복사했어요'), () => toast('내 코드: ' + P.code)); } catch (e) { toast('내 코드: ' + P.code); } }
 
 // 재화
 const when = at => new Date(at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -735,18 +784,24 @@ function claim(i) {
 }
 
 // 설정 / 전적 / 프로필
-function setST(k, v) { ST[k] = v; LS.set('cf_st', ST); if (k === 'hs') resize(); if (k === 'wake') wakeUpdate(); }
+function setST(k, v) { ST[k] = v; LS.set('cf_st', ST); if (k === 'hs') resize(); if (k === 'wake') wakeUpdate(); if (k === 'mus') bgmApply(); }
 function drawSet() {
   const row = (k, n) => `<label class="item"><em>${n}</em><input type="checkbox" ${ST[k] ? 'checked' : ''} onchange="setST('${k}',this.checked?1:0)"></label>`;
-  $('st-list').innerHTML = (AUTH ? `<div class="item"><em>계정 · ${AUTH.id.replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';')}<small id="sy">${SYNCT[SYNC.st] || ''}</small></em><button class="btn" style="padding:7px 12px;font-size:13px" onclick="logout(this)">로그아웃</button></div>` : '') + row('grid', '소환 격자 표시') + row('banner', '엘릭서 배율 알림') + row('lift', '터치 시 소환 위치 위로 띄우기') + row('wake', '플레이 중 화면 꺼짐 방지') +
-    `<div class="item"><em>손패 크기</em><span style="display:flex;gap:6px">${['작게', '보통', '크게'].map((n, i) => `<button class="btn${(ST.hs ?? 1) === i ? ' gold' : ''}" style="padding:7px 12px;font-size:13px" onclick="setST('hs',${i});drawSet()">${n}</button>`).join('')}</span></div>` +
-    `<div class="item"><em>전체화면<small>패드에서 주소창을 숨겨요</small></em><button class="btn" style="padding:7px 12px;font-size:13px" onclick="toggleFS()">전환</button></div>` +
-    `<label class="item"><em>효과음 크기<small>0이면 소리가 꺼져요</small></em><input type="range" min="0" max="100" value="${ST.vol}" oninput="setST('vol',+this.value)"></label>`;
+  const sm = 'padding:7px 12px;font-size:13px';
+  $('st-list').innerHTML = (AUTH ? `<div class="item"><em>계정 · ${esc(AUTH.id)}<small id="sy">${SYNCT[SYNC.st] || ''}</small></em></div>` : '') +
+    `<div class="item"><em>이름<small>${esc(P.name)}</small></em><button class="btn" style="${sm}" onclick="nameModal()">변경</button></div>` +
+    `<label class="item"><em>음악</em><input type="range" min="0" max="100" value="${ST.mus ?? 40}" oninput="setST('mus',+this.value)"></label>` +
+    `<label class="item"><em>효과음</em><input type="range" min="0" max="100" value="${ST.vol}" oninput="setST('vol',+this.value)"></label>` +
+    row('grid', '소환 격자 표시') + row('banner', '엘릭서 배율 알림') + row('lift', '터치 시 소환 위치 위로 띄우기') + row('wake', '플레이 중 화면 꺼짐 방지') +
+    `<div class="item"><em>손패 크기</em><span style="display:flex;gap:6px">${['작게', '보통', '크게'].map((n, i) => `<button class="btn${(ST.hs ?? 1) === i ? ' gold' : ''}" style="${sm}" onclick="setST('hs',${i});drawSet()">${n}</button>`).join('')}</span></div>` +
+    `<div class="item"><em>전체화면<small>패드에서 주소창을 숨겨요</small></em><button class="btn" style="${sm}" onclick="toggleFS()">전환</button></div>` +
+    (AUTH ? `<div class="item"><em>로그아웃</em><button class="btn" style="${sm}" onclick="logout(this)">로그아웃</button></div>` +
+      `<div class="item"><em>계정 삭제<small>되돌릴 수 없어요</small></em><button class="btn" style="${sm};background:#9b2c3a;box-shadow:0 3px 0 #5e1a23" onclick="delModal()">삭제</button></div>` : '');
 }
 function resetAll(btn) {
   if (!rsArm) { rsArm = 1; btn.textContent = '한 번 더 누르면 모두 초기화돼요'; setTimeout(() => { rsArm = 0; btn.textContent = '저장 데이터 초기화'; }, 3000); return; }
   rsArm = 0; try { ['cf_st', 'cf_pass', 'cf_deck', 'cf_decks', 'cf_prof', 'cf_diff'].forEach(k => localStorage.removeItem(nk(k))); } catch (e) {}
-  ST = { grid: 1, banner: 1, lift: 1, vol: 70, wake: 1, hs: 1 }; PASS = { xp: 0, claimed: [] }; P = DEFP(); DIFF = 1; saveP(); loadDecks(); applySkin(); refreshTop(); drawSet(); btn.textContent = '저장 데이터 초기화'; toast('초기화했어요');
+  ST = { grid: 1, banner: 1, lift: 1, vol: 70, mus: 40, wake: 1, hs: 1 }; PASS = { xp: 0, claimed: [] }; P = DEFP(); DIFF = 1; saveP(); loadDecks(); applySkin(); refreshTop(); drawSet(); btn.textContent = '저장 데이터 초기화'; toast('초기화했어요');
 }
 function drawStats() {
   $('s-w').textContent = P.w; $('s-l').textContent = P.l; $('s-d').textContent = P.d;
@@ -774,19 +829,24 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fin').className = w === 0 ? 'win' : w === 1 ? 'lose' : 'draw';
   $('fn-title').textContent = forfeit ? '기권패' : w === 0 ? '승리!' : w === 1 ? '패배' : '무승부';
   $('fn-ec').innerHTML = crownRow(crowns(1), '#e5445a'); $('fn-pc').innerHTML = crownRow(crowns(0), '#3b82f6');
-  const nt = G.net; $('fn-es').textContent = nt ? '1대1 친구 대전' : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = title();
+  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : '1대1 친선전') : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = title();
   $('fn-rw').innerHTML = rw.length ? rw.map(r => `<div class="rb2">${r.i}<span>${r.t}</span></div>`).join('') : '<p>받은 보상이 없어요</p>';
-  $('fin').style.display = 'flex'; $('fin').querySelectorAll('.pt').forEach(e => e.remove()); if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir');
+  $('fin').style.display = 'flex'; $('fin').querySelectorAll('.pt').forEach(e => e.remove()); if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); pubSoon();
 }
+function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
+  if (!(G.net && G.net.mode === 'trophy')) return null;
+  const d = w === 0 ? 30 : w === 1 ? -20 : 0, old = P.tr | 0, nv = Math.max(0, old + d); P.tr = nv; saveP(); return nv - old;
+}
+const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
 function end(w) {
   G.res = w; evSync(); const g = Math.round((w === 0 ? 100 : w === 1 ? 30 : 50) * (G.net ? 1 : AIP[DIFF].gold)); let m = 0, ex = '';
   if (w === 0) { P.w++; P.evWins++; if (P.evWins >= 3 && !P.evDone) { P.evDone = 1; m = 20; ex = ' · 이벤트 보석 +20'; } } else if (w === 1) P.l++; else P.d++;
   P.exp += w === 0 ? 30 : 10; P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
-  earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); addXp(w === 0 ? 30 : 10);
+  const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); addXp(w === 0 ? 30 : 10);
   const rw = [{ i: '<span class="dot g"></span>', t: '+' + fmt(g) }]; if (m) rw.push({ i: '<span class="dot m"></span>', t: '+' + m });
-  rw.push({ i: '<i>★</i>', t: '+' + (w === 0 ? 30 : 10) + ' XP' }); showFinal(w, rw, false);
+  rw.push({ i: '<i>★</i>', t: '+' + (w === 0 ? 30 : 10) + ' XP' }, ...trRw(td)); showFinal(w, rw, false);
 }
-function restart() { pvLeave(); newGame(); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false; }
+function restart() { pubSoon(); pvLeave(); newGame(); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false; }
 function askForfeit() {
   if (G.res !== undefined || PAUSE) return;
   if (!G.net) PAUSE = true;   // 온라인 대전은 멈출 수 없음
@@ -796,10 +856,10 @@ function resume() { $('res').style.display = 'none'; PAUSE = false; }
 function forfeit() {
   if (G.res !== undefined) return;
   G.res = 1; evSync(); P.l++; P.hist.unshift({ r: 1, c: crowns(0) + ':' + crowns(1), at: Date.now(), f: 1 }); P.hist.length = Math.min(P.hist.length, 10); saveP();
-  showFinal(1, [], true);
+  showFinal(1, trRw(trophyApply(1)), true);
   const n = G.net; if (n && n.role === 'guest') { const f = () => n.room.emit('ff', {}).catch(() => {}); f(); setTimeout(f, 300); setTimeout(f, 800); }
 }
-function menu() { $('res').style.display = 'none'; $('fin').style.display = 'none'; PAUSE = true; pvLeave(); showMenu('home'); }
+function menu() { pubSoon(); $('res').style.display = 'none'; $('fin').style.display = 'none'; PAUSE = true; pvLeave(); showMenu('home'); }
 
 // ---------- 3단계: AI 상대 ----------
 const AIP = [
@@ -935,7 +995,7 @@ function pvUI() {
   sub.textContent = !n ? '방을 만들고 코드를 친구에게 알려주세요' : n.state === 'wait' ? '방 코드 ' + n.code + ' · 친구를 기다리는 중…' : n.state === 'join' ? '방 ' + n.code + ' 입장 중…' : '대전 중';
   b.textContent = n && n.role === 'host' ? '취소' : '방 만들기'; b.disabled = !!n && n.role === 'guest';
 }
-async function pvHost() {
+async function pvHost(mode) {
   if (NET) { pvLeave(); pvUI(); return; }
   toast('방을 만드는 중…');
   const R = await pvRoom(); if (!R) { toast('온라인 연결을 쓸 수 없어요 · 초대받은 사람만 이 링크로 연결돼요'); return; }
@@ -945,29 +1005,30 @@ async function pvHost() {
     try { room = await R.join(code.toLowerCase(), 'host'); } catch (e) { room = null; }
   }
   if (!room) { toast('방을 만들지 못했어요. 잠시 뒤 다시 해 주세요'); return; }
-  const n = NET = { role: 'host', code, room, state: 'wait', unsubs: [], lastPing: Date.now() };
+  const n = NET = { role: 'host', code, room, state: 'wait', unsubs: [], lastPing: Date.now(), mode: mode === 'trophy' ? 'trophy' : 'friendly' };
   n.unsubs.push(room.on('hello', m => hostHello(n, m)), room.on('play', m => hostPlay(n, m)),
     room.on('ff', m => { if (!m.isMe && G.net === n && G.res === undefined) end(0); }), room.on('ping', m => { if (!m.isMe) n.lastPing = Date.now(); }), room.on('peerleft', () => { n.lastPing = 0; }));
   pvUI(); try { navigator.clipboard.writeText(code); } catch (e) {}
+  return code;
 }
 function hostHello(n, m) {
   if (m.isMe || NET !== n) return; const d = m.data || {};
-  if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
+  if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
   const deck = Array.isArray(d.deck) ? d.deck.map(i => CIDS[i]) : [];
   if (deck.length !== 8 || deck.some(x => !x) || new Set(deck).size !== 8) return;
   n.tok = String(d.tok); n.opp = String(d.name || '친구').slice(0, 12); n.oppDeck = deck; n.state = 'play'; n.lastPing = Date.now();
-  n.room.emit('start', { tok: n.tok, host: P.name }).catch(() => {});
+  n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode }).catch(() => {});
   pvBegin(n);
 }
-async function pvJoin() {
+async function pvJoin(codeArg) {
   if (NET) return;
-  const code = $('pv-code').value.trim().toUpperCase(); if (code.length !== 5) { toast('방 코드 5자리를 입력해 주세요'); return; }
+  const code = String(codeArg || $('pv-code').value).trim().toUpperCase(); if (code.length !== 5) { toast('방 코드 5자리를 입력해 주세요'); return; }
   toast('입장 중…');
   const R = await pvRoom(); if (!R) { toast('온라인 연결을 쓸 수 없어요 · 초대받은 사람만 이 링크로 연결돼요'); return; }
   let room; try { room = await R.join(code.toLowerCase(), 'guest'); } catch (e) { toast('방을 찾지 못했어요. 코드를 다시 확인해 주세요'); return; }
   const n = NET = { role: 'guest', code, room, state: 'join', unsubs: [], tok: Math.random().toString(36).slice(2, 10), lastSnap: Date.now() };
   n.unsubs.push(
-    room.on('start', m => { const d = m.data || {}; if (m.isMe || n.state !== 'join' || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); clearTimeout(n.t1); pvBegin(n); }),
+    room.on('start', m => { const d = m.data || {}; if (m.isMe || n.state !== 'join' || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); n.mode = d.mode === 'trophy' ? 'trophy' : 'friendly'; clearTimeout(n.t1); pvBegin(n); }),
     room.on('full', m => { const d = m.data || {}; if (m.isMe || n.state !== 'join' || !(d.any || d.tok === n.tok)) return; toast('이미 가득 찬 방이에요'); pvLeave(); pvUI(); }),
     room.on('snap', m => { if (!m.isMe) onSnap(n, m.data); }), room.on('peerleft', () => { n.lastSnap = 0; }));
   let tries = 0;
@@ -979,7 +1040,7 @@ async function pvJoin() {
   hello(); pvUI();
 }
 function pvBegin(n) {
-  newGame(n); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false;
+  pubSoon(); newGame(n); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false;
   n.dog = setInterval(() => watchdog(n), 1000);
   if (n.role === 'host') n.timer = setInterval(() => { if (G.net === n && G.res !== undefined) sendSnap(n); }, 100);
   else n.ping = setInterval(() => n.room.emit('ping', {}).catch(() => {}), 2000);
@@ -1122,6 +1183,171 @@ function hurt(t, d) { t.hp -= d; if (t.tk === 'king') t.active = true; fxDamage(
 
 // ---------- 6단계: 효과음(WebAudio 합성, 파일 없음) · 타격 이펙트 ----------
 let AC = null; const SFXT = {};
+
+// ---------- 공용 모달 / 이름 / 계정 삭제 ----------
+let SM = { lock: 0 }, CURP = 'home';
+const esc = x => String(x).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+const smOpen = h => { $('sm-box').innerHTML = h; $('sm').style.display = 'flex'; };
+const smClose = () => { SM.lock = 0; $('sm').style.display = 'none'; };
+const AVC = ['#3b82f6', '#10b981', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
+const avH = (name, key) => { let h = 0; for (const c of String(key || name)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return `<span class="av" style="background:${AVC[h % 8]}">${esc(Array.from(String(name))[0] || '?')}</span>`; };
+const ago = t => { const m = Math.floor((Date.now() - t) / 60000); return !t ? '오래전 접속' : m < 1 ? '방금 전 접속' : m < 60 ? m + '분 전 접속' : m < 1440 ? Math.floor(m / 60) + '시간 전 접속' : Math.floor(m / 1440) + '일 전 접속'; };
+function openMenu() {
+  smOpen(`<h3>메뉴</h3><button class="btn" onclick="smClose();showMenu('stats')">전투 기록</button><button class="btn" onclick="smClose();showMenu('rank')">순위표</button><button class="btn" onclick="smClose();showMenu('set')">설정</button><button class="btn" onclick="smClose()">닫기</button>`);
+}
+function nameModal() {
+  smOpen(`<h3>이름 변경</h3><input id="nm-in" maxlength="10" value="${esc(P.name)}" autocomplete="off"><div class="row"><button class="btn" onclick="smClose()">취소</button><button class="btn gold" onclick="nameSave()">저장</button></div>`);
+}
+function nameSave() {
+  const v = $('nm-in').value.trim(); if (!v) return toast('이름을 입력해 주세요');
+  P.name = v; saveP(); pubSoon(); smClose(); drawSet(); toast('이름을 바꿨어요');
+}
+function delModal() {
+  smOpen(`<h3>계정 삭제</h3><p>전적·골드·보석·덱이 모두 사라지고<br>되돌릴 수 없어요. 계속하려면 비밀번호를 입력해 주세요.</p><input id="dl-pw" type="password" placeholder="비밀번호" autocomplete="current-password"><div id="dl-msg" style="color:#ff8a8a;font-weight:700;min-height:18px;font-size:13px"></div><div class="row"><button class="btn" onclick="smClose()">취소</button><button class="btn" id="dl-go" style="background:#b02a3a;box-shadow:0 3px 0 #5e1a23" onclick="delGo()">삭제</button></div>`);
+}
+async function delGo() {
+  const pw = $('dl-pw').value; if (!pw) { $('dl-msg').textContent = '비밀번호를 입력해 주세요'; return; }
+  $('dl-go').disabled = true; const uid = AUTH.uid, id = AUTH.id;
+  try {
+    await fbAuth('signInWithPassword', id, pw);                  // 비밀번호 확인(재로그인)
+    clearTimeout(SYNC.t); SYNC.dirty = 0; READY = 0;
+    for (const c of ['users', 'profiles']) await jf(fsDoc(c, uid), { method: 'DELETE', headers: hdr() });
+    await jf(IDURL + 'delete?key=' + FB.apiKey, { method: 'POST', headers: JH, body: JSON.stringify({ idToken: AUTH.idToken }) });
+    try { Object.keys(localStorage).filter(k => k.endsWith(':' + uid) || k === 'cf_auth').forEach(k => localStorage.removeItem(k)); } catch (e) {}
+    location.reload();
+  } catch (e) { READY = 1; if (!AUTH) AUTH = { uid, id }; $('dl-msg').textContent = errKo(e); $('dl-go').disabled = false; }
+}
+
+// ---------- 소셜: 공개 프로필 · 가입자 전체가 친구 · 접속 표시 · 대전 신청 ----------
+const fsRoot = () => 'https://firestore.googleapis.com/v1/projects/' + FB.projectId + '/databases/(default)/documents';
+const fsDoc = (col, id) => fsRoot() + '/' + col + '/' + id;
+const hdr = () => ({ Authorization: 'Bearer ' + AUTH.idToken });
+let PUBX = { to: '', dc: '', inv: null }, FR = [], SOC = { t: 0, w: 0, busy: 0 }, INVS = { seen: {}, cur: null };
+const isOn = o => Date.now() - (o.seen || 0) < 75000;
+const inPlay = () => $('menu').style.display === 'none';
+async function pubPush(off) {
+  if (!AUTH || !READY) return; await tokenOk();
+  const d = { n: P.name, id: AUTH.id, tr: P.tr | 0, w: P.w, l: P.l, d: P.d, seen: off ? 0 : Date.now(), st: inPlay() ? 'play' : 'idle', inv: PUBX.to ? PUBX.inv : null };
+  await jf(fsDoc('profiles', AUTH.uid) + '?updateMask.fieldPaths=d&updateMask.fieldPaths=to&updateMask.fieldPaths=dc', { method: 'PATCH', keepalive: true, headers: { ...JH, ...hdr() },
+    body: JSON.stringify({ fields: { d: { stringValue: JSON.stringify(d) }, to: { stringValue: PUBX.to || '' }, dc: { stringValue: PUBX.dc || '' } } }) });
+}
+let pubT = 0;
+function pubSoon() { if (!AUTH) return; clearTimeout(pubT); pubT = setTimeout(() => pubPush().catch(() => {}), 600); }
+async function profList() {
+  await tokenOk(); const out = []; let tok = '';
+  do {
+    const j = await jf(fsRoot() + '/profiles?pageSize=300' + (tok ? '&pageToken=' + encodeURIComponent(tok) : ''), { headers: hdr() });
+    for (const d of j.documents || []) { try { const o = JSON.parse(d.fields.d.stringValue); o.uid = d.name.split('/').pop(); o.to = (d.fields.to || {}).stringValue || ''; o.dc = (d.fields.dc || {}).stringValue || ''; out.push(o); } catch (e) {} }
+    tok = j.nextPageToken || '';
+  } while (tok);
+  return out;
+}
+function socStart() {
+  pubPush().catch(() => {}); setInterval(() => { if (!document.hidden) pubPush().catch(() => {}); }, 30000);
+  document.addEventListener('visibilitychange', () => { pubPush(document.hidden).catch(() => {}); });
+  setInterval(invPoll, 4000);
+}
+function drawSocial() {
+  clearInterval(SOC.t);
+  if (!AUTH) { $('so-msg').textContent = '로그인하면 친구 기능을 쓸 수 있어요'; $('so-on').innerHTML = $('so-off').innerHTML = ''; $('so-cnt').textContent = ''; return; }
+  renderFriends(); socLoad(); SOC.t = setInterval(() => { if (CURP === 'social' && !document.hidden) socLoad(); }, 10000);
+}
+async function socLoad() {
+  if (SOC.busy) return; SOC.busy = 1;
+  try { FR = (await profList()).filter(o => o.uid !== AUTH.uid); $('so-msg').textContent = ''; renderFriends(); }
+  catch (e) { $('so-msg').textContent = e.net ? '인터넷 연결을 확인해 주세요' : '친구 목록을 불러오지 못했어요'; }
+  SOC.busy = 0;
+}
+function renderFriends() {
+  const on = FR.filter(isOn).sort((a, b) => (b.tr | 0) - (a.tr | 0)), off = FR.filter(o => !isOn(o)).sort((a, b) => (b.seen || 0) - (a.seen || 0));
+  const row = (o, live) => `<button class="fr${live ? '' : ' off'}" ${live ? `onclick="frMenu('${o.uid}')"` : ''}>${avH(o.n, o.uid)}<em>${esc(o.n)}<span>${live ? (o.st === 'play' ? '대전 중' : '온라인') : ago(o.seen)}</span></em><span class="tr">🏆 ${o.tr | 0}</span><i class="od ${live ? (o.st === 'play' ? 'busy' : '') : 'x'}"></i></button>`;
+  $('so-cnt').textContent = '온라인 ' + on.length + ' / 전체 ' + FR.length;
+  $('so-on').innerHTML = on.length ? on.map(o => row(o, 1)).join('') : '<p style="margin:0">지금 접속한 친구가 없어요</p>';
+  $('so-off').innerHTML = off.length ? off.map(o => row(o, 0)).join('') : '<p style="margin:0">' + (FR.length ? '모두 접속 중이에요!' : '아직 다른 가입자가 없어요. 친구에게 링크를 보내 보세요') + '</p>';
+}
+function frMenu(uid) {
+  const o = FR.find(x => x.uid === uid); if (!o) return; const can = isOn(o) && o.st !== 'play' && !NET;
+  smOpen(`<div style="display:flex;justify-content:center">${avH(o.n, o.uid)}</div><h3>${esc(o.n)}</h3><p>🏆 ${o.tr | 0} · ${o.w | 0}승 ${o.l | 0}패 ${o.d | 0}무</p>${can ? '' : `<p style="color:#ffb4b4">${o.st === 'play' ? '지금 대전 중이에요' : NET ? '이미 방이 열려 있어요' : '오프라인이에요'}</p>`}
+    <button class="btn gold" ${can ? '' : 'disabled'} onclick="challenge('${uid}','friendly')">친선전<small style="display:block;font-weight:500;font-size:11px">트로피 변화 없음</small></button>
+    <button class="btn" ${can ? '' : 'disabled'} onclick="challenge('${uid}','trophy')">트로피전<small style="display:block;font-weight:500;font-size:11px">승리 +30 · 패배 -20</small></button>
+    <button class="btn" onclick="smClose()">닫기</button>`);
+}
+async function challenge(uid, type) {
+  const o = FR.find(x => x.uid === uid); if (!o || NET) return; smClose();
+  const code = await pvHost(type); if (!code) return;
+  const at = Date.now(); PUBX.to = uid; PUBX.inv = { code, type, at, from: AUTH.uid };
+  try { await pubPush(); } catch (e) { cancelChallenge(1); toast('신청을 보내지 못했어요'); return; }
+  SM.lock = 1; smOpen(`<h3>${esc(o.n)}님에게 신청 중…</h3><p>${type === 'trophy' ? '트로피전' : '친선전'} · 수락을 기다려요 (45초)</p><button class="btn" onclick="cancelChallenge(1)">취소</button>`);
+  clearInterval(SOC.w); const t0 = Date.now();
+  SOC.w = setInterval(async () => {
+    if (!NET || NET.role !== 'host') return stopWait();
+    if (NET.state === 'play') return stopWait();
+    if (Date.now() - t0 > 45000) { cancelChallenge(1); toast('상대가 응답하지 않았어요'); return; }
+    try { await tokenOk(); const j = await jf(fsDoc('profiles', uid), { headers: hdr() }); if (((j.fields.dc || {}).stringValue) === AUTH.uid + ':' + at) { cancelChallenge(1); toast(o.n + '님이 거절했어요'); } } catch (e) {}
+  }, 2500);
+}
+function stopWait() { clearInterval(SOC.w); smClose(); PUBX.to = ''; PUBX.inv = null; pubPush().catch(() => {}); }
+function cancelChallenge(leave) { stopWait(); if (leave && NET && NET.state === 'wait') { pvLeave(); pvUI(); } }
+async function invPoll() {
+  if (!AUTH || !READY || document.hidden || NET || inPlay() || SM.lock) return;
+  try {
+    await tokenOk();
+    const r = await jf(fsRoot() + ':runQuery', { method: 'POST', headers: { ...JH, ...hdr() }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'profiles' }], where: { fieldFilter: { field: { fieldPath: 'to' }, op: 'EQUAL', value: { stringValue: AUTH.uid } } }, limit: 5 } }) });
+    const now = Date.now(); let best = null;
+    for (const x of r) { const d = x.document; if (!d) continue; const o = JSON.parse(d.fields.d.stringValue), v = o.inv, from = d.name.split('/').pop();
+      if (!v || v.from !== from || now - v.at > 45000 || INVS.seen[v.from + ':' + v.at] || !/^[A-Z0-9]{5}$/.test(String(v.code))) continue; best = { ...v, n: o.n }; }
+    if (best && !SM.lock && !NET) showInvite(best);
+  } catch (e) {}
+}
+function showInvite(v) {
+  INVS.cur = v; SM.lock = 1; sfx('elixir');
+  smOpen(`<h3>${esc(v.n)}님의 대전 신청</h3><p>${v.type === 'trophy' ? '트로피전 · 승리 +30 / 패배 -20' : '친선전 · 트로피 변화 없음'}</p><div class="row"><button class="btn" onclick="invNo()">거절</button><button class="btn gold" onclick="invYes()">수락</button></div>`);
+  setTimeout(() => { if (INVS.cur === v) { INVS.seen[v.from + ':' + v.at] = 1; INVS.cur = null; smClose(); } }, Math.max(1000, v.at + 45000 - Date.now()));
+}
+function invYes() { const v = INVS.cur; if (!v) return smClose(); INVS.seen[v.from + ':' + v.at] = 1; INVS.cur = null; smClose(); pvJoin(v.code); }
+function invNo() { const v = INVS.cur; if (v) { INVS.seen[v.from + ':' + v.at] = 1; PUBX.dc = v.from + ':' + v.at; pubPush().catch(() => {}); } INVS.cur = null; smClose(); }
+
+// ---------- 순위표 ----------
+async function drawRank() {
+  $('rk-pod').innerHTML = $('rk-list').innerHTML = '';
+  if (!AUTH) { $('rk-msg').textContent = '로그인하면 순위표를 볼 수 있어요'; return; }
+  $('rk-msg').textContent = '불러오는 중…';
+  try {
+    const L = (await profList()).map(o => o.uid === AUTH.uid ? { ...o, n: P.name, tr: P.tr | 0, w: P.w } : o);
+    if (!L.some(o => o.uid === AUTH.uid)) L.push({ uid: AUTH.uid, n: P.name, tr: P.tr | 0, w: P.w });
+    L.sort((a, b) => (b.tr | 0) - (a.tr | 0) || (b.w | 0) - (a.w | 0) || String(a.n).localeCompare(String(b.n)));
+    const me = L.findIndex(o => o.uid === AUTH.uid) + 1; $('rk-msg').textContent = '내 순위 ' + me + '위 · 전체 ' + L.length + '명';
+    $('rk-pod').innerHTML = [1, 0, 2].map(i => { const o = L[i]; return o ? `<div class="pc p${i + 1}">${i === 0 ? '<span class="crown">👑</span>' : ''}${avH(o.n, o.uid)}<b>${esc(o.n)}</b><span class="tr">🏆 ${o.tr | 0}</span><div class="blk">${i + 1}</div></div>` : `<div class="pc p${i + 1}"><div class="blk">${i + 1}</div></div>`; }).join('');
+    $('rk-list').innerHTML = L.slice(3, 100).map((o, k) => `<div class="item${o.uid === AUTH.uid ? ' me' : ''}"><span class="rk">${k + 4}</span>${avH(o.n, o.uid)}<em>${esc(o.n)}</em><span class="tr">🏆 ${o.tr | 0}</span></div>`).join('');
+  } catch (e) { $('rk-msg').textContent = e.net ? '인터넷 연결을 확인해 주세요' : '순위표를 불러오지 못했어요'; }
+}
+
+// ---------- 배경음악 (직접 만든 간단한 루프) ----------
+const BGM = { on: 0, g: null, t: 0, next: 0, step: 0 };
+const CHORDS = [[220, 261.63, 329.63], [174.61, 220, 261.63], [261.63, 329.63, 392], [196, 246.94, 293.66]];
+const bgmGain = () => (ST.mus ?? 40) / 100 * 0.22 * (inPlay() ? 0.5 : 1);
+function bgmNote(f, t, d, type, g) {
+  const a = AC, o = a.createOscillator(), v = a.createGain(); o.type = type; o.frequency.value = f;
+  v.gain.setValueAtTime(0.0001, t); v.gain.linearRampToValueAtTime(g, t + 0.03); v.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(v); v.connect(BGM.g); o.start(t); o.stop(t + d + 0.05);
+}
+function bgmTick() {
+  if (!AC || !BGM.on) return; BGM.g.gain.setTargetAtTime(bgmGain(), AC.currentTime, 0.15);
+  const sp = 60 / 92 / 2;
+  while (BGM.next < AC.currentTime + 0.5) {
+    const n = BGM.step++, ch = CHORDS[(n >> 3) & 3], k = n & 7, t = BGM.next;
+    if (k === 0 || k === 4) bgmNote(ch[0] / 2, t, sp * 3.6, 'triangle', 0.6);
+    bgmNote(ch[[0, 1, 2, 1, 0, 1, 2, 1][k]] * 2, t, sp * 1.8, 'sine', 0.3);
+    if (k === 0) { bgmNote(ch[1], t, sp * 7.5, 'sine', 0.15); bgmNote(ch[2], t, sp * 7.5, 'sine', 0.15); }
+    BGM.next += sp;
+  }
+}
+function bgmApply() {
+  const want = (ST.mus ?? 40) > 0;
+  if (want && !BGM.on) { const a = audio(); if (!a) return; BGM.g = a.createGain(); BGM.g.gain.value = bgmGain(); BGM.g.connect(a.destination); BGM.on = 1; BGM.next = a.currentTime + 0.1; BGM.step = 0; BGM.t = setInterval(bgmTick, 150); }
+  else if (!want && BGM.on) { BGM.on = 0; clearInterval(BGM.t); try { BGM.g.disconnect(); } catch (e) {} }
+}
+addEventListener('pointerdown', bgmApply);
+
 function audio() {
   if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
   if (AC.state === 'suspended') AC.resume(); return AC;
