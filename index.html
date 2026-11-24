@@ -250,9 +250,10 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .card .tg{position:absolute;right:2px;top:-7px;font-size:10px;font-style:normal;font-weight:800;padding:1px 6px;border-radius:9px;background:#7b3fd1;color:#fff;white-space:nowrap;z-index:1}
 .card.hero .tg{background:#c99a14;color:#2b1f00}.card .tg.rd{background:#d9b3ff;color:#2a0a52}
 #bottom{position:relative}
-#hab{position:absolute;left:50%;transform:translateX(-50%);top:-46px;z-index:5;padding:9px 16px;border-radius:22px;border:2px solid #fff;background:linear-gradient(#ffd24d,#d9a21a);color:#2b1f00;font-weight:900;font-size:14px;box-shadow:0 3px 0 #7a5a05,0 4px 10px rgba(0,0,0,.5);touch-action:manipulation}
-#hab.off{filter:grayscale(.7) brightness(.8)}
-#app.land #hab{position:static;transform:none;margin:0 0 6px;width:100%}
+#habs{position:absolute;left:50%;transform:translateX(-50%);top:-46px;z-index:5;display:flex;gap:6px;justify-content:center;width:max-content;max-width:100%}
+#habs .hab{padding:9px 12px;border-radius:22px;border:2px solid #fff;background:linear-gradient(#ffd24d,#d9a21a);color:#2b1f00;font-weight:900;font-size:14px;box-shadow:0 3px 0 #7a5a05,0 4px 10px rgba(0,0,0,.5);touch-action:manipulation}
+#habs .hab.off{filter:grayscale(.7) brightness(.8)}
+#app.land #habs{position:static;transform:none;margin:0 0 6px;width:100%;flex-direction:column}
 .dc.sl-evo{border-color:rgba(195,139,255,.6)}.dc.sl-hero{border-color:rgba(255,210,77,.55)}
 .dc.empty.sl-evo{border:2px dashed #c38bff;color:#dcb8ff}.dc.empty.sl-hero{border:2px dashed #ffd24d;color:#ffd24d}
 .dc.empty{font-size:12px;font-weight:800;text-align:center;padding-bottom:0}
@@ -328,7 +329,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
   <canvas id="cv"></canvas>
   <div id="bottom">
     <div id="bar"><i></i><div id="ef"></div><span id="en">8</span></div>
-    <button id="hab" onclick="heroPress()" style="display:none"></button>
+    <div id="habs"></div>
     <div id="row"><div id="next"></div><div id="hand"></div></div>
   </div>
   <div id="ci" onclick="if(event.target===this)ciClose()"><div class="box"><div id="ci-head"></div><div id="ci-body"></div><div id="ci-acts"></div><div class="cib"><button class="btn" onclick="ciClose()">닫기</button></div></div></div>
@@ -580,7 +581,7 @@ const CHAMP = {   // 챔피언: 덱에 1장만 · 능력은 재사용 대기시�
   little_prince: { ab: 'guardienne', cost: 3, cdn: 20, name: '왕실 지원대', desc: '수호 기사를 불러 함께 돌격하고, 6초 동안 공격 속도가 3배가 돼요' },
 };
 function mkVariants() {
-  for (const [b, v] of Object.entries(EVO)) { const c = CARDS[b]; if (!c) continue; const o = { ...c, ...v, id: 'evo_' + b, name: '진화 ' + c.name, evoOf: b, cycles: v.cy };
+  for (const [b, v] of Object.entries(EVO)) { const c = CARDS[b]; if (!c) continue; const o = { ...c, ...v, id: 'evo_' + b, name: '진화 ' + c.name, evoOf: b, cycles: c.cost >= 5 ? 1 : 2 };
     if (v.hpX) o.hp = Math.round(c.hp * v.hpX); if (v.dmgX) o.damage = Math.round(c.damage * v.dmgX); if (v.hsX) o.hitSpeed = +(c.hitSpeed * v.hsX).toFixed(2); delete o.cy; delete o.hpX; delete o.dmgX; delete o.hsX; CARDS[o.id] = o; }
   for (const [b, v] of Object.entries(HERO)) { const c = CARDS[b]; if (!c) continue;
     CARDS['hero_' + b] = { ...c, id: 'hero_' + b, name: '영웅 ' + c.name, heroOf: b, ab: v.ab, abCost: v.cost, desc: '능력 「' + v.name + '」 (엘릭서 ' + v.cost + ') · ' + v.desc }; }
@@ -659,8 +660,8 @@ function spawn(id, team, x, y, seat) {
   const n = c.count || 1;
   for (let i = 0; i < n; i++) {
     const a = i / n * 6.283, rr = n > 1 ? Math.min(1.6, 0.4 * Math.sqrt(n)) : 0;
-    const px = Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr));
-    let py = y + Math.sin(a) * rr; py = team ? Math.min(py, Math.max(y, 14.8)) : Math.max(py, Math.min(y, 17.2));
+    const row = /royal_(hogs|recruits)$/.test(c.id) && n > 1, px = row ? Math.min(W - 0.5 - (n - 1) / 2, Math.max(0.5 + (n - 1) / 2, x)) + i - (n - 1) / 2 : Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr));   // 로얄 호그·리크루트: 가로 한 줄 · 1칸 간격(격자점)
+    let py = row ? y : y + Math.sin(a) * rr; py = team ? Math.min(py, Math.max(y, 14.8)) : Math.max(py, Math.min(y, 17.2));
     G.ents.push(Object.assign(mkUnit(id, team, px, py), { id: ++G.n, lane: x < 9 ? 0 : 1, sd: seat ?? team }));   // lane: 소환한 쪽(0=왼쪽, 1=오른쪽)
   }
 }
@@ -729,10 +730,10 @@ function tick(dt) {
 
 // ---------- 2단계: 크라운 / 승패 / 포켓 ----------
 const POCKET = 11; // 상대 프린세스 타워를 부순 레인에서 소환 가능한 최전방 y
-function okSpotT(t, x, y) { const ym = t ? H - y : y; return ym <= 31.5 && x >= 0.5 && x <= W - 0.5 && (ym >= 17.5 || (ym >= POCKET && pkT(t, x < 9 ? 0 : 1))); }
+function okSpotT(t, x, y) { const ym = t ? H - y : y; return ym <= 31.5 && x >= 0.5 && x <= W - 0.5 && (ym >= 17.5 || (ym >= POCKET && ym < RIV[0] && pkT(t, x < 9 ? 0 : 1))); }
 function pkT(t, i) { return G.ents.some(e => e.team === 1 - t && e.tk === 'princess' && e.hp <= 0 && (i === 0 ? e.x < 9 : e.x > 9)); }
 const anyOk = (x, y) => x >= 0.5 && x <= W - 0.5 && y >= 0.5 && y <= H - 0.5 && (y < RIV[0] - 0.01 || y > RIV[1] + 0.01);   // 광부·드릴: 강만 빼고 어디나
-const okSpotC = (c, t, x, y) => c && c.anywhere ? anyOk(x, y) : okSpotT(t, x, y);
+const okSpotC = (c, t, x, y) => c && c.anywhere ? anyOk(x, y) : okSpotT(t, x, y) && !(c && c.type === 'building' && (t ? H - y : y) < 17.5 && (t ? H - y : y) > RIV[0] - c.radius);   // 포켓에서 건물은 강에 걸치지 않게
 const okSpot = (x, y) => okSpotT(0, x, y), pk = i => pkT(0, i);
 function crowns(t) { const o = G.ents.filter(e => e.team !== t && e.kind === 'tower' && e.hp <= 0); return o.some(e => e.tk === 'king') ? 3 : o.length; }
 function judge() {
@@ -1258,7 +1259,7 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fin').style.display = 'flex'; $('fin').querySelectorAll('.pt').forEach(e => e.remove()); if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); pubSoon();
 }
 function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
-  if (!(G.net && G.net.mode === 'trophy')) return null;
+  if (!((G.net && G.net.mode === 'trophy') || (!G.net && !G.m2 && DIFF === 2))) return null;   // 친구 트로피전 · AI 어려움
   const d = w === 0 ? 30 : w === 1 ? -20 : 0, old = P.tr | 0, nv = Math.max(0, old + d); P.tr = nv; saveP(); return nv - old;
 }
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
@@ -1291,7 +1292,7 @@ function menu() { pubSoon(); $('res').style.display = 'none'; $('fin').style.dis
 const AIP = [
   { n: '쉬움', d: '반응이 느리고 자주 실수해요 · 골드 ×0.6', gold: 0.6, think: [3, 4.6], react: 2.4, off: 10, err: 0.4, spells: 1, spm: 2.6, jit: 2.5, zone: 13.5, smart: 0, ab: 0, evo: 0, sup: 0 },
   { n: '보통', d: '적당히 방어하고 공격해요 · 골드 ×1', gold: 1, think: [1.6, 2.6], react: 1.1, off: 9, err: 0.15, spells: 1, spm: 1.5, jit: 1.2, zone: 16, smart: 0.4, ab: 1, evo: 0.5, sup: 1 },
-  { n: '어려움', d: '빠르게 반응하고 스펠·능력도 영리하게 써요 · 골드 ×1.5', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, spm: 0.8, jit: 0.3, zone: 19, smart: 0.9, ab: 2, evo: 1, sup: 1 }
+  { n: '어려움', d: '빠르게 반응하고 스펠·능력도 영리하게 써요 · 골드 ×1.5 · 승리 🏆+30 / 패배 🏆-20', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, spm: 0.8, jit: 0.3, zone: 19, smart: 0.9, ab: 2, evo: 1, sup: 1 }
 ];
 let DIFF = 1;
 const rnd = a => a[Math.random() * a.length | 0];
@@ -1456,8 +1457,8 @@ function botAttack(a, force) {
   return false;
 }
 // ── 챔피언·영웅 능력: 상황이 맞을 때만
-function botAbility(a) {
-  const e = myHero(a.seat); if (!e) return; const h = abOf(e.card); if (abLeft(e) <= 0 || a.el < h.cost + 1) return;
+function botAbility(a) { for (const e of heroesOf(a.seat)) if (botAbOne(a, e)) return; }
+function botAbOne(a, e) { const h = abOf(e.card); if (abLeft(e) <= 0 || a.el < h.cost + 1) return;
   const fo = G.ents.filter(u => u.team !== e.team && u.hp > 0 && !hid(u)), nr = r => fo.filter(u => hyp(u.x - e.x, u.y - e.y) - u.r <= r), un = r => nr(r).filter(u => u.kind === 'unit'), low = e.hp < e.max * 0.45;
   const go = {
     taunt: () => un(4).length >= 1 && e.hp < e.max * 0.85 || un(3).length >= 2, guard: () => un(4).length >= 1 && e.hp < e.max * 0.9, meditate: () => un(4).length >= 1 && e.hp < e.max * 0.7,
@@ -1466,7 +1467,7 @@ function botAbility(a) {
     souls: () => (e.souls | 0) >= 8 && nr(8).length >= 1, dash: () => un(7).length >= 2, escape: () => low && nr(3).length >= 1, getaway: () => low && nr(3).length >= 1,
     cloak: () => nr(6).some(u => u.kind === 'tower'), guardienne: () => nr(5).length >= 1
   }[h.ab];
-  if ((go ? go() : nr(4).length >= 1) && heroDo(a.seat)) a.last = G.t;
+  if ((go ? go() : nr(4).length >= 1) && heroDo(a.seat, e.id)) { a.last = G.t; return true; }
 }
 
 // ---------- 4단계: 1대1 온라인 (호스트가 계산 → 게스트는 화면만 받음) ----------
@@ -1727,6 +1728,7 @@ function ok(c, t) { if (t.fly) return c.targets === 'air_ground'; if (c.targets 
 function think(e, dt) {
   const c = e.card;
   if (e.dep > 0) { e.dep -= dt; if (e.dep <= 0 && c.onDeploy && !e.dpl) { e.dpl = 1; deployBlast(e); } return; }   // 소환 지연 (끝나면 착지 효과)
+  if (e.dq) { dashStep(e, dt); return; }   // 돌진 중
   if (e.taunt > 0) { e.taunt -= dt; if (e.taunt <= 0) e.shield = 0; }
   if (e.guard > 0) { e.guard -= dt; if (e.guard <= 0) e.shield = 0; }
   if (e.vs > 0) e.vs -= dt; if (e.invT > 0) e.invT -= dt; if (e.medT > 0) e.medT -= dt; if (e.abT > 0) e.abT -= dt; if (e.axT > 0) { e.axT -= dt; if (e.axT <= 0) e.ax = 1; }
@@ -1771,13 +1773,28 @@ function find(e) {
 }
 
 // 소환한 차선의 반대쪽 프린세스 타워는 멀게 취급해요. (내 쪽 프세타워가 부서졌을 때 반대 차선으로 건너가지 않고 킹타워로 가도록)
-const lanePen = (e, t) => e.lane != null && t.tk === 'princess' && (t.x < 9 ? 0 : 1) !== e.lane ? 8 : 0;
+const lanePen = (e, t) => e.lane != null && t.tk !== 'king' && (t.kind === 'tower' || t.kind === 'building') && (t.x < 9 ? 0 : 1) !== e.lane ? 12 : 0;   // 반대 차선의 건물(석궁 등)로 건너가지 않아요
 function goal(e) { // 기본 이동 목표 = 가장 가까운 적 타워
   let best = null, bd = 1e9;
   for (const t of G.ents) if (t.team !== e.team && t.kind === 'tower' && t.hp > 0) { const d = hyp(t.x - e.x, t.y - e.y) + lanePen(e, t); if (d < bd) { bd = d; best = t; } }
   return best;
 }
 
+function avoid(e, ax, ay, tgt) {   // 가는 길에 건물·타워가 있으면 옆으로 돌아가요 (한쪽으로 정해서 계속 — 떨림 방지)
+  const dx = ax - e.x, dy = ay - e.y, d = hyp(dx, dy); if (d < 0.05) return [ax, ay];
+  const ux = dx / d, uy = dy / d, L = Math.min(d, 4.5); let best = null, bp = 1e9;
+  for (const o of G.ents) {
+    if ((o.kind !== 'tower' && o.kind !== 'building') || o.hp <= 0 || o === tgt || o === e.tgt) continue;
+    const R = o.r + e.r + 0.12, rx = o.x - e.x, ry = o.y - e.y, pr = rx * ux + ry * uy;
+    if (pr < -0.1 || pr > L + R) continue;
+    const cr = rx * uy - ry * ux; if (Math.abs(cr) >= R) continue;
+    if (pr < bp) { bp = pr; best = { o, cr, R }; }
+  }
+  if (!best) return [ax, ay];
+  const o = best.o; let sg = e.av && e.av.id === o.id ? e.av.sg : (best.cr > 0.05 ? -1 : best.cr < -0.05 ? 1 : (o.x < W / 2 ? 1 : -1)); e.av = { id: o.id, sg };
+  const nx = uy, ny = -ux, k = best.R + 0.4;
+  return [Math.min(W - e.r, Math.max(e.r, o.x + nx * sg * k)), Math.min(H - e.r, Math.max(e.r, o.y + ny * sg * k))];
+}
 function move(e, g, dt, sf = 1) {
   const c = e.card; let ax = g.x, ay = g.y;
   if (!e.fly && !c.canJumpRiver) { // 지상 유닛은 다리로만 강을 건넘
@@ -1791,6 +1808,7 @@ function move(e, g, dt, sf = 1) {
       else { ax = Math.min(hi, Math.max(lo, g.x)); ay = inR ? e.y + dir * 3 : g.y; }                                                                    // 다리 안에서는 폭 안에서 직진
     }
   }
+  if (!e.fly) [ax, ay] = avoid(e, ax, ay, g);
   const d = hyp(ax - e.x, ay - e.y); if (d < 1e-3) return;
   const ch = c.charge, charging = ch && (e.chg || 0) >= ch.dist; // 프린스: 일정 거리 달리면 돌진(속도·피해 증가)
   const sp = Math.min(c.speed * (charging ? ch.speedMult : 1) * (1 + (e.rg || 0) * (c.rage ? c.rage.k : 0)) * sf / 60 * dt, d); // 속도 단위: 분당 타일 → 초당
@@ -1805,9 +1823,10 @@ const abOf = c => c.champ ? CHAMP[c.id] : c.heroOf ? HERO[c.heroOf] : null;
 const gst = () => G.net && G.net.role === 'guest';
 const mySeat = () => G.net && G.net.m2 ? G.net.seat | 0 : 0;
 const abLeft = e => { const h = abOf(e.card); if (h.cdn) return (gst() ? (Date.now() - (e.abAt || 0) < h.cdn * 1000 || e.abc) : e.abT > 0) ? 0 : 1; return h.uses - (e.ab | 0); };
-const myHero = team => G.ents.find(e => (e.sd ?? e.team) === team && e.kind === 'unit' && abOf(e.card) && e.hp > 0 && e.dep <= 0);
-function heroDo(team) {   // 호스트/싱글에서 실제 능력 발동
-  const e = myHero(team); if (!e) return false; const h = abOf(e.card); if (abLeft(e) <= 0) return false;
+const heroesOf = team => G.ents.filter(e => (e.sd ?? e.team) === team && e.kind === 'unit' && abOf(e.card) && e.hp > 0 && e.dep <= 0);
+const myHero = team => heroesOf(team)[0], uidOf = e => e.hid ?? e.id;
+function heroDo(team, uid) {   // 호스트/싱글에서 실제 능력 발동 (uid: 영웅이 여러 명일 때 누구인지)
+  const e = uid != null ? heroesOf(team).find(x => x.id === uid) : myHero(team); if (!e) return false; const h = abOf(e.card); if (abLeft(e) <= 0) return false;
   if (elOf(team) < h.cost) return false; elAdd(team, -h.cost);
   if (h.cdn) e.abT = h.cdn; else e.ab = (e.ab | 0) + 1;
   const tm = e.team, m = e.m, fw = tm ? 1 : -1;   // fw: 앞쪽(상대 진영) 방향
@@ -1838,33 +1857,41 @@ function heroDo(team) {   // 호스트/싱글에서 실제 능력 발동
   if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'puff', x: e.x, y: e.y, at: performance.now(), max: 420 });
   sfx('elixir'); return true;
 }
-function dash(e) {   // 골드 나이트: 가까운 적에게 차례로 돌진
-  const m = e.m, hit = new Set(); let p = { x: e.x, y: e.y };
+function dash(e) {   // 골드 나이트: 가까운 적들을 차례로 가르며 돌진 (연출: 빠르게 이동하며 도착할 때마다 타격)
+  const hit = new Set(), q = []; let p = { x: e.x, y: e.y };
   for (let n = 0; n < 10; n++) {
     let b = null, bd = n ? 6 : 7;
     for (const u of G.ents) if (u.team !== e.team && u.hp > 0 && !hit.has(u) && !hid(u)) { const g = hyp(u.x - p.x, u.y - p.y) - u.r; if (g < bd) { bd = g; b = u; } }
-    if (!b) break; hit.add(b); hurt(b, (b.kind === 'tower' ? 0.4 : 1) * 335 * m, { stun: 0.3 }, p.x, p.y);
+    if (!b) break; hit.add(b);
     const dx = b.x - p.x, dy = b.y - p.y, dd = hyp(dx, dy) || 1, k = b.r + e.r + 0.1; p = { x: b.x - dx / dd * k, y: b.y - dy / dd * k };
-    if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'hit', x: b.x, y: b.y, at: performance.now(), max: 260 });
+    q.push({ u: b, x: Math.min(W - e.r, Math.max(e.r, p.x)), y: Math.min(H - e.r, Math.max(e.r, p.y)) });
   }
-  e.x = Math.min(W - e.r, Math.max(e.r, p.x)); e.y = Math.min(H - e.r, Math.max(e.r, p.y)); e.px = e.x; e.py = e.y; e.tgt = null; e.lock = false; e.cd = 0.4; e.lane = e.x < 9 ? 0 : 1; sfx('boom');
+  if (!q.length) return; e.dq = q; e.tgt = null; e.lock = false; sfx('boom');
 }
-function heroPress() {   // 영웅 능력 버튼
+function dashStep(e, dt) {
+  const w = e.dq[0], dx = w.x - e.x, dy = w.y - e.y, d = hyp(dx, dy), sp = 26 * dt;
+  if (d > sp) { e.x += dx / d * sp; e.y += dy / d * sp; if (G.vfx && G.vfx.length < 90 && Math.random() < 0.5) G.vfx.push({ type: 'puff', x: e.x, y: e.y, at: performance.now(), max: 260 }); return; }
+  e.x = w.x; e.y = w.y; const b = w.u;
+  if (b.hp > 0) { hurt(b, (b.kind === 'tower' ? 0.4 : 1) * 335 * e.m, { stun: 0.3 }, e.x, e.y); if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'hit', x: b.x, y: b.y, at: performance.now(), max: 260 }); }
+  e.dq.shift();
+  if (!e.dq.length) { e.dq = null; e.cd = 0.4; e.lane = e.x < 9 ? 0 : 1; }
+}
+function heroPress(uid) {   // 영웅 능력 버튼
   if (PAUSE || G.res !== undefined) return;
-  const e = myHero(mySeat()); if (!e || abLeft(e) <= 0) return; const h = abOf(e.card);
+  const e = uid != null ? heroesOf(mySeat()).find(x => uidOf(x) === uid) : myHero(mySeat()); if (!e || abLeft(e) <= 0) return; const h = abOf(e.card);
   if (G.elixir < h.cost) return lack();
   const n = G.net;
   if (n && n.role === 'guest') {
     const q = ++n.pq; n.pending.push({ seq: q, cost: h.cost }); G.elixir = Math.max(0, G.elixir - h.cost); if (!h.cdn) e.ab = (e.ab | 0) + 1; e.abAt = Date.now(); sfx('elixir');
-    const send = () => { if (G.net === n) n.room.emit('hab', { q }).catch(() => {}); }; send(); setTimeout(send, 120); setTimeout(send, 320); return;
+    const send = () => { if (G.net === n) n.room.emit('hab', { q, u: uidOf(e) }).catch(() => {}); }; send(); setTimeout(send, 120); setTimeout(send, 320); return;
   }
-  heroDo(0);
+  heroDo(0, e.id);
 }
 function hostHab(n, m) {
   if (m.isMe || G.net !== n || G.res !== undefined) return;
   const q = ((m.data || {}).q) | 0; let sn = n, seat = 1;
   if (n.m2) { seat = (G.S || []).findIndex(x => x && x.human && x.conn === m.from); if (seat < 0) return; sn = G.S[seat]; }
-  if (sn.seen.has(q)) return; sn.seen.add(q); if (q > sn.ack) sn.ack = q; heroDo(seat);
+  if (sn.seen.has(q)) return; sn.seen.add(q); if (q > sn.ack) sn.ack = q; heroDo(seat, (m.data || {}).u);
 }
 function hurt(t, d, c, sx, sy) {
   if (t.card && t.card.dr && t.mv) d *= 1 - t.card.dr;                    // 진화 기사: 이동 중 피해 감소
@@ -2328,7 +2355,8 @@ function toggleFS() {
     else toast('이 브라우저는 전체화면을 지원하지 않아요. 홈 화면에 추가하면 전체화면으로 열려요');
   } catch (e) { toast('전체화면을 켤 수 없어요'); }
 }
-addEventListener('fullscreenchange', () => setTimeout(resize, 150)); addEventListener('webkitfullscreenchange', () => setTimeout(resize, 150));
+const reFS = () => [100, 350, 800, 1500].forEach(t => setTimeout(resize, t));   // 폰은 전체화면 전환이 끝나야 실제 높이가 정해져요
+addEventListener('fullscreenchange', reFS); addEventListener('webkitfullscreenchange', reFS); if (window.visualViewport) visualViewport.addEventListener('resize', () => setTimeout(resize, 50));
 let wlock = null;
 function wakeUpdate() {
   try {
@@ -2379,31 +2407,42 @@ addEventListener('pointerup', () => {
   hov = null; markSel();
 });
 
+const HB = new Map();
+function habUI() {   // 영웅·챔피언마다 능력 버튼을 따로
+  const box = $('habs'), alive = new Set();
+  for (const e of heroesOf(mySeat())) {
+    const h = abOf(e.card), k = uidOf(e), ready = abLeft(e) > 0; if (!ready && !h.cdn) continue;
+    alive.add(k); let b = HB.get(k);
+    if (!b) { b = document.createElement('button'); b.className = 'hab'; b.onclick = () => heroPress(k); box.appendChild(b); HB.set(k, b); }
+    const nm = (e.card.heroOf ? CARDS[e.card.heroOf].name : e.card.name);
+    b.textContent = ready ? nm + ' · ' + h.name + ' 💧' + h.cost + (h.cdn ? (h.ab === 'souls' ? ' · 영혼 ' + (e.souls | 0) : '') : h.uses > 1 ? ' (' + abLeft(e) + ')' : '') : nm + ' · 대기 ' + (gst() ? '…' : Math.ceil(e.abT) + '초');
+    b.classList.toggle('off', !ready || G.elixir < h.cost);
+  }
+  for (const [k, b] of HB) if (!alive.has(k)) { b.remove(); HB.delete(k); }
+}
 function ui() {
   const rem = G.t < 180 ? 180 - G.t : Math.max(0, 300 - G.t);
   $('crown').textContent = '👑 ' + crowns(0) + ' : ' + crowns(1);
   $('ef').style.width = G.elixir * 10 + '%'; $('en').textContent = Math.floor(G.elixir);
   [...$('hand').children].forEach((el, i) => { const c = CARDS[G.hand[i]]; el.classList.toggle('off', c.cost > G.elixir);
     const tg = el.querySelector('.tg'); if (tg) { if (c.evoOf) { const l = Math.max(0, c.cycles - (G.cyc[0][c.id] | 0)); tg.textContent = l ? '진화 ' + l + '회 후' : '진화!'; tg.classList.toggle('rd', !l); el.classList.toggle('rdy', !l); } else tg.textContent = '영웅'; } });
-  const hb = $('hab'), he = myHero(mySeat());
-  if (he && abLeft(he) > 0) { const h = abOf(he.card); hb.style.display = 'block'; hb.textContent = h.name + ' · 💧' + h.cost + (h.cdn ? (h.ab === 'souls' ? ' · 영혼 ' + (he.souls | 0) : '') : h.uses > 1 ? ' (' + abLeft(he) + ')' : ''); hb.classList.toggle('off', G.elixir < h.cost); }
-  else if (he && abOf(he.card).cdn) { const h = abOf(he.card); hb.style.display = 'block'; hb.textContent = h.name + ' · 대기 ' + (gst() ? '…' : Math.ceil(he.abT) + '초'); hb.classList.add('off'); }
-  else hb.style.display = 'none';
+  habUI();
 }
 
 function applyUI() {   // 손패 크기 / 가로 배치
   const app = $('app'), land = innerWidth > innerHeight * 1.15 && innerWidth >= 640;
   app.classList.toggle('land', land); app.classList.remove('hs0', 'hs1', 'hs2'); app.classList.add('hs' + (ST.hs ?? 1)); return land;
 }
+const VH = () => Math.round((window.visualViewport && visualViewport.height) || innerHeight);
 function resize() {
-  dpr = devicePixelRatio || 1;
+  dpr = devicePixelRatio || 1; $('app').style.height = VH() + 'px';
   const land = applyUI(), hud = $('hud').offsetHeight;
   if (land) {
     const pw = Math.max(150, Math.min(230, innerWidth * 0.2));
-    S = Math.min((innerWidth - pw - 20) / W, (innerHeight - hud) / H, 34); $('bottom').style.width = '';
+    S = Math.min((innerWidth - pw - 20) / W, (VH() - hud) / H, 34); $('bottom').style.width = '';
     $('app').style.setProperty('--pw', pw + 'px'); $('app').style.setProperty('--ah', H * S + 'px'); $('app').style.setProperty('--aw', W * S + 'px');
   } else {
-    const avail = innerHeight - hud - $('bottom').offsetHeight; S = Math.min(innerWidth / W, avail / H, 30); $('bottom').style.width = W * S + 'px';
+    const avail = VH() - hud - $('bottom').offsetHeight; S = Math.min(innerWidth / W, avail / H, 30); $('bottom').style.width = W * S + 'px';
   }
   cv.style.width = W * S + 'px'; cv.style.height = H * S + 'px';
   cv.width = W * S * dpr; cv.height = H * S * dpr; buildBG();
@@ -2551,6 +2590,12 @@ function hudClock() {
   }
   cx.restore();
 }
+const INI = {};
+function ini(c) {   // 큰 유닛·건물은 두 글자 (폭탄 타워 → 폭타)
+  if (INI[c.id]) return INI[c.id];
+  const base = c.name.replace(/^(진화|영웅) /, ''), w = base.split(' ');
+  return INI[c.id] = c.type === 'building' || c.radius >= 0.75 ? (w.length > 1 ? w[0][0] + w[1][0] : [...base].slice(0, 2).join('')) : c.initial;
+}
 function render(a) {
   const nowT = performance.now(), sk = G.shake > nowT ? (G.shake - nowT) / 450 * 5 : 0;
   cx.setTransform(S * dpr, 0, 0, S * dpr, (sk ? (Math.random() - 0.5) * sk : 0) * dpr, (sk ? (Math.random() - 0.5) * sk : 0) * dpr);
@@ -2594,7 +2639,7 @@ function render(a) {
       else {
         cx.beginPath(); if (e.kind === 'building') cx.rect(x - r, dy - r, r * 2, r * 2); else cx.arc(x, dy, r, 0, 7);
         cx.fillStyle = c.color; cx.fill(); cx.lineWidth = 0.12; cx.strokeStyle = TC[e.team]; cx.stroke();
-        cx.fillStyle = '#111'; cx.font = `bold ${Math.max(0.5, r * 1.1)}px sans-serif`; cx.fillText(c.initial, x, dy);
+        const t2 = ini(c); cx.fillStyle = '#111'; cx.font = `bold ${Math.max(0.5, r * (t2.length > 1 ? 0.85 : 1.1))}px sans-serif`; cx.fillText(t2, x, dy);
       }
       if (chOn) { cx.restore(); cx.lineWidth = 0.12; cx.strokeStyle = 'rgba(255,190,80,.9)'; cx.beginPath(); cx.arc(x, dy, r + 0.12, 0, 7); cx.stroke(); }
       if (c.evoOf || c.heroOf || c.champ) {   // 진화=보라, 영웅=황금, 챔피언=주황: 맥동하는 링 + 둘레를 도는 반짝이
