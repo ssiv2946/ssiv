@@ -431,7 +431,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 </div>
 <script src="https://unpkg.com/peerjs@1.5.3/dist/peerjs.min.js"></script>
 <script>
-const CARDS_DATA=[{"id":"knight","name":"기사","initial":"기","color":"#c9a36b","sprite":"sprites/knight.png","type":"troop","cost":3,"count":1,"hp":1766,"damage":202,"hitSpeed":1.2,"firstHit":0.5,"range":1.2,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":6,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"archers","name":"아처","initial":"아","color":"#e86fa0","sprite":"sprites/archers.png","type":"troop","cost":3,"count":2,"hp":304,"damage":112,"hitSpeed":0.9,"firstHit":0.5,"range":5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":3,"radius":0.45,"deployTime":1,"splash":0,"projSpeed":10,"canJumpRiver":false},{"id":"giant","name":"자이언트","initial":"자","color":"#d98a3d","sprite":"sprites/giant.png","type":"troop","cost":5,"count":1,"hp":3968,"damage":253,"hitSpeed":1.5,"firstHit":0.5,"range":1.2,"speed":45,"sight":5.5,"targets":"buildings","flying":false,"mass":18,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"valkyrie","name":"발키리","initial":"발","color":"#e0662e","sprite":"sprites/valkyrie.png","type":"troop","cost":4,"count":1,"hp":1907,"damage":266,"hitSpeed":1.5,"firstHit":0.5,"range":1.2,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":8,"radius":0.55,"deployTime":1,"splash":1.9,"projSpeed":0,"canJumpRiver":false},{"id":"wizard","name":"마법사","initial":"마","color":"#e5c84a","sprite":"sprites/wizard.png","type":"troop","cost":5,"count":1,"hp":755,"damage":304,"hitSpeed":1.4,"firstHit":0.5,"range":5.5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":1.5,"projSpeed":8,"canJumpRiver":false},{"id":"baby_dragon","name":"베이비 드래곤","initial":"베","color":"#7bc96f","sprite":"sprites/baby_dragon.png","type":"troop","cost":4,"count":1,"hp":1152,"damage":168,"hitSpeed":1.5,"firstHit":0.5,"range":3.5,"speed":90,"sight":5.5,"targets":"air_ground","flying":true,"mass":4,"radius":0.6,"deployTime":1,"splash":1.5,"projSpeed":6,"canJumpRiver":false},{"id":"skeleton_army","name":"해골 군대","initial":"해","color":"#e8e8e8","sprite":"sprites/skeleton.png","type":"troop","cost":3,"count":15,"hp":81,"damage":81,"hitSpeed":1.1,"firstHit":0.5,"range":0.8,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":1,"radius":0.3,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"skeletons","name":"해골 병사","initial":"병","color":"#cfd3da","sprite":"sprites/skeletons.png","type":"troop","cost":1,"count":3,"hp":81,"damage":81,"hitSpeed":1.1,"firstHit":0.5,"range":0.8,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":1,"radius":0.3,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"goblins","name":"고블린","initial":"고","color":"#5fbf4a","sprite":"sprites/goblins.png","type":"troop","cost":2,"count":4,"hp":202,"damage":125,"hitSpeed":1.1,"firstHit":0.5,"range":0.5,"speed":120,"sight":5.5,"targets":"ground","flying":false,"mass":2,"radius":0.4,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"hog_rider","name":"호그 라이더","initial":"호","color":"#b5651d","sprite":"sprites/hog_rider.png","type":"troop","cost":4,"count":1,"hp":1697,"damage":317,"hitSpeed":1.6,"firstHit":0.5,"range":0.8,"speed":120,"sight":5.5,"targets":"buildings","flying":false,"mass":6,"radius":0.6,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":true},{"id":"prince","name":"프린스","initial":"프","color":"#6a5acd","sprite":"sprites/prince.png","type":"troop","cost":5,"count":1,"hp":1920,"damage":391,"hitSpeed":1.4,"firstHit":0.5,"range":1.6,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":6,"radius":0.6,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":true,"charge":{"dist":2.5,"speedMult":2,"dmgMult":2.0026}},{"id":"cannon","name":"대포","initial":"대","color":"#8a8f98","sprite":"sprites/cannon.png","type":"building","cost":3,"count":1,"hp":824,"damage":202,"hitSpeed":1.0,"firstHit":0.5,"range":5.5,"speed":0,"sight":5.5,"targets":"ground","flying":false,"mass":1000,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":15,"canJumpRiver":false,"lifetime":30},{"id":"arrows","name":"화살","initial":"화","color":"#f2d16b","sprite":"sprites/arrows.png","type":"spell","cost":3,"damage":122,"radius":3.5,"delay":0.6,"targets":"air_ground","towerDamage":25,"waves":3,"waveGap":0.2},{"id":"fireball","name":"파이어 볼","initial":"파","color":"#ff6a2b","sprite":"sprites/fireball.png","type":"spell","cost":4,"damage":688,"radius":2.5,"delay":1.0,"targets":"air_ground","towerDamage":159},{"id":"mini_pekka","name":"미니 페카","initial":"미","color":"#5b6b86","sprite":"sprites/mini_pekka.png","type":"troop","cost":4,"count":1,"hp":1390,"damage":755,"hitSpeed":1.6,"firstHit":0.5,"range":1.0,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"pekka","name":"페카","initial":"페","color":"#3d4a66","sprite":"sprites/pekka.png","type":"troop","cost":7,"count":1,"hp":3760,"damage":842,"hitSpeed":1.8,"firstHit":0.5,"range":1.2,"speed":45,"sight":5.5,"targets":"ground","flying":false,"mass":12,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"musketeer","name":"머스킷 총사","initial":"머","color":"#9a6fd1","sprite":"sprites/musketeer.png","type":"troop","cost":4,"count":1,"hp":721,"damage":217,"hitSpeed":1.0,"firstHit":0.5,"range":6,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":16,"canJumpRiver":false},{"id":"minions","name":"미니언","initial":"니","color":"#5aa7ff","sprite":"sprites/minions.png","type":"troop","cost":3,"count":3,"hp":230,"damage":107,"hitSpeed":1.2,"firstHit":0.5,"range":2,"speed":90,"sight":5.5,"targets":"air_ground","flying":true,"mass":1,"radius":0.4,"deployTime":1,"splash":0,"projSpeed":18,"canJumpRiver":false},{"id":"mega_minion","name":"메가 미니언","initial":"메","color":"#4a6fd8","sprite":"sprites/mega_minion.png","type":"troop","cost":3,"count":1,"hp":837,"damage":312,"hitSpeed":1.5,"firstHit":0.5,"range":1.6,"speed":60,"sight":5.5,"targets":"air_ground","flying":true,"mass":5,"radius":0.55,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"barbarians","name":"바바리안","initial":"바","color":"#e2a93b","sprite":"sprites/barbarians.png","type":"troop","cost":5,"count":5,"hp":716,"damage":192,"hitSpeed":1.4,"firstHit":0.5,"range":0.7,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":5,"radius":0.45,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"bomber","name":"폭탄병","initial":"폭","color":"#7a5c3a","sprite":"sprites/bomber.png","type":"troop","cost":2,"count":1,"hp":304,"damage":212,"hitSpeed":1.8,"firstHit":0.5,"range":4.5,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":3,"radius":0.4,"deployTime":1,"splash":1.5,"projSpeed":7,"canJumpRiver":false},{"id":"royal_giant","name":"로열 자이언트","initial":"왕","color":"#d1a23a","sprite":"sprites/royal_giant.png","type":"troop","cost":6,"count":1,"hp":3164,"damage":307,"hitSpeed":1.8,"firstHit":0.5,"range":5,"speed":45,"sight":5.5,"targets":"buildings","flying":false,"mass":18,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":12,"canJumpRiver":false},{"id":"spear_goblins","name":"창 고블린","initial":"창","color":"#7ccf5f","sprite":"sprites/spear_goblins.png","type":"troop","cost":2,"count":3,"hp":133,"damage":81,"hitSpeed":1.1,"firstHit":0.5,"range":5,"speed":120,"sight":5.5,"targets":"air_ground","flying":false,"mass":2,"radius":0.35,"deployTime":1,"splash":0,"projSpeed":14,"canJumpRiver":false},{"id":"dart_goblin","name":"다트 고블린","initial":"다","color":"#3fae6a","sprite":"sprites/dart_goblin.png","type":"troop","cost":3,"count":1,"hp":261,"damage":143,"hitSpeed":0.8,"firstHit":0.5,"range":6.5,"speed":120,"sight":5.5,"targets":"air_ground","flying":false,"mass":2,"radius":0.4,"deployTime":1,"splash":0,"projSpeed":18,"canJumpRiver":false},{"id":"bats","name":"박쥐","initial":"박","color":"#8d6fb8","sprite":"sprites/bats.png","type":"troop","cost":2,"count":5,"hp":81,"damage":81,"hitSpeed":1.2,"firstHit":0.5,"range":1.0,"speed":120,"sight":5.5,"targets":"air_ground","flying":true,"mass":1,"radius":0.3,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"fire_spirit","name":"파이어 스피릿","initial":"스","color":"#ff7a3d","sprite":"sprites/fire_spirit.png","type":"troop","cost":1,"count":1,"hp":215,"damage":215,"hitSpeed":1.0,"firstHit":0.5,"range":2,"speed":120,"sight":5.5,"targets":"air_ground","flying":false,"mass":2,"radius":0.35,"deployTime":1,"splash":1.7,"projSpeed":0,"canJumpRiver":false,"suicide":1,"towerDamage":91},{"id":"rocket","name":"로켓","initial":"로","color":"#e5484d","sprite":"sprites/rocket.png","type":"spell","cost":6,"damage":1484,"radius":2,"delay":1.8,"targets":"air_ground","towerDamage":371}];
+const CARDS_DATA=[{"id":"knight","name":"기사","initial":"기","color":"#c9a36b","sprite":"sprites/knight.png","type":"troop","cost":3,"count":1,"hp":1766,"damage":202,"hitSpeed":1.2,"firstHit":0.5,"range":1.2,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":6,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"archers","name":"아처","initial":"아","color":"#e86fa0","sprite":"sprites/archers.png","type":"troop","cost":3,"count":2,"hp":304,"damage":112,"hitSpeed":0.9,"firstHit":0.5,"range":5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":3,"radius":0.45,"deployTime":1,"splash":0,"projSpeed":10,"canJumpRiver":false},{"id":"giant","name":"자이언트","initial":"자","color":"#d98a3d","sprite":"sprites/giant.png","type":"troop","cost":5,"count":1,"hp":3968,"damage":253,"hitSpeed":1.5,"firstHit":0.5,"range":1.2,"speed":45,"sight":5.5,"targets":"buildings","flying":false,"mass":18,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"valkyrie","name":"발키리","initial":"발","color":"#e0662e","sprite":"sprites/valkyrie.png","type":"troop","cost":4,"count":1,"hp":1907,"damage":266,"hitSpeed":1.5,"firstHit":0.5,"range":1.2,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":8,"radius":0.55,"deployTime":1,"splash":1.9,"projSpeed":0,"canJumpRiver":false},{"id":"wizard","name":"마법사","initial":"마","color":"#e5c84a","sprite":"sprites/wizard.png","type":"troop","cost":5,"count":1,"hp":755,"damage":304,"hitSpeed":1.4,"firstHit":0.5,"range":5.5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":1.5,"projSpeed":8,"canJumpRiver":false},{"id":"baby_dragon","name":"베이비 드래곤","initial":"베","color":"#7bc96f","sprite":"sprites/baby_dragon.png","type":"troop","cost":4,"count":1,"hp":1152,"damage":168,"hitSpeed":1.5,"firstHit":0.5,"range":3.5,"speed":90,"sight":5.5,"targets":"air_ground","flying":true,"mass":4,"radius":0.6,"deployTime":1,"splash":1.5,"projSpeed":6,"canJumpRiver":false},{"id":"skeleton_army","name":"해골 군대","initial":"해","color":"#e8e8e8","sprite":"sprites/skeleton.png","type":"troop","cost":3,"count":15,"hp":81,"damage":81,"hitSpeed":1.1,"firstHit":0.5,"range":0.8,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":1,"radius":0.3,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"skeletons","name":"해골 병사","initial":"병","color":"#cfd3da","sprite":"sprites/skeletons.png","type":"troop","cost":1,"count":3,"hp":81,"damage":81,"hitSpeed":1.1,"firstHit":0.5,"range":0.8,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":1,"radius":0.3,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"goblins","name":"고블린","initial":"고","color":"#5fbf4a","sprite":"sprites/goblins.png","type":"troop","cost":2,"count":4,"hp":202,"damage":125,"hitSpeed":1.1,"firstHit":0.5,"range":0.5,"speed":120,"sight":5.5,"targets":"ground","flying":false,"mass":2,"radius":0.4,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"hog_rider","name":"호그 라이더","initial":"호","color":"#b5651d","sprite":"sprites/hog_rider.png","type":"troop","cost":4,"count":1,"hp":1697,"damage":317,"hitSpeed":1.6,"firstHit":0.5,"range":0.8,"speed":120,"sight":5.5,"targets":"buildings","flying":false,"mass":6,"radius":0.6,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":true},{"id":"prince","name":"프린스","initial":"프","color":"#6a5acd","sprite":"sprites/prince.png","type":"troop","cost":5,"count":1,"hp":1920,"damage":391,"hitSpeed":1.4,"firstHit":0.5,"range":1.6,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":6,"radius":0.6,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":true,"charge":{"dist":2.5,"speedMult":2,"dmgMult":2.0026}},{"id":"cannon","name":"대포","initial":"대","color":"#8a8f98","sprite":"sprites/cannon.png","type":"building","cost":3,"count":1,"hp":824,"damage":202,"hitSpeed":1.0,"firstHit":0.5,"range":5.5,"speed":0,"sight":5.5,"targets":"ground","flying":false,"mass":1000,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":15,"canJumpRiver":false,"lifetime":30},{"id":"arrows","name":"화살","initial":"화","color":"#f2d16b","sprite":"sprites/arrows.png","type":"spell","cost":3,"damage":122,"radius":3.5,"delay":0.6,"targets":"air_ground","towerDamage":25,"waves":3,"waveGap":0.2},{"id":"fireball","name":"파이어 볼","initial":"파","color":"#ff6a2b","sprite":"sprites/fireball.png","type":"spell","cost":4,"damage":688,"radius":2.5,"delay":1.0,"targets":"air_ground","towerDamage":159},{"id":"mini_pekka","name":"미니 페카","initial":"미","color":"#5b6b86","sprite":"sprites/mini_pekka.png","type":"troop","cost":4,"count":1,"hp":1390,"damage":755,"hitSpeed":1.6,"firstHit":0.5,"range":1.0,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"pekka","name":"페카","initial":"페","color":"#3d4a66","sprite":"sprites/pekka.png","type":"troop","cost":7,"count":1,"hp":3760,"damage":842,"hitSpeed":1.8,"firstHit":0.5,"range":1.2,"speed":45,"sight":5.5,"targets":"ground","flying":false,"mass":12,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"musketeer","name":"머스킷 총사","initial":"머","color":"#9a6fd1","sprite":"sprites/musketeer.png","type":"troop","cost":4,"count":1,"hp":721,"damage":217,"hitSpeed":1.0,"firstHit":0.5,"range":6,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":16,"canJumpRiver":false},{"id":"minions","name":"미니언","initial":"니","color":"#5aa7ff","sprite":"sprites/minions.png","type":"troop","cost":3,"count":3,"hp":230,"damage":107,"hitSpeed":1.2,"firstHit":0.5,"range":2,"speed":90,"sight":5.5,"targets":"air_ground","flying":true,"mass":1,"radius":0.4,"deployTime":1,"splash":0,"projSpeed":18,"canJumpRiver":false},{"id":"mega_minion","name":"메가 미니언","initial":"메","color":"#4a6fd8","sprite":"sprites/mega_minion.png","type":"troop","cost":3,"count":1,"hp":837,"damage":312,"hitSpeed":1.5,"firstHit":0.5,"range":1.6,"speed":60,"sight":5.5,"targets":"air_ground","flying":true,"mass":5,"radius":0.55,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"barbarians","name":"바바리안","initial":"바","color":"#e2a93b","sprite":"sprites/barbarians.png","type":"troop","cost":5,"count":5,"hp":716,"damage":192,"hitSpeed":1.4,"firstHit":0.5,"range":0.7,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":5,"radius":0.45,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"bomber","name":"폭탄병","initial":"폭","color":"#7a5c3a","sprite":"sprites/bomber.png","type":"troop","cost":2,"count":1,"hp":304,"damage":212,"hitSpeed":1.8,"firstHit":0.5,"range":4.5,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":3,"radius":0.4,"deployTime":1,"splash":1.5,"projSpeed":7,"canJumpRiver":false},{"id":"royal_giant","name":"로열 자이언트","initial":"왕","color":"#d1a23a","sprite":"sprites/royal_giant.png","type":"troop","cost":6,"count":1,"hp":3164,"damage":307,"hitSpeed":1.8,"firstHit":0.5,"range":5,"speed":45,"sight":5.5,"targets":"buildings","flying":false,"mass":18,"radius":0.8,"deployTime":1,"splash":0,"projSpeed":12,"canJumpRiver":false},{"id":"spear_goblins","name":"창 고블린","initial":"창","color":"#7ccf5f","sprite":"sprites/spear_goblins.png","type":"troop","cost":2,"count":3,"hp":133,"damage":81,"hitSpeed":1.1,"firstHit":0.5,"range":5,"speed":120,"sight":5.5,"targets":"air_ground","flying":false,"mass":2,"radius":0.35,"deployTime":1,"splash":0,"projSpeed":14,"canJumpRiver":false},{"id":"dart_goblin","name":"다트 고블린","initial":"다","color":"#3fae6a","sprite":"sprites/dart_goblin.png","type":"troop","cost":3,"count":1,"hp":261,"damage":143,"hitSpeed":0.8,"firstHit":0.5,"range":6.5,"speed":120,"sight":5.5,"targets":"air_ground","flying":false,"mass":2,"radius":0.4,"deployTime":1,"splash":0,"projSpeed":18,"canJumpRiver":false},{"id":"bats","name":"박쥐","initial":"박","color":"#8d6fb8","sprite":"sprites/bats.png","type":"troop","cost":2,"count":5,"hp":81,"damage":81,"hitSpeed":1.2,"firstHit":0.5,"range":1.0,"speed":120,"sight":5.5,"targets":"air_ground","flying":true,"mass":1,"radius":0.3,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false},{"id":"fire_spirit","name":"파이어 스피릿","initial":"스","color":"#ff7a3d","sprite":"sprites/fire_spirit.png","type":"troop","cost":1,"count":1,"hp":215,"damage":215,"hitSpeed":1.0,"firstHit":0.5,"range":2,"speed":120,"sight":5.5,"targets":"air_ground","flying":false,"mass":2,"radius":0.35,"deployTime":1,"splash":1.7,"projSpeed":0,"canJumpRiver":false,"suicide":1,"towerDamage":91},{"id":"rocket","name":"로켓","initial":"로","color":"#e5484d","sprite":"sprites/rocket.png","type":"spell","cost":6,"damage":1484,"radius":2,"delay":1.8,"targets":"air_ground","towerDamage":371},{"id":"princess","name":"공주","initial":"공","color":"#ff9ecb","type":"troop","cost":3,"count":1,"hp":261,"damage":140,"hitSpeed":3.0,"firstHit":0.5,"range":9,"speed":60,"sight":9.5,"targets":"air_ground","flying":false,"mass":3,"radius":0.4,"deployTime":1,"splash":2,"projSpeed":12,"canJumpRiver":false},{"id":"ice_wizard","name":"얼음 마법사","initial":"얼","color":"#8fd8ff","type":"troop","cost":3,"count":1,"hp":754,"damage":87,"hitSpeed":1.7,"firstHit":0.5,"range":5.5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":1.5,"projSpeed":8,"canJumpRiver":false,"slow":{"k":0.35,"t":2.5}},{"id":"electro_wizard","name":"일렉트로 마법사","initial":"전","color":"#5aa9ff","type":"troop","cost":4,"count":1,"hp":713,"damage":128,"hitSpeed":1.8,"firstHit":0.5,"range":5,"speed":90,"sight":5.5,"targets":"air_ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":20,"canJumpRiver":false,"stun":0.5,"onDeploy":{"dmg":159,"r":2.5,"stun":0.5}},{"id":"executioner","name":"처형자","initial":"처","color":"#c0453a","type":"troop","cost":5,"count":1,"hp":1100,"damage":233,"hitSpeed":2.4,"firstHit":0.5,"range":4.5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":5,"radius":0.55,"deployTime":1,"splash":1.4,"projSpeed":9,"canJumpRiver":false},{"id":"dark_prince","name":"다크 프린스","initial":"암","color":"#4b3a8a","type":"troop","cost":4,"count":1,"hp":1210,"damage":250,"hitSpeed":1.3,"firstHit":0.5,"range":1.2,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":6,"radius":0.55,"deployTime":1,"splash":1.2,"projSpeed":0,"canJumpRiver":false,"shield":240,"charge":{"dist":3,"speedMult":2,"dmgMult":2}},{"id":"bandit","name":"도적","initial":"도","color":"#d97a9c","type":"troop","cost":3,"count":1,"hp":750,"damage":190,"hitSpeed":1.0,"firstHit":0.3,"range":0.8,"speed":90,"sight":5.5,"targets":"ground","flying":false,"mass":4,"radius":0.45,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false,"charge":{"dist":3,"speedMult":1.8,"dmgMult":2}},{"id":"witch","name":"마녀","initial":"녀","color":"#9b4fc9","type":"troop","cost":5,"count":1,"hp":838,"damage":138,"hitSpeed":0.7,"firstHit":0.5,"range":5,"speed":60,"sight":5.5,"targets":"air_ground","flying":false,"mass":4,"radius":0.5,"deployTime":1,"splash":1.5,"projSpeed":8,"canJumpRiver":false,"spawner":{"id":"skeletons","n":3,"every":6,"first":2}},{"id":"inferno_dragon","name":"인페르노 드래곤","initial":"인","color":"#f0743a","type":"troop","cost":4,"count":1,"hp":1100,"damage":24,"hitSpeed":0.4,"firstHit":0.5,"range":3.5,"speed":90,"sight":5.5,"targets":"air_ground","flying":true,"mass":4,"radius":0.55,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false,"ramp":{"n":5,"x":[1,3,9]}},{"id":"balloon","name":"벌룬","initial":"풍","color":"#d0463c","type":"troop","cost":5,"count":1,"hp":1396,"damage":640,"hitSpeed":3.0,"firstHit":0.5,"range":0.8,"speed":90,"sight":5.5,"targets":"buildings","flying":true,"mass":5,"radius":0.6,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false,"death":{"dmg":145,"r":3}},{"id":"golem","name":"골렘","initial":"골","color":"#8c8f7a","type":"troop","cost":8,"count":1,"hp":4256,"damage":259,"hitSpeed":2.5,"firstHit":0.5,"range":1.2,"speed":45,"sight":5.5,"targets":"buildings","flying":false,"mass":20,"radius":0.9,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false,"death":{"dmg":259,"r":2.8,"spawn":"golemite","n":2}},{"id":"golemite","name":"골레마이트","initial":"골","color":"#a3a68f","type":"troop","cost":0,"count":1,"hp":1100,"damage":78,"hitSpeed":1.3,"firstHit":0.5,"range":1.0,"speed":45,"sight":5.5,"targets":"buildings","flying":false,"mass":8,"radius":0.6,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":false,"hidden":true,"death":{"dmg":78,"r":2.2}},{"id":"mega_knight","name":"메가 나이트","initial":"나","color":"#5d6b8a","type":"troop","cost":7,"count":1,"hp":3993,"damage":266,"hitSpeed":1.7,"firstHit":0.5,"range":1.2,"speed":60,"sight":5.5,"targets":"ground","flying":false,"mass":18,"radius":0.8,"deployTime":1,"splash":1.8,"projSpeed":0,"canJumpRiver":false,"onDeploy":{"dmg":266,"r":3.5}},{"id":"sparky","name":"스파키","initial":"키","color":"#e8c53a","type":"troop","cost":6,"count":1,"hp":1767,"damage":1331,"hitSpeed":4.0,"firstHit":1.6,"range":5,"speed":45,"sight":5.5,"targets":"ground","flying":false,"mass":12,"radius":0.7,"deployTime":1,"splash":1.8,"projSpeed":14,"canJumpRiver":false},{"id":"royal_hogs","name":"로열 호그","initial":"돼","color":"#c9833e","type":"troop","cost":5,"count":4,"hp":695,"damage":70,"hitSpeed":1.2,"firstHit":0.5,"range":0.8,"speed":120,"sight":5.5,"targets":"buildings","flying":false,"mass":5,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":0,"canJumpRiver":true},{"id":"flying_machine","name":"비행 기계","initial":"비","color":"#7fa6c9","type":"troop","cost":4,"count":1,"hp":563,"damage":106,"hitSpeed":1.1,"firstHit":0.5,"range":6,"speed":90,"sight":5.5,"targets":"air_ground","flying":true,"mass":3,"radius":0.5,"deployTime":1,"splash":0,"projSpeed":16,"canJumpRiver":false},{"id":"zap","name":"전기 충격","initial":"번","color":"#7fd6ff","type":"spell","cost":2,"damage":159,"radius":2.5,"delay":0.4,"targets":"air_ground","towerDamage":64,"stun":0.5},{"id":"giant_snowball","name":"자이언트 눈덩이","initial":"눈","color":"#dff3ff","type":"spell","cost":2,"damage":202,"radius":2.5,"delay":0.9,"targets":"air_ground","towerDamage":82,"slow":{"k":0.35,"t":3}},{"id":"poison","name":"독","initial":"독","color":"#7bd84a","type":"spell","cost":4,"damage":91,"radius":4,"delay":0.5,"targets":"air_ground","towerDamage":36,"waves":8,"waveGap":1,"dot":1,"slow":{"k":0.15,"t":1.3}},{"id":"freeze","name":"프리즈","initial":"빙","color":"#a8e6ff","type":"spell","cost":4,"damage":95,"radius":3,"delay":0.5,"targets":"air_ground","towerDamage":38,"stun":4,"freeze":1},{"id":"lightning","name":"번개","initial":"뇌","color":"#ffe44d","type":"spell","cost":6,"damage":659,"radius":3.5,"delay":0.6,"targets":"air_ground","towerDamage":264,"strikes":3,"stun":0.5}];
 const CFG_DATA={"startElixir":8,"baseLevel":11,"playerLevel":11,"enemyLevel":11,"dummyInterval":5,"playerDeck":["knight","archers","giant","hog_rider","valkyrie","fireball","arrows","cannon"],"elixir":[{"from":0,"sec":2.8,"mult":1},{"from":120,"sec":1.4,"mult":2,"label":"2배 엘릭서"},{"from":240,"sec":0.9333,"mult":3,"label":"3배 엘릭서"}],"towers":{"princess":{"hp":3052,"damage":109,"hitSpeed":0.8,"firstHit":0.5,"range":7.5,"radius":1.4,"projSpeed":12},"king":{"hp":4824,"damage":109,"hitSpeed":1.0,"firstHit":0.5,"range":7,"radius":1.7,"projSpeed":12}}};
 'use strict';
 // 좌표 단위 = 타일. 아레나 18x32, 강 y 15~17, 다리 x 3.5 / 14.5 (폭 3)
@@ -441,7 +441,7 @@ const cv = $('cv'), cx = cv.getContext('2d');
 let CARDS = {}, CIDS = [], CFG, G, S = 20, dpr = 1, drag = null, sel = -1, hov = null;
 
 // ---------- 해금 · 진화 · 히어로 ----------
-const LOCK = { mega_minion: 600, royal_giant: 900, pekka: 1500 };   // 잠긴 카드 = 골드 가격 (새 카드를 잠그려면 여기에 추가)
+const LOCK = { mega_minion: 600, royal_giant: 900, pekka: 1500, golem: 1200, mega_knight: 1500, sparky: 1500, lightning: 1000 };   // 잠긴 카드 = 골드 가격 (새 카드를 잠그려면 여기에 추가)
 const EVOP = 40, HEROP = 70;                                         // 진화 · 히어로 = 보석 가격
 const EVO = {   // cy: 이 횟수만큼 낸 뒤부터 진화 (원작의 '사이클')
   knight: { cy: 2, hpX: 1.15, dmgX: 1.15, dr: 0.6, desc: '체력·공격력 +15% · 이동 중에는 받는 피해 60% 감소' },
@@ -450,15 +450,23 @@ const EVO = {   // cy: 이 횟수만큼 낸 뒤부터 진화 (원작의 '사이�
   skeletons: { cy: 2, evoSpawn: 6, desc: '공격할 때마다 해골 병사가 한 마리씩 늘어나요 (최대 6마리)' },
   valkyrie: { cy: 2, pull: 1.6, desc: '휘두를 때마다 주변 적 유닛을 끌어당겨요' },
   bats: { cy: 2, hpX: 1.3, heal: 1, desc: '체력 +30% · 공격할 때마다 체력을 회복해요' },
+  pekka: { cy: 2, heal: 0.35, desc: '공격할 때마다 준 피해의 35%만큼 체력을 회복해요' },
+  royal_giant: { cy: 2, knock: { r: 2, push: 1.5, dmg: 0.5 }, desc: '대포알이 터질 때 주변 지상 유닛이 밀려나고 피해를 입어요' },
+  mega_knight: { cy: 2, onDeploy: { dmg: 266, r: 4.2, stun: 1 }, desc: '착지 충격이 더 넓고, 맞은 적이 1초 동안 기절해요' },
+  bomber: { cy: 2, echo: { t: 0.6, dmg: 0.6 }, desc: '폭탄이 한 번 더 터져요 (두 번째는 60% 피해)' },
+  musketeer: { cy: 2, hsX: 0.7, range: 7, desc: '공격 속도 +30% · 사거리 7칸' },
 };
 const HERO = {   // 능력은 전장에 나온 뒤 버튼으로 사용 (엘릭서 소모)
   knight: { ab: 'taunt', cost: 2, uses: 1, name: '도발의 함성', desc: '4초 동안 주변 적과 타워가 영웅을 공격하고, 방어막이 피해를 먼저 막아요' },
   musketeer: { ab: 'turret', cost: 2, uses: 1, name: '믿음직한 포탑', desc: '앞에 작은 포탑을 설치해요 · 설치 순간 범위 피해, 이후 공중·지상 공격' },
   mini_pekka: { ab: 'pancake', cost: 1, uses: 5, name: '아침 식사', desc: '팬케이크를 먹을 때마다 체력·공격력 +10% (최대 5번)' },
+  giant: { ab: 'guard', cost: 1, uses: 1, name: '수호의 방패', desc: '6초 동안 방어막(체력의 40%)이 생기고 받는 피해가 30% 줄어요' },
+  wizard: { ab: 'nova', cost: 2, uses: 1, name: '화염 폭발', desc: '주변 적에게 큰 피해를 주고 0.8초 동안 기절시켜요' },
+  ice_wizard: { ab: 'frost', cost: 2, uses: 1, name: '서리 폭풍', desc: '주변 적에게 피해를 주고 2초 동안 얼려요' },
 };
 function mkVariants() {
   for (const [b, v] of Object.entries(EVO)) { const c = CARDS[b]; if (!c) continue; const o = { ...c, ...v, id: 'evo_' + b, name: '진화 ' + c.name, evoOf: b, cycles: v.cy };
-    if (v.hpX) o.hp = Math.round(c.hp * v.hpX); if (v.dmgX) o.damage = Math.round(c.damage * v.dmgX); delete o.cy; delete o.hpX; delete o.dmgX; CARDS[o.id] = o; }
+    if (v.hpX) o.hp = Math.round(c.hp * v.hpX); if (v.dmgX) o.damage = Math.round(c.damage * v.dmgX); if (v.hsX) o.hitSpeed = +(c.hitSpeed * v.hsX).toFixed(2); delete o.cy; delete o.hpX; delete o.dmgX; delete o.hsX; CARDS[o.id] = o; }
   for (const [b, v] of Object.entries(HERO)) { const c = CARDS[b]; if (!c) continue;
     CARDS['hero_' + b] = { ...c, id: 'hero_' + b, name: '영웅 ' + c.name, heroOf: b, ab: v.ab, abCost: v.cost, desc: '능력 「' + v.name + '」 (엘릭서 ' + v.cost + ') · ' + v.desc }; }
   CARDS.hero_turret = { id: 'hero_turret', name: '믿음직한 포탑', initial: '포', color: '#9fb4c8', type: 'building', cost: 0, count: 1, hp: 520, damage: 120, hitSpeed: 0.8, firstHit: 0.4, range: 6, speed: 0, sight: 6, targets: 'air_ground', flying: false, mass: 1000, radius: 0.5, deployTime: 0.4, splash: 0, projSpeed: 16, canJumpRiver: false, lifetime: 10, hidden: true };
@@ -496,12 +504,12 @@ function mkTower(team, k, x, y) {
 }
 function mkUnit(id, team, x, y) {
   const c = CARDS[id], m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
-  return { id: 0, team, kind: c.type === 'building' ? 'building' : 'unit', card: c, x, y, px: x, py: y, hp: c.hp * m, max: c.hp * m, r: c.radius, fly: !!c.flying, tgt: null, cd: 0, dep: c.deployTime ?? 1, m };
+  return { id: 0, team, kind: c.type === 'building' ? 'building' : 'unit', card: c, x, y, px: x, py: y, hp: c.hp * m, max: c.hp * m, r: c.radius, fly: !!c.flying, tgt: null, cd: 0, dep: c.deployTime ?? 1, m, shield: c.shield || 0 };
 }
 function newGame(net) {
   sel = -1; drag = null; hov = null;
   G = { t: 0, ot: 0, res: undefined, n: 0, ents: [], projs: [], fx: [], elixir: CFG.startElixir, cur: CFG.elixir[0],
-        q: [...CFG.playerDeck].sort(() => Math.random() - 0.5), hand: [], nxt: null, net: net || null, vfx: [], shake: 0, cyc: [{}, {}] };
+        q: [...CFG.playerDeck].sort(() => Math.random() - 0.5), hand: [], nxt: null, net: net || null, vfx: [], shake: 0, cyc: [{}, {}], later: [] };
   G.hand = G.q.splice(0, 4); G.nxt = G.q.shift();
   if (!net) G.ai = newAI();
   else if (net.role === 'host') { const q = [...net.oppDeck].sort(() => Math.random() - 0.5); G.o = { el: CFG.startElixir, hand: q.splice(0, 4), nxt: q.shift(), q }; net.ack = 0; net.seen = new Set(); net.sc = 0; net.seq = 0; }
@@ -573,6 +581,8 @@ function tick(dt) {
   for (const e of G.ents) { e.px = e.x; e.py = e.y; }
   for (const e of G.ents) if (e.hp > 0) think(e, dt);
   collide(); projs(dt); fxs(dt);
+  for (const q of G.later) q.t -= dt; { const ds = G.later.filter(q => q.t <= 0); G.later = G.later.filter(q => q.t > 0); ds.forEach(q => q.f()); }
+  deaths();
   for (const e of G.ents) if (e.hp <= 0 && e.kind === 'tower' && !e.dead) {
     e.dead = true; fxDeath(e.x, e.y, true);
     if (e.tk === 'princess') G.ents.find(k => k.team === e.team && k.tk === 'king').active = true;
@@ -736,7 +746,8 @@ const okDeck = d => Array.isArray(d) && d.length === 8 && new Set(d).size === 8 
 const starters = () => [[...DEFDECK], ['goblins', 'skeleton_army', 'hog_rider', 'cannon', 'archers', 'knight', 'arrows', 'fireball'],
   ['wizard', 'baby_dragon', 'giant', 'valkyrie', 'archers', 'prince', 'fireball', 'arrows'], ['prince', 'knight', 'goblins', 'skeleton_army', 'wizard', 'cannon', 'arrows', 'fireball'],
   ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'giant', 'bomber', 'rocket', 'arrows']];
-const AIDECKS = () => [...starters().slice(0, 4), ['pekka', 'dart_goblin', 'bats', 'fire_spirit', 'mega_minion', 'spear_goblins', 'fireball', 'arrows'], ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'royal_giant', 'bomber', 'rocket', 'arrows']];
+const AIDECKS = () => [...starters().slice(0, 4), ['pekka', 'dart_goblin', 'bats', 'fire_spirit', 'mega_minion', 'spear_goblins', 'fireball', 'arrows'], ['mini_pekka', 'musketeer', 'minions', 'barbarians', 'royal_giant', 'bomber', 'rocket', 'arrows'],
+  ['golem', 'witch', 'electro_wizard', 'zap', 'mega_knight', 'ice_wizard', 'poison', 'flying_machine'], ['balloon', 'inferno_dragon', 'princess', 'dark_prince', 'bandit', 'zap', 'giant_snowball', 'executioner']];
 function loadDecks() { // 덱 프리셋 5개 (자동 저장)
   const st = starters(), v = LS.get('cf_decks', null); DK = { cur: 0, list: st };
   if (v && Array.isArray(v.list) && v.list.length >= 1) {   // 프리셋은 1~10개, 덱은 빈 칸(null)이 있어도 저장돼요
@@ -946,7 +957,7 @@ function cardInfo(id) {
   add('종류', sp ? '주문' : c.type === 'building' ? '건물' : '유닛'); add('엘릭서', c.cost);
   if (sp) {
     add('피해량', n(c.damage * m)); if (c.towerDamage) add('타워 피해', n(c.towerDamage * m)); add('범위', '반지름 ' + c.radius + '칸'); add('발동까지', c.delay + '초');
-    if (c.waves) add('연속 횟수', c.waves + '회'); add('대상', '공중 + 지상');
+    if (c.dot) add('지속 시간', c.waves * c.waveGap + '초'); else if (c.waves) add('연속 횟수', c.waves + '회'); if (c.strikes) add('번개 수', c.strikes + '줄기 (체력 높은 적부터)'); add('대상', '공중 + 지상');
   } else {
     add('체력', n(c.hp * m)); add('공격력', n(c.damage * m)); add('공격 속도', c.hitSpeed + '초'); add('초당 피해(DPS)', n(c.damage * m / c.hitSpeed));
     add('사거리', c.range <= 1.6 ? '근접' : c.range + '칸');
@@ -955,7 +966,13 @@ function cardInfo(id) {
     if (c.count > 1) add('소환 수', c.count + '마리');
     if (c.splash) add('범위 공격', '반지름 ' + c.splash + '칸');
   }
-  const ft = []; if (c.charge) ft.push('돌진: 달리다가 첫 공격은 2배 피해'); if (c.suicide) ft.push('적에 닿으면 자폭'); if (c.canJumpRiver) ft.push('강을 뛰어넘음'); if (c.lifetime) ft.push('지속 시간 ' + c.lifetime + '초'); if (EVO[id]) ft.push('★ 진화 ' + (have('evo_' + id) ? '(보유)' : '(보석 ' + EVOP + ')') + ': ' + EVO[id].desc + ' · ' + EVO[id].cy + '번 낸 뒤부터');
+  const ft = []; if (c.stun) ft.push(c.freeze ? '❄ ' + c.stun + '초 동안 얼려요' : '⚡ ' + c.stun + '초 동안 기절');
+  if (c.slow) ft.push('🐌 ' + c.slow.t + '초 동안 이동·공격 ' + Math.round(c.slow.k * 100) + '% 느려져요'); if (c.dot) ft.push('독 지대에서 1초마다 피해');
+  if (c.shield) ft.push('🛡 방어막 ' + n(c.shield * m)); if (c.ramp) ft.push('🔥 한 적을 오래 태울수록 피해가 ' + c.ramp.x[c.ramp.x.length - 1] + '배까지 커져요');
+  if (c.spawner) ft.push('주기적으로 ' + CARDS[c.spawner.id].name + ' ' + c.spawner.n + '마리 소환 (' + c.spawner.every + '초)');
+  if (c.onDeploy) ft.push('착지 충격: 반지름 ' + c.onDeploy.r + '칸에 ' + n(c.onDeploy.dmg * m) + ' 피해' + (c.onDeploy.stun ? ' + 기절' : ''));
+  if (c.death) ft.push('죽으면 반지름 ' + c.death.r + '칸에 ' + n(c.death.dmg * m) + ' 피해' + (c.death.spawn ? ' + ' + CARDS[c.death.spawn].name + ' ' + c.death.n + '마리' : ''));
+  if (c.charge) ft.push('돌진: 달리다가 첫 공격은 2배 피해'); if (c.suicide) ft.push('적에 닿으면 자폭'); if (c.canJumpRiver) ft.push('강을 뛰어넘음'); if (c.lifetime) ft.push('지속 시간 ' + c.lifetime + '초'); if (EVO[id]) ft.push('★ 진화 ' + (have('evo_' + id) ? '(보유)' : '(보석 ' + EVOP + ')') + ': ' + EVO[id].desc + ' · ' + EVO[id].cy + '번 낸 뒤부터');
   if (HERO[id]) ft.push('★ 영웅 ' + (have('hero_' + id) ? '(보유)' : '(보석 ' + HEROP + ')') + ': 「' + HERO[id].name + '」 엘릭서 ' + HERO[id].cost + ' · ' + HERO[id].desc);
   $('ci-head').innerHTML = `<div class="cic" style="background:${c.color}">${c.initial}</div><div><b>${c.name}</b><small>${SPCT(c)}</small></div><i class="cic2">${c.cost}</i>`;
   $('ci-body').innerHTML = R.join('') + (ft.length ? `<div class="ft">${ft.join('<br>')}</div>` : '');
@@ -1157,6 +1174,10 @@ function aiScore(c, T, cl, p) { // 위협에 대한 카드 점수 (0이면 쓰�
   if (c.type === 'spell') {
     if (!p.spells) return 0;
     if (c.id === 'arrows') return swarm ? 12 : 0;
+    if (c.id === 'zap' || c.id === 'giant_snowball') return swarm ? 10 : n >= 3 ? 5 : 0;
+    if (c.id === 'poison') return n >= 3 ? 8 : 0;
+    if (c.id === 'freeze') return hp > 2200 ? 7 : 0;
+    if (c.id === 'lightning') return hp > 2500 ? 8 : 0;
     if (c.id === 'fireball' || c.id === 'rocket') { const big = c.id === 'rocket' ? 2600 : 1800; return hp > big ? 9 : n >= 3 && c.id === 'fireball' ? 7 : 0; }
     return 0;
   }
@@ -1312,7 +1333,7 @@ function sendSnap(n) {
   const s = ++n.seq, E = [], o = G.o;
   for (const e of G.ents) {
     const hp = e.hp > 0 ? Math.max(1, Math.round(e.hp)) : 0;
-    E.push(e.kind === 'tower' ? [e.id, e.tk === 'king' ? -2 : -1, e.team, r1(e.x), r1(e.y), hp, e.active ? 1 : 0] : [e.id, CIDS.indexOf(e.card.id), e.team, r1(e.x), r1(e.y), hp, Math.round(Math.max(0, e.dep) * 10), (e.shield > 0 ? 1 : 0) | ((e.ab | 0) << 1)]);
+    E.push(e.kind === 'tower' ? [e.id, e.tk === 'king' ? -2 : -1, e.team, r1(e.x), r1(e.y), hp, e.active ? 1 : 0, e.stunT > 0 ? 16 : 0] : [e.id, CIDS.indexOf(e.card.id), e.team, r1(e.x), r1(e.y), hp, Math.round(Math.max(0, e.dep) * 10), (e.shield > 0 ? 1 : 0) | ((e.ab | 0) << 1) | (e.stunT > 0 ? 16 : 0) | (e.slowT > 0 ? 32 : 0)]);
   }
   const N = 70, cn = Math.max(1, Math.ceil(E.length / N));
   for (let i = 0; i < cn; i++) {
@@ -1357,7 +1378,7 @@ function applySnap(n, b) {
       e = ci < 0 ? mkTower(1 - ht, ci === -2 ? 'king' : 'princess', x, y) : mkUnit(CIDS[ci], 1 - ht, x, y);
       e.hid = hid; G.gm.set(hid, e); G.ents.push(e);
     } else { e.px += (e.x - e.px) * a; e.py += (e.y - e.py) * a; e.x = x; e.y = y; if (e.hp - hp > 0.5) fxDamage(e, e.hp - hp); if (e.kind === 'tower' && e.hp > 0 && hp <= 0) fxDeath(e.x, e.y, true); }
-    e.hp = hp; if (e.kind === 'tower') e.active = !!f; else { e.dep = f / 10; e.sh = (fl | 0) & 1; if (!(Date.now() - (e.abAt || 0) < 1500)) e.ab = (fl | 0) >> 1; else e.ab = Math.max(e.ab | 0, (fl | 0) >> 1); }
+    e.hp = hp; e.stn = (fl >> 4) & 1; if (e.kind === 'tower') e.active = !!f; else { e.dep = f / 10; e.sh = (fl | 0) & 1; e.slw = (fl >> 5) & 1; const ab = ((fl | 0) >> 1) & 7; if (!(Date.now() - (e.abAt || 0) < 1500)) e.ab = ab; else e.ab = Math.max(e.ab | 0, ab); }
   }
   for (const [hid, e] of G.gm) if (!seen.has(hid)) { if (e.kind === 'unit' && e.dep <= 0) fxDeath(e.x, e.y, false); G.gm.delete(hid); }
   G.ents = G.ents.filter(e => seen.has(e.hid));
@@ -1376,10 +1397,15 @@ function ok(c, t) { if (t.fly) return c.targets === 'air_ground'; if (c.targets 
 
 function think(e, dt) {
   const c = e.card;
-  if (e.dep > 0) { e.dep -= dt; return; }                       // 소환 지연
+  if (e.dep > 0) { e.dep -= dt; if (e.dep <= 0 && c.onDeploy && !e.dpl) { e.dpl = 1; deployBlast(e); } return; }   // 소환 지연 (끝나면 착지 효과)
   if (e.taunt > 0) { e.taunt -= dt; if (e.taunt <= 0) e.shield = 0; }
+  if (e.guard > 0) { e.guard -= dt; if (e.guard <= 0) e.shield = 0; }
   if (e.kind === 'building') e.hp -= e.max / c.lifetime * dt;   // 수명
   if (e.kind === 'tower' && !e.active) return;
+  if (e.stunT > 0) { e.stunT -= dt; e.mv = 0; e.cd = Math.max(e.cd, c.firstHit ?? 0.5); return; }   // 기절·빙결: 움직임·공격 정지
+  if (e.slowT > 0) { e.slowT -= dt; if (e.slowT <= 0) e.slowK = 0; }
+  if (c.spawner) { e.spT = (e.spT ?? c.spawner.first ?? c.spawner.every) - dt; if (e.spT <= 0) { e.spT = c.spawner.every; sub(c.spawner.id, c.spawner.n, e.team, e.x, e.y + (e.team ? 0.8 : -0.8), e.lane); } }   // 마녀: 주기적으로 소환
+  const sf = e.slowT > 0 ? 1 - (e.slowK || 0) : 1;
   // 타겟팅: 공격을 시작하기 전(이동 중)에는 매 틱 가장 가까운 적으로 갈아타고, 사거리에 들어와 공격을 시작하면 그 타겟에 고정(lock)돼요.
   // 고정된 타겟은 죽거나 시야(sight) 밖으로 나가야 풀려요. (원작: 새로 나온 유닛이 공격 중인 유닛을 끌어오지 못함, 이동 중엔 가까운 쪽으로 끌려옴)
   const tn = e.taunt > 0 ? null : tauntOf(e); if (tn && e.tgt !== tn) e.lock = false;   // 도발: 고정된 타겟도 풀고 영웅을 노려요
@@ -1391,9 +1417,9 @@ function think(e, dt) {
     if (n !== t0) { e.tgt = n; e.cd = c.firstHit ?? 0.5; } // 타겟이 바뀌면 공격 준비 시간 리셋
   }
   const t = e.tgt;
-  if (t && gap(e, t) <= c.range) { e.lock = true; e.mv = 0; e.cd -= dt * (1 + (e.rg || 0) * (c.rage ? c.rage.k : 0)); if (e.cd <= 0) { strike(e, t); e.cd = c.hitSpeed; } return; }
+  if (t && gap(e, t) <= c.range) { e.lock = true; e.mv = 0; e.cd -= dt * sf * (1 + (e.rg || 0) * (c.rage ? c.rage.k : 0)); if (e.cd <= 0) { strike(e, t); e.cd = c.hitSpeed; } return; }
   if (e.kind !== 'unit') return;
-  const g = t || goal(e); if (g) { e.mv = 1; move(e, g, dt); }
+  const g = t || goal(e); if (g) { e.mv = 1; move(e, g, dt, sf); }
 }
 
 function tauntOf(e) { const c = e.card; for (const t of G.ents) if (t.taunt > 0 && t.team !== e.team && t.hp > 0 && gap(e, t) <= 6 && ok(c, t)) return t; return null; }
@@ -1417,7 +1443,7 @@ function goal(e) { // 기본 이동 목표 = 가장 가까운 적 타워
   return best;
 }
 
-function move(e, g, dt) {
+function move(e, g, dt, sf = 1) {
   const c = e.card; let ax = g.x, ay = g.y;
   if (!e.fly && !c.canJumpRiver) { // 지상 유닛은 다리로만 강을 건넘
     const inR = e.y > RIV[0] - 0.3 && e.y < RIV[1] + 0.3, need = (e.y - 16) * (g.y - 16) < 0 || inR;
@@ -1432,7 +1458,7 @@ function move(e, g, dt) {
   }
   const d = hyp(ax - e.x, ay - e.y); if (d < 1e-3) return;
   const ch = c.charge, charging = ch && (e.chg || 0) >= ch.dist; // 프린스: 일정 거리 달리면 돌진(속도·피해 증가)
-  const sp = Math.min(c.speed * (charging ? ch.speedMult : 1) * (1 + (e.rg || 0) * (c.rage ? c.rage.k : 0)) / 60 * dt, d); // 속도 단위: 분당 타일 → 초당
+  const sp = Math.min(c.speed * (charging ? ch.speedMult : 1) * (1 + (e.rg || 0) * (c.rage ? c.rage.k : 0)) * sf / 60 * dt, d); // 속도 단위: 분당 타일 → 초당
   e.x += (ax - e.x) / d * sp; e.y += (ay - e.y) / d * sp; if (ch) e.chg = (e.chg || 0) + sp;
 }
 
@@ -1447,7 +1473,10 @@ function heroDo(team) {   // 호스트/싱글에서 실제 능력 발동
   else if (h.ab === 'turret') {
     const u = Object.assign(mkUnit('hero_turret', team, e.x, e.y + (team ? 1.6 : -1.6)), { id: ++G.n });
     G.ents.push(u); area(u.x, u.y, 1.8, 180, team, CARDS.hero_turret, 0.35);
-  } else if (h.ab === 'pancake') { e.max *= 1.1; e.hp = Math.min(e.max, e.hp * 1.1 + e.max * 0.05); e.m *= 1.1; }
+  } else if (h.ab === 'guard') { e.shield = e.max * 0.4; e.guard = 6; }
+  else if (h.ab === 'nova') { area(e.x, e.y, 3.5, 420 * e.m, team, { targets: 'air_ground', stun: 0.8 }, 0.35); blastFx(e.x, e.y, 3.5); sfx('boom'); }
+  else if (h.ab === 'frost') { area(e.x, e.y, 3.5, 90 * e.m, team, { targets: 'air_ground', stun: 2 }, 0.3); blastFx(e.x, e.y, 3.5); sfx('boom'); }
+  else if (h.ab === 'pancake') { e.max *= 1.1; e.hp = Math.min(e.max, e.hp * 1.1 + e.max * 0.05); e.m *= 1.1; }
   if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'puff', x: e.x, y: e.y, at: performance.now(), max: 420 });
   sfx('elixir'); return true;
 }
@@ -1466,10 +1495,36 @@ function hostHab(n, m) {
   if (m.isMe || G.net !== n || G.res !== undefined) return;
   const q = ((m.data || {}).q) | 0; if (n.seen.has(q)) return; n.seen.add(q); if (q > n.ack) n.ack = q; heroDo(1);
 }
-function hurt(t, d) {
+function hurt(t, d, c, sx, sy) {
   if (t.card && t.card.dr && t.mv) d *= 1 - t.card.dr;                    // 진화 기사: 이동 중 피해 감소
-  if (t.shield > 0) { const a = Math.min(t.shield, d); t.shield -= a; d -= a; if (d <= 0) return; }   // 영웅 방어막
-  t.hp -= d; if (t.tk === 'king') t.active = true; fxDamage(t, d);
+  if (t.guard > 0) d *= 0.7;                                              // 영웅 자이언트: 수호의 방패
+  if (t.shield > 0) { const a = Math.min(t.shield, d); t.shield -= a; d -= a; }   // 방어막
+  if (d > 0) { t.hp -= d; if (t.tk === 'king') t.active = true; fxDamage(t, d); }
+  if (c && t.hp > 0) afflict(t, c, sx, sy);
+}
+function afflict(t, c, sx, sy) {   // 기절 · 슬로우 · 넉백
+  if (c.stun) t.stunT = Math.max(t.stunT || 0, c.stun);
+  if (c.slow && t.kind !== 'tower') { t.slowT = Math.max(t.slowT || 0, c.slow.t); t.slowK = Math.max(t.slowK || 0, c.slow.k); }
+  if (c.push && t.kind === 'unit' && sx != null) { const dx = t.x - sx, dy = t.y - sy, dd = hyp(dx, dy) || 1, k = c.push * (t.card.mass >= 15 ? 0.4 : 1); t.x += dx / dd * k; t.y += dy / dd * k; }
+}
+const AGC = { targets: 'air_ground' };
+const blastFx = (x, y, r) => { if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'blast', x, y, r, at: performance.now(), max: 320 }); };
+function deployBlast(e) {   // 착지 충격 (메가 나이트 · 일렉트로 마법사)
+  const b = e.card.onDeploy; area(e.x, e.y, b.r, b.dmg * e.m, e.team, { targets: 'air_ground', stun: b.stun }, 0.35); blastFx(e.x, e.y, b.r); sfx('boom');
+}
+function sub(id, n, team, x, y, lane) {   // 부하 소환 (마녀 해골 · 골레마이트)
+  for (let i = 0; i < n; i++) { const a = i / n * 6.283, rr = n > 1 ? 0.6 : 0; G.ents.push(Object.assign(mkUnit(id, team, Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr)), y + Math.sin(a) * rr), { id: ++G.n, lane })); }
+}
+function deaths() {   // 사망 시 효과 (벌룬 폭탄 · 골렘 분열). 연쇄로 죽은 유닛도 처리
+  for (let k = 0; k < 3; k++) {
+    let any = 0;
+    for (const e of G.ents.slice()) if (e.hp <= 0 && e.kind !== 'tower' && e.dep <= 0 && !e.dd) {
+      e.dd = 1; const d = e.card.death; if (!d) continue; any = 1;
+      area(e.x, e.y, d.r, d.dmg * e.m, e.team, AGC, 0.5); blastFx(e.x, e.y, d.r);
+      if (d.spawn) sub(d.spawn, d.n, e.team, e.x, e.y, e.lane);
+    }
+    if (!any) break;
+  }
 }
 
 // ---------- 6단계: 효과음(WebAudio 합성, 파일 없음) · 타격 이펙트 ----------
@@ -1783,8 +1838,8 @@ function fxDeath(x, y, tower) {
 }
 
 function area(x, y, r, d, team, c, tr = 1) {
-  tr = tr || 1; if (c.type === 'spell') { if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'blast', x, y, r, at: performance.now(), max: 320 }); sfx('boom'); }
-  for (const t of G.ents) if (t.team !== team && t.hp > 0 && ok(c, t) && hyp(t.x - x, t.y - y) - t.r <= r) hurt(t, t.kind === 'tower' ? d * tr : d);
+  tr = tr || 1; if (c.type === 'spell' && !c.dot) { if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'blast', x, y, r, at: performance.now(), max: 320 }); sfx('boom'); }
+  for (const t of G.ents) if (t.team !== team && t.hp > 0 && ok(c, t) && hyp(t.x - x, t.y - y) - t.r <= r) hurt(t, t.kind === 'tower' ? d * tr : d, c, x, y);
   G.fx.push({ x, y, r, t: 0.25, max: 0.25, vis: 1, team });
 }
 
@@ -1792,7 +1847,8 @@ function strike(e, t) {
   const c = e.card; let d = c.damage * e.m;
   if (c.longShot && gap(e, t) >= c.longShot) d *= 2;                      // 진화 아처: 먼 적에게 2배
   if (c.rage) e.rg = Math.min(c.rage.max, (e.rg || 0) + 1);               // 진화 바바리안: 때릴수록 빨라짐
-  if (c.heal) e.hp = Math.min(e.max, e.hp + d);                           // 진화 박쥐: 공격하면 회복
+  if (c.ramp) { if (e.rpT !== t) { e.rpT = t; e.rpN = 0; } d *= c.ramp.x[Math.min(c.ramp.x.length - 1, Math.floor(e.rpN++ / c.ramp.n))]; }   // 인페르노: 오래 태울수록 강해져요
+  if (c.heal) e.hp = Math.min(e.max, e.hp + d * c.heal);                 // 회복 (박쥐 1배 · 페카 0.35배)
   if (c.evoSpawn && G.ents.filter(u => u.team === e.team && u.card === c && u.hp > 0).length < c.evoSpawn)   // 진화 해골: 한 마리씩 늘어남
     G.ents.push(Object.assign(mkUnit(c.id, e.team, e.x + (Math.random() - 0.5) * 0.6, e.y + (e.team ? 0.4 : -0.4)), { id: ++G.n, lane: e.lane }));
   if (c.pull) for (const u of G.ents) if (u.team !== e.team && u.kind === 'unit' && u.hp > 0 && u.dep <= 0) {   // 진화 발키리: 끌어당김
@@ -1800,15 +1856,17 @@ function strike(e, t) {
     if (dd <= c.splash + 0.8 && go > 0) { u.x += dx / dd * go; u.y += dy / dd * go; }
   }
   if (c.charge) { if ((e.chg || 0) >= c.charge.dist) d *= c.charge.dmgMult; e.chg = 0; } // 돌진 피해 후 초기화
-  if (c.projSpeed) G.projs.push({ x: e.x, y: e.y, t, tx: t.x, ty: t.y, team: e.team, d, sp: c.projSpeed, rad: c.splash || 0, c });
-  else if (c.splash) { area(e.x, e.y, c.splash, d, e.team, c, c.towerRatio); if (c.suicide) e.hp = 0; } else hurt(t, d);
+  if (c.projSpeed) G.projs.push({ x: e.x, y: e.y, sx: e.x, sy: e.y, t, tx: t.x, ty: t.y, team: e.team, d, sp: c.projSpeed, rad: c.splash || 0, c });
+  else if (c.splash) { area(e.x, e.y, c.splash, d, e.team, c, c.towerRatio); if (c.suicide) e.hp = 0; } else hurt(t, d, c, e.x, e.y);
 }
 
 function projs(dt) {
   for (const p of G.projs) {
     if (p.t.hp > 0) { p.tx = p.t.x; p.ty = p.t.y; }
     const dx = p.tx - p.x, dy = p.ty - p.y, d = hyp(dx, dy), s = p.sp * dt;
-    if (d <= s + p.t.r * 0.5) { p.done = 1; if (p.rad) area(p.tx, p.ty, p.rad, p.d, p.team, p.c, p.c.towerRatio); else if (p.t.hp > 0) hurt(p.t, p.d); }
+    if (d <= s + p.t.r * 0.5) { p.done = 1; if (p.rad) { area(p.tx, p.ty, p.rad, p.d, p.team, p.c, p.c.towerRatio); if (p.c.echo) { const q = p, ec = q.c; G.later.push({ t: ec.echo.t, f: () => area(q.tx, q.ty, q.rad, q.d * ec.echo.dmg, q.team, ec, ec.towerRatio) }); } } else if (p.t.hp > 0) hurt(p.t, p.d, p.c, p.sx, p.sy);
+      if (p.c.knock) { const k = p.c.knock; for (const t of G.ents) if (t.team !== p.team && t.kind === 'unit' && !t.fly && t.hp > 0 && hyp(t.x - p.tx, t.y - p.ty) - t.r <= k.r) {   // 진화 로열 자이언트: 착탄 충격
+        const dx = t.x - p.tx, dy = t.y - p.ty, dd = hyp(dx, dy) || 1, w = k.push * (t.card.mass >= 15 ? 0.4 : 1); hurt(t, p.d * k.dmg); t.x += dx / dd * w; t.y += dy / dd * w; } } }
     else { p.x += dx / d * s; p.y += dy / d * s; }
   }
   G.projs = G.projs.filter(p => !p.done);
@@ -1817,11 +1875,21 @@ function projs(dt) {
 function fxs(dt) { // 스펠: 범위 표시 후 delay 뒤에 적용
   for (const f of G.fx) {
     f.t -= dt;
-    if (f.c && f.left > 0 && f.t <= 0) { f.left--; area(f.x, f.y, f.r, f.c.damage * f.m, f.team, f.c, f.c.towerRatio); f.t = f.left > 0 ? (f.c.waveGap || 0.2) : 0; }
+    if (f.c && f.left > 0 && f.t <= 0) { f.left--; if (f.c.strikes) bolts(f); else area(f.x, f.y, f.r, f.c.damage * f.m, f.team, f.c, f.c.towerRatio); f.t = f.left > 0 ? (f.c.waveGap || 0.2) : 0; }
   }
   G.fx = G.fx.filter(f => f.t > 0);
 }
 
+function bolts(f) {   // 번개: 범위 안에서 체력이 가장 높은 적 3곳을 차례로 내리쳐요
+  const c = f.c, d = c.damage * f.m, hit = new Set();
+  for (let i = 0; i < c.strikes; i++) {
+    let best = null;
+    for (const t of G.ents) if (t.team !== f.team && t.hp > 0 && !hit.has(t) && hyp(t.x - f.x, t.y - f.y) - t.r <= f.r && (!best || t.hp > best.hp)) best = t;
+    if (!best) break; hit.add(best); hurt(best, best.kind === 'tower' ? d * (c.towerRatio || 1) : d, c, f.x, f.y);
+    if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'bolt', x: best.x, y: best.y, at: performance.now(), max: 380 });
+  }
+  sfx('boom');
+}
 function collide() { // 질량 기반 밀어내기 + 강/경계 처리
   const A = G.ents;
   for (let i = 0; i < A.length; i++) {
@@ -2038,7 +2106,9 @@ function render(a) {
       }
       if (c.evoOf || c.heroOf) { cx.lineWidth = 0.14; cx.strokeStyle = c.evoOf ? '#5ad7ff' : '#ffd24d'; cx.beginPath(); cx.arc(x, dy, r + 0.14, 0, 7); cx.stroke(); }
       if (e.shield > 0 || e.sh) { cx.lineWidth = 0.16; cx.strokeStyle = 'rgba(140,210,255,.95)'; cx.beginPath(); cx.arc(x, dy, r + 0.34, 0, 7); cx.stroke(); }
+      if (e.slowT > 0 || e.slw) { cx.fillStyle = 'rgba(110,190,255,.38)'; cx.beginPath(); cx.arc(x, dy, r, 0, 7); cx.fill(); }
     }
+    if (e.stunT > 0 || e.stn) { cx.fillStyle = 'rgba(255,238,110,.45)'; cx.strokeStyle = '#fff6b0'; cx.lineWidth = 0.1; cx.beginPath(); if (e.kind === 'tower') cx.rect(x - e.r, y - e.r, e.r * 2, e.r * 2); else cx.arc(x, e.fly ? y - 0.5 : y, e.r, 0, 7); cx.fill(); cx.stroke(); }
     cx.globalAlpha = 1;
     if (e.flash > nowT && e.hp > 0) { cx.globalAlpha = 0.5 * (e.flash - nowT) / 110; cx.fillStyle = '#fff'; cx.beginPath(); if (e.kind === 'unit' || e.kind === 'building') cx.arc(x, e.fly ? y - 0.5 : y, e.r, 0, 7); else cx.rect(x - e.r, y - e.r, e.r * 2, e.r * 2); cx.fill(); cx.globalAlpha = 1; }
     if (e.kind === 'tower') { if (e.hp > 0) towerBar(e, x, y); } else if (e.hp > 0 && e.hp < e.max) {
@@ -2057,6 +2127,7 @@ function render(a) {
     for (const v of G.vfx) {
       const k = (nowT - v.at) / v.max;
       if (v.type === 'hit') { cx.globalAlpha = 1 - k; cx.strokeStyle = '#fff'; cx.lineWidth = 0.12; cx.beginPath(); cx.arc(v.x, v.y, 0.25 + k * 0.5, 0, 7); cx.stroke(); }
+      else if (v.type === 'bolt') { cx.globalAlpha = 1 - k; cx.strokeStyle = '#fff7a0'; cx.lineWidth = 0.22; cx.beginPath(); let bx = v.x, by = v.y - 7; cx.moveTo(bx, by); for (let i = 1; i <= 6; i++) { bx = v.x + (i === 6 ? 0 : Math.sin(v.at + i * 3) * 0.7); by = v.y - 7 + i * 7 / 6; cx.lineTo(bx, by); } cx.stroke(); cx.globalAlpha = (1 - k) * 0.5; cx.fillStyle = '#ffe44d'; cx.beginPath(); cx.arc(v.x, v.y, 0.8, 0, 7); cx.fill(); }
       else if (v.type === 'puff') { cx.fillStyle = '#d9d9d9'; for (let i = 0; i < 5; i++) { const an = i * 1.256 + 0.4; cx.globalAlpha = (1 - k) * 0.7; cx.beginPath(); cx.arc(v.x + Math.cos(an) * k * 0.8, v.y + Math.sin(an) * k * 0.8, 0.22 * (1 - k * 0.5), 0, 7); cx.fill(); } }
       else if (v.type === 'blast') { cx.globalAlpha = (1 - k) * 0.55; cx.fillStyle = '#ffb347'; cx.beginPath(); cx.arc(v.x, v.y, v.r * (0.6 + 0.4 * k), 0, 7); cx.fill(); cx.globalAlpha = 1 - k; cx.strokeStyle = '#fff3c4'; cx.lineWidth = 0.14; cx.stroke(); }
       else if (v.type === 'boom') { cx.globalAlpha = 1 - k; cx.fillStyle = '#ff8c2a'; cx.beginPath(); cx.arc(v.x, v.y, 0.8 + k * 2.6, 0, 7); cx.fill(); cx.fillStyle = '#ffe8a3'; cx.beginPath(); cx.arc(v.x, v.y, (0.5 + k * 1.4) * (1 - k * 0.4), 0, 7); cx.fill(); }
