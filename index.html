@@ -282,6 +282,18 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .dc.dd-over{outline:3px solid #fff;outline-offset:-2px;box-shadow:0 0 14px #fff}
 .dd-ghost{position:fixed;z-index:300;pointer-events:none;opacity:1!important;margin:0;transform:translate(-50%,-58%) scale(1.1);box-shadow:0 12px 26px rgba(0,0,0,.65);animation:none!important}
 .dc.evo{border-color:#c38bff}.dc.hero{border-color:#ffd24d}
+.bk{background:rgba(5,20,40,.55);border-radius:12px;overflow:hidden;width:100%;flex:none}
+.bk .bh{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;font-weight:900;font-size:15px}
+.bk.r0 .bh{background:linear-gradient(#3f8cf0,#2457b5)}.bk.r1 .bh{background:linear-gradient(#e5525a,#a52630)}.bk.r2 .bh{background:linear-gradient(#6c8199,#4a5d73)}
+.bk .bn,.bk .bd{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:8px 8px 0}
+.bk .bn button{font:inherit;font-weight:800;font-size:14px;color:#fff;background:rgba(255,255,255,.08);border:0;border-radius:8px;padding:6px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;touch-action:manipulation}
+.bk .bn button.lk{text-decoration:underline;text-decoration-color:#7fb4ff;text-underline-offset:3px;background:rgba(80,140,255,.22)}
+.bk .dk8{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;min-width:0}
+.bk small{display:block;text-align:center;color:#a9c4e6;font-size:12px;padding:6px 0 8px}
+.bc{aspect-ratio:3/4;border-radius:6px;border:2px solid rgba(255,255,255,.28);background:linear-gradient(160deg,var(--cc),#10233d 92%);position:relative;display:grid;place-items:center;overflow:hidden;font-style:normal}
+.bc b{position:absolute;left:1px;top:1px;min-width:14px;height:16px;padding:0 1px;background:var(--elx);border:1px solid #fff;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;display:grid;place-items:center;font-weight:900;font-size:9px;line-height:1}
+.bc span{font-size:13px;font-weight:900;text-shadow:0 1px 2px #000}
+.bc.evo{border-color:#c38bff}.bc.hero{border-color:#ffd24d}
 .dc.evo .lv{color:#dcb8ff}.dc.hero .lv{color:#ffd24d}
 /* 진화=보라, 영웅=황금: 테두리 빛 + 흐르는 광택 + 반짝이는 별 */
 .card.evo,.dc.evo{border-color:#c38bff!important;animation:evg 1.8s ease-in-out infinite}
@@ -547,7 +559,13 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>전적</h2></div>
         <div class="two"><div class="panel"><span class="big" id="s-w">0</span><small>승</small></div><div class="panel"><span class="big" id="s-l">0</span><small>패</small></div><div class="panel"><span class="big" id="s-d">0</span><small>무</small></div></div>
         <p id="s-rate" style="text-align:center"></p>
-        <div class="sect">최근 10경기</div><div id="s-hist" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="sect">전투 기록</div><div id="s-hist" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+
+      <div class="pg" id="pg-prof">
+        <div class="sub"><button class="back" onclick="profBack()">‹</button><h2>프로필</h2></div>
+        <div id="pf-head" style="display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center"></div>
+        <div class="sect">전투 기록</div><div id="pf-hist" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
 
       <div class="pg" id="pg-profile">
@@ -1446,8 +1464,61 @@ function resetAll(btn) {
 function drawStats() {
   $('s-w').textContent = P.w; $('s-l').textContent = P.l; $('s-d').textContent = P.d;
   const n = P.w + P.l + P.d; $('s-rate').textContent = n ? '승률 ' + Math.round(P.w / n * 100) + '% · 총 ' + n + '경기' : '아직 경기가 없어요';
-  $('s-hist').innerHTML = P.hist.length ? P.hist.map(h => `<div class="item"><b style="width:28px">${['승', '패', '무'][h.r === 0 ? 0 : h.r === 1 ? 1 : 2]}</b><em>👑 ${h.c}${h.f ? ' · 기권' : ''}<small>${when(h.at)}</small></em></div>`).join('') : '<p>대전을 마치면 기록이 쌓여요.</p>';
+  BKL = P.hist.map(h => ({ h, me: P.name, mu: AUTH ? AUTH.uid : '' })); $('s-hist').innerHTML = BKL.length ? BKL.map((e, k) => bkHTML(e, k)).join('') : '<p>대전을 마치면 전투 기록이 쌓여요.</p>';
 }
+// ---------- 전투 기록 · 프로필 보기 · 덱 복사 ----------
+let BKL = [], PROFBACK = 'home';
+const MDL = { ai: 'AI 대전', tr: '트로피전', fr: '친선전', 2: '2대2' };
+const mcH = id => { const c = CARDS[id]; return c ? `<i class="bc${c.evoOf ? ' evo' : ''}${c.heroOf ? ' hero' : ''}" style="--cc:${c.color}"><b>${c.cost}</b><span>${c.initial}</span></i>` : '<i class="bc"></i>'; };
+const dk8 = d => Array.isArray(d) && d.length === 8 ? `<div class="dk8">${d.map(mcH).join('')}</div>` : '<div class="dk8" style="display:block;text-align:center;color:#8aa4c6;font-size:12px;padding:10px 0">덱 정보 없음</div>';
+function bkHTML(e, k) {   // 전투 기록 카드 한 장: 결과 · 왕관 · 양쪽 이름 · 양쪽 덱 · 시간
+  const h = e.h, r = h.r === 0 ? 0 : h.r === 1 ? 1 : 2, [a, b] = String(h.c || '0:0').split(':'), tap = (side, nm, ok) => `<button ${ok ? `class="lk" onclick="bkMenu(${k},'${side}')"` : 'disabled'}>${esc(nm)}</button>`;
+  const opOk = !!(h.ou || (Array.isArray(h.od) && h.od.length === 8)), myOk = !!(e.mu !== undefined && e.view && Array.isArray(h.d) && h.d.length === 8);
+  return `<div class="bk r${r}"><div class="bh"><span>${['승리', '패배', '무승부'][r]}${h.f ? ' (기권)' : ''}</span><span>👑 ${a} - ${b}</span></div>
+    <div class="bn">${tap('m', e.me || '나', myOk)}${tap('o', h.o || '상대', opOk)}</div>
+    <div class="bd">${dk8(h.d)}${dk8(h.od)}</div>
+    <small>${agoB(h.at)}${h.md != null && MDL[h.md] ? ' · ' + MDL[h.md] : ''}</small></div>`;
+}
+const agoB = t => { const m = Math.floor((Date.now() - t) / 60000); return m < 1 ? '방금 전' : m < 60 ? m + '분 전' : m < 1440 ? Math.floor(m / 60) + '시간 전' : Math.floor(m / 1440) + '일 전'; };
+function bkMenu(k, side) {   // 이름을 누르면: 프로필 보기 · 덱 복사
+  const e = BKL[k]; if (!e) return; const h = e.h, o = side === 'o', nm = o ? h.o || '상대' : e.me, uid = o ? h.ou : e.mu, d = o ? h.od : h.d, can = Array.isArray(d) && d.length === 8;
+  smOpen(`<div style="display:flex;justify-content:center">${avH(nm, uid || nm)}</div><h3>${esc(nm)}</h3>${can ? dk8(d) : ''}
+    ${uid && AUTH && !(e.view && e.mu === uid) ? `<button class="btn gold" onclick="profOpen('${esc(uid)}')">프로필 보기</button>` : ''}
+    <button class="btn" ${can ? '' : 'disabled'} onclick="bkCopy(${k},'${side}')">덱 복사</button>
+    <button class="btn" onclick="smClose()">닫기</button>`);
+}
+function bkCopy(k, side) {   // 상대 덱을 내 덱 목록에 새 덱으로 저장해요 (진화 · 영웅 칸 순서에 맞춰서, 없는 카드는 빼고)
+  const e = BKL[k]; if (!e) return; const ids = side === 'o' ? e.h.od : e.h.d; if (!Array.isArray(ids) || ids.length !== 8) return;
+  if (DK.list.length >= MAXDK) return toast('덱이 가득 찼어요 · 덱 하나를 지우고 다시 눌러 주세요');
+  const evo = [], hero = [], norm = [], seen = new Set(); let miss = 0;
+  for (const id of ids) {
+    const c = CARDS[id]; if (!c || c.hidden) { miss++; continue; } const b = baseOf(id); if (seen.has(b)) continue; seen.add(b);
+    if (!have(b)) { miss++; continue; }
+    (c.evoOf && have(id) ? evo : c.heroOf && have(id) ? hero : norm).push(b);
+  }
+  const arr = Array(8).fill(null); evo.splice(2).forEach(x => norm.push(x)); hero.splice(2).forEach(x => norm.push(x));
+  evo.forEach((x, i) => arr[i] = x); hero.forEach((x, i) => arr[2 + i] = x);
+  for (const x of norm) { const z = [4, 5, 6, 7, 0, 1, 2, 3].find(i => !arr[i]); if (z != null) arr[z] = x; }
+  DK.list.push(arr); DK.cur = DK.list.length - 1; deck = [...arr]; saveDecks(); smClose();
+  toast('덱 ' + DK.list.length + '(으)로 저장했어요' + (miss ? ' · 없는 카드 ' + miss + '장은 빠졌어요' : ''));
+}
+async function profOpen(uid) {   // 프로필 보기: 그 사람의 전적과 전투 기록
+  smClose(); if (CURP !== 'prof') PROFBACK = CURP || 'home';
+  showMenu('prof'); const hd = $('pf-head'), hs = $('pf-hist'); hs.innerHTML = ''; hd.innerHTML = '<p>불러오는 중…</p>';
+  try {
+    let o, H;
+    if (AUTH && uid === AUTH.uid) { o = { n: P.name, tr: P.tr | 0, w: P.w, l: P.l, d: P.d }; H = P.hist; }
+    else {
+      if (!AUTH) throw 0; await tokenOk(); const j = await jf(fsDoc('profiles', uid) + '?mask.fieldPaths=d&mask.fieldPaths=h', { headers: hdr() });
+      o = JSON.parse(j.fields.d.stringValue); H = []; try { H = JSON.parse((j.fields.h || {}).stringValue || '[]'); } catch (e) {} if (!Array.isArray(H)) H = [];
+    }
+    if (CURP !== 'prof') return; const n = (o.w | 0) + (o.l | 0) + (o.d | 0);
+    hd.innerHTML = `${avH(o.n, uid)}<h3 style="margin:0">${esc(o.n)}</h3><div>🏆 ${o.tr | 0}</div><div class="two" style="width:100%"><div class="panel"><span class="big">${o.w | 0}</span><small>승</small></div><div class="panel"><span class="big">${o.l | 0}</span><small>패</small></div><div class="panel"><span class="big">${o.d | 0}</span><small>무</small></div></div><p style="margin:0">${n ? '승률 ' + Math.round((o.w | 0) / n * 100) + '% · 총 ' + n + '경기' : '아직 경기가 없어요'}</p>`;
+    BKL = H.slice(0, HMAX).filter(h => h && typeof h === 'object').map(h => ({ h, me: o.n, mu: uid, view: 1 }));
+    hs.innerHTML = BKL.length ? BKL.map((e, k) => bkHTML(e, k)).join('') : '<p>아직 전투 기록이 없어요.</p>';
+  } catch (e) { hd.innerHTML = '<p>' + (AUTH ? '프로필을 불러오지 못했어요' : '로그인하면 프로필을 볼 수 있어요') + '</p>'; }
+}
+function profBack() { showMenu(PROFBACK || 'home'); }
 function drawProfile() {
   const i = $('p-name'); i.value = P.name; i.onchange = () => { P.name = i.value.trim() || '플레이어'; i.value = P.name; saveP(); toast('이름을 저장했어요'); };
   $('p-acct').style.display = AUTH ? '' : 'none'; if (AUTH) $('p-acct').lastElementChild.textContent = AUTH.id;
@@ -1477,12 +1548,21 @@ function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
   const hd = !G.net && DIFF >= 3, d = w === 0 ? (hd ? 50 : 30) : w === 1 ? (hd ? -30 : -20) : 0, old = P.tr | 0, nv = Math.max(0, old + d); P.tr = nv; saveP(); return nv - old;
 }
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
+const HMAX = 20;   // 전투 기록은 최근 20경기까지
+function recBattle(w, f) {   // 전투 기록 한 건: 결과 · 왕관 · 상대 이름/uid · 모드 · 내 덱 · 상대 덱
+  const n = G.net, e = { r: w, c: crowns(0) + ':' + crowns(1), at: Date.now(), d: [...CFG.playerDeck] };
+  if (f) e.f = 1;
+  if (n) { e.o = String(n.opp || '친구').slice(0, 40); e.md = n.m2 ? 2 : n.mode === 'trophy' ? 'tr' : 'fr'; if (n.oppUid && !n.m2) e.ou = n.oppUid; if (Array.isArray(n.oppDeck) && !n.m2) e.od = [...n.oppDeck]; }
+  else if (G.m2) { e.o = 'AI 팀'; e.md = 2; }
+  else { e.o = 'AI · ' + AIP[DIFF].n; e.md = 'ai'; if (G.ai && G.ai.dk) e.od = [...G.ai.dk]; }
+  P.hist.unshift(e); P.hist.length = Math.min(P.hist.length, HMAX);
+}
 function end(w) {
   if (G.free || G.nr) { G.res = w; showFinal(w, [], false); return; }   // 친구 규칙전 · 연습 · n배 엘릭서: 보상·전적·트로피 없음
   G.res = w; evSync(); const g = Math.round((w === 0 ? 200 : w === 1 ? 60 : 100) * (G.net ? 1 : AIP[DIFF].gold)); let m = w === 0 ? 3 : 0, evNew = 0;   // 이기면 보석 +3 (학교용: 바로바로 보상)
   let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF >= 2 ? (DIFF >= 3 ? 3 : 2) : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
   if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
-  P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
+  recBattle(w, 0);
   const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); if (w === 0) passWin();
   const rw = [{ i: '<span class="dot g"></span>', t: '+' + fmt(g) }]; if (m) rw.push({ i: '<span class="dot m"></span>', t: '+' + m });
   if (wcMin) rw.push({ i: '<span style="font-size:20px">🎁</span>', t: '승리 상자' + (wcMin > 1 ? ' ★' + wcMin + '+ 확정' : '') + ' (홈에서 열기)' });
@@ -1501,7 +1581,7 @@ function forfeit() {
   if (G.res !== undefined) return;
   if (G.free || G.nr) { G.res = 1; showFinal(1, [], true); }   // 규칙전은 기록 없이 끝나요 (손님이면 아래에서 호스트에게 기권을 알려요)
   else {
-  G.res = 1; evSync(); P.l++; P.hist.unshift({ r: 1, c: crowns(0) + ':' + crowns(1), at: Date.now(), f: 1 }); P.hist.length = Math.min(P.hist.length, 10); saveP();
+  G.res = 1; evSync(); P.l++; recBattle(1, 1); saveP();
   showFinal(1, trRw(trophyApply(1)), true); }
   const n = G.net; if (n && n.role === 'guest') { const f = () => n.room.emit('ff', {}).catch(() => {}); f(); setTimeout(f, 300); setTimeout(f, 800); }
 }
@@ -1567,8 +1647,8 @@ function botDeck(p) {
   return d;
 }
 function newBot(team, seat, p, deck) {   // 손패 4장 + 다음 카드 · 엘릭서는 플레이어와 같은 규칙
-  const q = [...(deck || botDeck(p))].sort(() => Math.random() - 0.5), hand = q.splice(0, 4), nxt = q.shift();
-  return { team, seat, hand, nxt, q, el: CFG.startElixir, wait: p.v4 && p.v4.inst ? 0 : 2 + Math.random() * 2, abW: 1, threatT: -1, push: null, p, last: 0, defL: -1, defT: -9 };
+  const dk = [...(deck || botDeck(p))], q = [...dk].sort(() => Math.random() - 0.5), hand = q.splice(0, 4), nxt = q.shift();
+  return { dk, team, seat, hand, nxt, q, el: CFG.startElixir, wait: p.v4 && p.v4.inst ? 0 : 2 + Math.random() * 2, abW: 1, threatT: -1, push: null, p, last: 0, defL: -1, defT: -9 };
 }
 const newAI = () => newBot(1, 1, AIP[DIFF]);
 function aiTick(dt) { for (const a of G.bots || []) botTick(a, dt); }
@@ -1915,11 +1995,11 @@ async function pvHost(mode, m2, rule) {
 function hostHello(n, m) {
   if (n.m2) return hostHello2(n, m);
   if (m.isMe || NET !== n) return; const d = m.data || {};
-  if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode, rule: n.rule }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
+  if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode, rule: n.rule, hu: AUTH ? AUTH.uid : '', hd: CFG.playerDeck.map(id => CIDS.indexOf(id)) }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
   const deck = Array.isArray(d.deck) ? d.deck.map(i => CIDS[i]) : [];
   if (deck.length !== 8 || deck.some(x => !x || CARDS[x].hidden) || new Set(deck).size !== 8 || !deckRules(deck)) return;
-  n.tok = String(d.tok); n.opp = String(d.name || '친구').slice(0, 12); n.oppDeck = deck; n.state = 'play'; n.lastPing = Date.now();
-  n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode, rule: n.rule }).catch(() => {});
+  n.tok = String(d.tok); n.opp = String(d.name || '친구').slice(0, 12); n.oppDeck = deck; n.oppUid = typeof d.uid === 'string' && d.uid.length <= 64 ? d.uid : ''; n.state = 'play'; n.lastPing = Date.now();
+  n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode, rule: n.rule, hu: AUTH ? AUTH.uid : '', hd: CFG.playerDeck.map(id => CIDS.indexOf(id)) }).catch(() => {});
   pvBegin(n);
 }
 async function pvJoin(codeArg, want) {
@@ -1930,7 +2010,7 @@ async function pvJoin(codeArg, want) {
   let room; try { room = await R.join(code.toLowerCase(), 'guest'); } catch (e) { toast('방을 찾지 못했어요. 코드를 다시 확인해 주세요'); return; }
   const n = NET = { role: 'guest', code, room, state: 'join', unsubs: [], tok: Math.random().toString(36).slice(2, 10), lastSnap: Date.now() };
   n.unsubs.push(
-    room.on('start', m => { const d = m.data || {}; if (m.isMe || (n.state !== 'join' && n.state !== 'lobby') || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); n.mode = d.mode === 'trophy' ? 'trophy' : 'friendly'; n.rule = n.mode === 'trophy' ? null : sanRule(d.rule); clearTimeout(n.t1);
+    room.on('start', m => { const d = m.data || {}; if (m.isMe || (n.state !== 'join' && n.state !== 'lobby') || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); n.oppUid = typeof d.hu === 'string' && d.hu.length <= 64 ? d.hu : ''; { const hd = Array.isArray(d.hd) ? d.hd.map(i => CIDS[i]) : []; n.oppDeck = hd.length === 8 && hd.every(x => x && CARDS[x] && !CARDS[x].hidden) ? hd : null; } n.mode = d.mode === 'trophy' ? 'trophy' : 'friendly'; n.rule = n.mode === 'trophy' ? null : sanRule(d.rule); clearTimeout(n.t1);
       n.flip = d.m2 ? (d.seat >= 2 ? 1 : 0) : 1;   // 1대1 손님·2대2 상대 팀은 화면을 뒤집어 보고, 같은 팀은 그대로 봐요
       if (d.m2) { n.m2 = 1; n.seat = d.seat; n.names = d.names || []; n.opp = (d.seat >= 2 ? [n.names[0], n.names[1]] : [n.names[2], n.names[3]]).join(' · '); smClose(); }
       pvBegin(n); }),
@@ -1941,7 +2021,7 @@ async function pvJoin(codeArg, want) {
   const hello = () => {
     if (n.state !== 'join') return;
     if (++tries > 6) { toast('방을 찾지 못했어요. 코드를 다시 확인해 주세요'); pvLeave(); pvUI(); return; }
-    room.emit('hello', { tok: n.tok, st: want | 0, name: P.name, deck: CFG.playerDeck.map(id => CIDS.indexOf(id)) }).catch(() => {}); n.t1 = setTimeout(hello, 1500);
+    room.emit('hello', { tok: n.tok, st: want | 0, name: P.name, uid: AUTH ? AUTH.uid : '', deck: CFG.playerDeck.map(id => CIDS.indexOf(id)) }).catch(() => {}); n.t1 = setTimeout(hello, 1500);
   };
   hello(); pvUI();
 }
@@ -2443,6 +2523,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/26', t: '전투 기록 · 프로필 보기 · 덱 복사', n: 1, l: ['메인화면 전적에 클래시 로얄처럼 전투 기록이 생겼어요 — 승리/패배 · 왕관 · 내 덱과 상대 덱 · 몇 분 전인지를 최근 20경기까지 보여줘요', '상대 이름을 누르면 「프로필 보기」와 「덱 복사」 버튼이 떠요. 덱 복사는 진화·영웅 칸 순서에 맞춰 새 덱으로 저장하고, 없는 카드는 빠져요', '프로필 보기: 그 사람의 승·패·무와 전투 기록을 볼 수 있어요 (그 기록 속 상대 이름도 눌러서 이어서 볼 수 있어요)', '소셜에서 친구 이름을 누르면 온라인·오프라인 상관없이 「프로필 보기」 버튼이 떠요', '온라인 대전은 상대 계정과 덱이 기록돼요 · AI 대전은 AI 덱이 기록돼요 (이 업데이트 이전 경기는 덱 없이 결과만 남아 있어요)'] },
   { d: '11/26', t: '진화 상태별 미리보기 · 로켓병 조정', n: 1, l: ['진화 카드는 진화 주기가 아직 안 찼으면 놓기 전 미리보기(이름·사거리)도 일반 카드로 보여줘요 — 진화 안 된 대형 석궁이 무한 사거리 원으로 보이던 문제를 고쳤어요', '로켓병 공격 속도 수정: 타겟이 바뀔 때 공격 대기시간이 0.5초로 줄어들던 버그 때문에 3초마다 쏘지 않고 훨씬 자주 쐈어요 — 이제 공속 3초를 지켜요 (다른 유닛도 같은 규칙)', '로켓병 불꽃: 퍼지는 길이 7칸→4칸(진화 5.5칸)으로 줄이고, 갈라지는 각도를 넓혀(±19°→±34°) 더 넓은 부채꼴로 바꿨어요'] },
   { d: '11/26', t: '로켓병 불꽃 부채꼴', n: 1, l: ['로켓병이 쏜 불꽃놀이가 터지면 불꽃 5갈래가 부채꼴로 멀리(7칸) 퍼지며 적 뒤에 있는 유닛·타워까지 때려요 — 한 갈래 = 피해의 1/5 (64 × 5), 목표는 5갈래를 다 맞아요', '쏠 때마다 반동으로 뒤로 조금 밀려나요 (강 위로는 못 가요)', '진화 로켓병: 공격력 +20% · 불꽃이 9칸까지 퍼져요 (전엔 폭발 범위 1.8칸)'] },
   { d: '11/25', t: '무덤 공식 수치 · 소환 위치', n: 1, l: ['무덤이 공주 타워 하나로 막히던 문제를 고쳤어요 — 공식 영상·데이터 기준으로 해골을 0.5초마다 1마리씩(전엔 0.8초) 더 빨리, 15마리까지 소환해요', '놓고 2.2초 뒤부터 해골이 나오기 시작해요 (전엔 1초 뒤)', '해골은 장판 중심에서 3칸 이상 떨어진 바깥쪽 고리 구역에만 나와요 — 타워 위에 놓으면 타워 주변을 빙 둘러싸요'] },
@@ -2609,12 +2690,12 @@ const isOn = o => Date.now() - (o.seen || 0) < 150000;
 const inPlay = () => $('menu').style.display === 'none';
 async function pubPush(off) {   // 내 공개 프로필 저장 (같은 내용이면 50초 안에는 다시 보내지 않아요)
   if (!AUTH || !READY) return; if (!off && quotaHit()) return;
-  const st = inPlay() ? 'play' : 'idle', sig = JSON.stringify([P.name, P.tr | 0, P.w, P.l, P.d, st, PUBX.to, PUBX.dc, PUBX.to ? PUBX.inv : null, off ? 1 : 0]);
+  const st = inPlay() ? 'play' : 'idle', sig = JSON.stringify([P.name, P.tr | 0, P.w, P.l, P.d, st, PUBX.to, PUBX.dc, PUBX.to ? PUBX.inv : null, off ? 1 : 0, P.hist.length ? P.hist[0].at : 0]);
   if (sig === PUBX.sig && Date.now() - PUBX.at < 50000) return;
   PUBX.sig = sig; PUBX.at = Date.now(); PUBX.off = off ? 1 : 0; await tokenOk();
   const seen = off ? 0 : Date.now(), d = { n: P.name, id: AUTH.id, tr: P.tr | 0, w: P.w, l: P.l, d: P.d, seen, st, inv: PUBX.to ? PUBX.inv : null };
-  await jf(fsDoc('profiles', AUTH.uid) + '?updateMask.fieldPaths=d&updateMask.fieldPaths=to&updateMask.fieldPaths=dc&updateMask.fieldPaths=s', { method: 'PATCH', keepalive: true, headers: { ...JH, ...hdr() },
-    body: JSON.stringify({ fields: { d: { stringValue: JSON.stringify(d) }, to: { stringValue: PUBX.to || '' }, dc: { stringValue: PUBX.dc || '' }, s: { integerValue: String(seen) } } }) });
+  await jf(fsDoc('profiles', AUTH.uid) + '?updateMask.fieldPaths=d&updateMask.fieldPaths=to&updateMask.fieldPaths=dc&updateMask.fieldPaths=s&updateMask.fieldPaths=h', { method: 'PATCH', keepalive: true, headers: { ...JH, ...hdr() },
+    body: JSON.stringify({ fields: { d: { stringValue: JSON.stringify(d) }, to: { stringValue: PUBX.to || '' }, dc: { stringValue: PUBX.dc || '' }, s: { integerValue: String(seen) }, h: { stringValue: JSON.stringify(P.hist.slice(0, HMAX)) } } }) });
 }
 let pubT = 0;
 function pubSoon() { if (!AUTH) return; clearTimeout(pubT); pubT = setTimeout(() => pubPush().catch(() => {}), 600); }
@@ -2668,7 +2749,7 @@ async function socLoad(force) {   // 처음·2분마다는 전체 목록, 그 �
 }
 function renderFriends() {
   const on = FR.filter(isOn).sort((a, b) => (b.tr | 0) - (a.tr | 0)), off = FR.filter(o => !isOn(o)).sort((a, b) => (b.seen || 0) - (a.seen || 0));
-  const row = (o, live) => `<button class="fr${live ? '' : ' off'}" ${live ? `onclick="frMenu('${o.uid}')"` : ''}>${avH(o.n, o.uid)}<em>${esc(o.n)}<span>${live ? (o.st === 'play' ? '대전 중' : '온라인') : ago(o.seen)}</span></em><span class="tr">🏆 ${o.tr | 0}</span><i class="od ${live ? (o.st === 'play' ? 'busy' : '') : 'x'}"></i></button>`;
+  const row = (o, live) => `<button class="fr${live ? '' : ' off'}" onclick="frMenu('${o.uid}')">${avH(o.n, o.uid)}<em>${esc(o.n)}<span>${live ? (o.st === 'play' ? '대전 중' : '온라인') : ago(o.seen)}</span></em><span class="tr">🏆 ${o.tr | 0}</span><i class="od ${live ? (o.st === 'play' ? 'busy' : '') : 'x'}"></i></button>`;
   $('so-cnt').textContent = '온라인 ' + on.length + ' / 전체 ' + FR.length;
   $('so-on').innerHTML = on.length ? on.map(o => row(o, 1)).join('') : '<p style="margin:0">지금 접속한 친구가 없어요</p>';
   $('so-off').innerHTML = off.length ? off.map(o => row(o, 0)).join('') : '<p style="margin:0">' + (FR.length ? '모두 접속 중이에요!' : '아직 다른 가입자가 없어요. 친구에게 링크를 보내 보세요') + '</p>';
@@ -2682,6 +2763,7 @@ function frMenu(uid) {
       <div style="display:flex;align-items:center;gap:10px;width:100%"><span style="font-size:12px;min-width:48px">덱</span><select id="fr-d" onchange="frRule()" style="flex:1;font:inherit;font-size:14px;padding:8px;border-radius:10px;border:2px solid #2d6aa8;background:#0b1b30;color:#fff"><option value="0" ${FRR.d === 0 ? 'selected' : ''}>각자 내 덱</option><option value="1" ${FRR.d === 1 ? 'selected' : ''}>랜덤 덱 (둘 다 아무 카드 8장)</option><option value="2" ${FRR.d === 2 ? 'selected' : ''}>미러 (둘 다 방장 덱)</option></select></div></div>` : ''}
     <button class="btn gold" ${can ? '' : 'disabled'} onclick="challenge('${uid}','friendly')">친선전<small style="display:block;font-weight:500;font-size:11px">트로피 변화 없음</small></button>
     <button class="btn" ${can ? '' : 'disabled'} onclick="challenge('${uid}','trophy')">트로피전<small style="display:block;font-weight:500;font-size:11px">승리 +30 · 패배 -20</small></button>
+    <button class="btn" onclick="profOpen('${uid}')">프로필 보기</button>
     <button class="btn" onclick="smClose()">닫기</button>`); frRule();
 }
 async function challenge(uid, type) {
