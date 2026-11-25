@@ -86,6 +86,12 @@ input{-webkit-user-select:text;user-select:text}
 #menu{position:absolute;inset:0;z-index:9;display:flex;justify-content:center;padding-top:env(safe-area-inset-top,0px);background-color:#0d3157;background-image:linear-gradient(45deg,rgba(255,255,255,.045) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.045) 75%),linear-gradient(45deg,rgba(255,255,255,.045) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.045) 75%),linear-gradient(#0b2f55,#17639c);background-size:56px 56px,56px 56px,100% 100%;background-position:0 0,28px 28px,0 0}
 #mcol{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;min-height:0}
 #mtop{display:flex;gap:8px;padding:8px 10px;align-items:center;justify-content:flex-end}
+.cpbar{display:flex;gap:6px;align-items:center;margin:0 2px}
+.cpbar input{flex:1;min-width:0;height:36px;border-radius:12px;border:2px solid #2c64a6;background:linear-gradient(#10325c,#091d38);color:#fff;padding:0 12px;font-size:16px;font-weight:800;outline:0;box-shadow:inset 0 2px 4px rgba(0,0,0,.35)}
+.cpbar input::placeholder{color:#8fb0d8;font-weight:700}
+.cpbar .btn{height:36px;padding:0 16px;font-size:14px;flex:none}
+.cpmsg{color:#ffb4b4;font-weight:800;font-size:12px;text-align:center;min-height:0;margin-top:-2px}
+.cpmsg:empty{display:none}
 #mfs{margin-right:auto;min-width:0;width:40px;padding:0;justify-content:center;font-size:18px;color:#dfe7f5;cursor:pointer}
 .lvl{flex:1;height:30px;border-radius:15px;background:#0a2240;position:relative;overflow:hidden;border:2px solid #0a1a30}
 .lvl i{position:absolute;top:0;bottom:0;left:0;background:#3dd5f3;width:0}
@@ -327,6 +333,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 .dc.r4{border-color:#ffd24d;box-shadow:inset 0 0 0 2px #ff8a3d,0 0 12px rgba(255,170,60,.75);animation:lgd 2.4s ease-in-out infinite}
 .card.r4{border-color:#ffd24d;box-shadow:0 0 10px rgba(255,170,60,.7)}
 #sm .lt{font-size:12px;opacity:.7;margin:8px 0 2px;text-align:left}#sm .lr{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border-radius:10px;padding:5px 8px;margin:3px 0}#sm .lr em{flex:1;text-align:left;font-style:normal}#sm .btn.sm{padding:4px 10px;font-size:12px;min-height:0}
+@media(max-height:700px){.cpbar input,.cpbar .btn{height:30px}.cpbar .btn{padding:0 12px}.cpbar input{font-size:15px}#pg-home .sb{padding:4px 4px}#pg-home .sb .si{font-size:17px}}
 </style>
 </head>
 <body>
@@ -407,6 +414,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         </div>
         <div class="event"><span id="h-evt"></span><div class="slots" id="h-ev"></div></div>
         <div class="event" id="h-wcb" style="display:none"><span id="h-wct"></span><div class="slots" id="h-wc"></div></div>
+        <div class="cpbar"><input id="hcp-in" maxlength="24" placeholder="🎁 쿠폰 코드 입력" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn gold" id="hcp-go" onclick="cpGo('hcp')">받기</button></div>
         <div class="h-bat">
           <button class="sq" id="h-deck" onclick="showMenu('deck')"></button>
           <button class="fight" onclick="restart()">전투<small id="h-fsub">AI 대전</small></button>
@@ -2087,18 +2095,19 @@ function cpSum(f) {   // 쿠폰 내용을 글로
   v.s('un').split(',').filter(id => CARDS[id]).forEach(id => a.push(CARDS[id].name + ' 해금'));
   return a.join(' · ') || '(보상 없음)';
 }
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.id === 'hcp-in') cpGo('hcp'); });
 function cpModal() {
   smOpen(`<h3>🎁 쿠폰</h3><p>쿠폰 코드를 입력하면 보상을 받아요</p><input id="cp-in" maxlength="24" placeholder="쿠폰 코드" autocomplete="off" autocapitalize="characters" spellcheck="false">
     <div id="cp-msg" style="color:#ffb4b4;font-weight:700;min-height:18px;font-size:13px">${AUTH && FBON() ? '' : '로그인한 계정에서만 쓸 수 있어요'}</div>
     <div class="row"><button class="btn" onclick="openMenu()">뒤로</button><button class="btn gold" id="cp-go" onclick="cpGo()">확인</button></div>`);
   const e = $('cp-in'); e.onkeydown = ev => { if (ev.key === 'Enter') cpGo(); }; setTimeout(() => { try { e.focus(); } catch (x) {} }, 60);
 }
-async function cpGo() {
-  const msg = t => { const e = $('cp-msg'); if (e) e.textContent = t; };
+async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화면 입력칸
+  const msg = t => { if (px === 'hcp') { if (t) toast(t); return; } const e = $(px + '-msg'); if (e) e.textContent = t; };   // 메인 화면 입력칸은 화면이 밀리지 않게 알림(토스트)으로 알려요
   if (!FBON() || !AUTH) return msg('로그인한 계정에서만 쓸 수 있어요');
-  const code = cpNorm($('cp-in').value); if (!code) return msg('코드를 입력해 주세요'); if (!cpOk(code)) return msg('코드는 3~24자 글자·숫자예요');
-  const btn = $('cp-go'); btn.disabled = true; msg('확인 중…');
-  const fail = t => { msg(t); const b = $('cp-go'); if (b) b.disabled = false; };
+  const code = cpNorm($(px + '-in').value); if (!code) return msg('코드를 입력해 주세요'); if (!cpOk(code)) return msg('코드는 3~24자 글자·숫자예요');
+  const btn = $(px + '-go'); btn.disabled = true; msg('확인 중…');
+  const fail = t => { msg(t); const b = $(px + '-go'); if (b) b.disabled = false; };
   try {
     await tokenOk(); let d;
     try { d = await jf(fsRoot() + '/' + cpPath(code), { headers: hdr() }); } catch (e) { if (e.code === 404) return fail('존재하지 않는 쿠폰이에요'); throw e; }
@@ -2115,7 +2124,7 @@ async function cpGo() {
     v.s('un').split(',').map(x => x.trim()).filter(id => CARDS[id]).forEach(id => { if (have(id)) got.push(CARDS[id].name + ' (이미 보유)'); else { grantId(id); got.push('🎟 ' + CARDS[id].name + ' 해금!'); } });
     const ch = Math.min(5, v.n('ch')); let rc = null, star = 0;
     if (ch >= 1) { star = rollStar(ch); rc = chestRoll(star); g += rc.g; m += rc.m; got.push(...rc.got); }
-    earn(g, m, '쿠폰 ' + code); saveP(); if (DK) refreshPlay(); smClose(); sfx('coin');
+    earn(g, m, '쿠폰 ' + code); saveP(); if (DK) refreshPlay(); smClose(); sfx('coin'); { const i = $('hcp-in'), mm = $('hcp-msg'); if (i) i.value = ''; if (mm) mm.textContent = ''; const b = $('hcp-go'); if (b) b.disabled = false; }
     if (rc) chestShow(ch, star, { g, m, got }, '쿠폰 상자 · ★' + ch + '+ 확정');
     else smOpen(`<h3>🎁 쿠폰 보상</h3>${g ? `<div class="item"><em>골드 +${fmt(g)}</em></div>` : ''}${m ? `<div class="item"><em>보석 +${m}</em></div>` : ''}${got.map(t => `<div class="item"><em>${esc(t)}</em></div>`).join('')}<button class="btn gold" onclick="smClose();drawHome()">확인</button>`);
   } catch (e) { fail(errKo(e)); }
