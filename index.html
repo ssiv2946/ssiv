@@ -2420,6 +2420,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '진화 고블린 통 범위 표시', n: 1, l: ['진화 고블린 통(사이클 2)을 끌어서 놓을 때, 좌우 대칭으로 날아갈 두 번째 도착 범위도 같이 보여요'] },
   { d: '11/25', t: '카드 이름 한글판 맞춤', n: 1, l: ['한국어 공식 이름으로 정정: 파이어볼→파이어 볼 · 창고블린→창 고블린 · 자이언트 눈덩이→거대 눈덩이 · 얼음골렘→얼음 골렘 · 악동들→악동 · 아처퀸→아처 퀸', '벽 파괴자→해골 돌격병 · 미니언 호드→미니언 패거리 · 고블린 기계→고블린 머신 · 수상한 덤불→수상한 수풀 · 묘지→무덤', '수치도 원작 데이터와 대조했어요 — 체력·공격력은 거의 일치해서 따로 바꾸지 않았어요'] },
   { d: '11/25', t: '진화 고블린 통', n: 1, l: ['진화 고블린 통(사이클 2): 통을 던지면 맵 가운데 기준 좌우 대칭인 자리에도 똑같이 한 통이 더 날아가요 (고블린 6마리)'] },
   { d: '11/25', t: '진화 대형 석궁', n: 1, l: ['진화 대형 석궁(사이클 1)은 사정거리가 무한이에요 — 맵 어디서든 가장 가까운 적 지상 유닛과 타워를 쏴요'] },
@@ -3425,7 +3426,12 @@ function render(a) {
     } else {
     cx.globalAlpha = 0.5; cx.fillStyle = dc.color; cx.beginPath();
     if (sp && dc.roll) cx.rect(px - dc.radius, py - dc.roll.len, dc.radius * 2, dc.roll.len); else if (dc.type === 'building') cx.rect(px - dc.radius, py - dc.radius, dc.radius * 2, dc.radius * 2); else cx.arc(px, py, sp ? dc.radius : Math.max(dc.radius, 0.5), 0, 7);
-    cx.fill(); cx.globalAlpha = 1; }
+    cx.fill(); cx.globalAlpha = 1;
+    if (sp && dc.mirror && (G.cyc[0][dc.id] | 0) >= dc.cycles) {   // 진화 고블린 통: 좌우 대칭으로 날아갈 두 번째 도착 범위도 같이 보여줘요 (spawn과 같은 계산)
+      let mx = W - px; if (Math.abs(mx - px) < 1.4) mx = px + (px < W / 2 ? 1.4 : -1.4); mx = Math.min(W - 0.3, Math.max(0.3, mx));
+      cx.globalAlpha = 0.5; cx.fillStyle = dc.color; cx.beginPath(); cx.arc(mx, py, dc.radius, 0, 7); cx.fill();
+      cx.globalAlpha = 0.9; cx.strokeStyle = '#fff'; cx.lineWidth = 0.08; cx.setLineDash([0.3, 0.2]); cx.beginPath(); cx.arc(mx, py, dc.radius, 0, 7); cx.stroke(); cx.beginPath(); cx.arc(px, py, dc.radius, 0, 7); cx.stroke(); cx.setLineDash([]); cx.globalAlpha = 1;
+    } }
     if (!sp) { // 카드 이름
       cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.lineJoin = 'round'; cx.lineWidth = 0.16; cx.strokeStyle = 'rgba(0,0,0,.75)'; cx.fillStyle = '#fff';
       cx.font = 'bold 0.8px sans-serif'; cx.strokeText(dc.name, px, py - dc.radius - 1.2); cx.fillText(dc.name, px, py - dc.radius - 1.2);
