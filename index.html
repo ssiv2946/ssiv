@@ -661,7 +661,7 @@ const HERO = {   // 능력은 전장에 나온 뒤 버튼으로 사용 (엘릭�
 };
 const CHAMP = {   // 챔피언: 덱에 1장만 · 능력은 재사용 대기시간(cdn)마다 사용
   skeleton_king: { ab: 'souls', cost: 2, cdn: 15, name: '영혼 소환', desc: '모은 영혼만큼 해골을 불러요 (6~16마리) · 주변에서 유닛이 죽을 때마다 영혼이 쌓여요' },
-  golden_knight: { ab: 'dash', cost: 1, cdn: 8, name: '맹돌진', desc: '가까운 적 최대 10명을 차례로 돌진하며 335 피해를 줘요 · 돌진 중엔 기절·밀치기를 무시해요(무적은 아니에요)' },
+  golden_knight: { ab: 'dash', cost: 1, cdn: 8, name: '맹돌진', desc: '가까운 지상 적(공중 유닛 제외) 최대 10명을 차례로 돌진하며 335 피해를 줘요 · 돌진 중엔 기절·밀치기를 무시해요(무적은 아니에요)' },
   mighty_miner: { ab: 'escape', cost: 1, cdn: 12, name: '폭탄 탈출', desc: '폭탄(332 피해)을 떨어뜨리고 반대 차선으로 순간이동해요' },
   archer_queen: { ab: 'cloak', cost: 1, cdn: 15, name: '투명 망토', desc: '3.5초 동안 투명해지고 공격 속도가 크게 빨라져요' },
   boss_bandit: { ab: 'getaway', cost: 1, cdn: 10, name: '도주 수류탄', desc: '수류탄을 던지고 뒤로 순간이동, 1초 동안 투명해져요' },
@@ -2247,7 +2247,8 @@ function dash(e) {   // 골드 나이트: 가까운 적들을 차례로 가르�
   const hit = new Set(), q = []; let p = { x: e.x, y: e.y };
   for (let n = 0; n < 10; n++) {
     let b = null, bd = n ? 6 : 7;
-    for (const u of G.ents) if (u.team !== e.team && u.hp > 0 && !hit.has(u) && !hid(u)) { const g = hyp(u.x - p.x, u.y - p.y) - u.r; if (g < bd) { bd = g; b = u; } }
+    for (const u of G.ents) if (u.team !== e.team && u.hp > 0 && !u.fly && !hit.has(u) && !hid(u)) { const g = hyp(u.x - p.x, u.y - p.y) - u.r;   // 공중 유닛은 돌진에 맞지 않아요
+      if (g < bd) { bd = g; b = u; } }
     if (!b) break; hit.add(b);
     const dx = b.x - p.x, dy = b.y - p.y, dd = hyp(dx, dy) || 1, k = b.r + e.r + 0.1; p = { x: b.x - dx / dd * k, y: b.y - dy / dd * k };
     q.push({ u: b, x: Math.min(W - e.r, Math.max(e.r, p.x)), y: Math.min(H - e.r, Math.max(e.r, p.y)) });
@@ -2421,6 +2422,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '골드 나이트 돌진', n: 1, l: ['맹돌진이 공중 유닛은 맞히지 않아요 (지상 유닛·타워만 대상)'] },
   { d: '11/25', t: '로얄 고스트 은신 · 도둑 직선 돌진', n: 1, l: ['로얄 고스트: 소환되는 순간부터 숨어 있고, 공격하면 드러났다가 공격을 멈춘 지 2초가 지나면 다시 사라져요', '도둑·대장 도둑: 돌진할 때 다리나 장애물을 돌지 않고 목표를 향해 일직선으로 달려요 (강도 그대로 건너요)'] },
   { d: '11/25', t: '진화 고블린 통 범위 표시', n: 1, l: ['진화 고블린 통(사이클 2)을 끌어서 놓을 때, 좌우 대칭으로 날아갈 두 번째 도착 범위도 같이 보여요'] },
   { d: '11/25', t: '카드 이름 한글판 맞춤', n: 1, l: ['한국어 공식 이름으로 정정: 파이어볼→파이어 볼 · 창고블린→창 고블린 · 자이언트 눈덩이→거대 눈덩이 · 얼음골렘→얼음 골렘 · 악동들→악동 · 아처퀸→아처 퀸', '벽 파괴자→해골 돌격병 · 미니언 호드→미니언 패거리 · 고블린 기계→고블린 머신 · 수상한 덤불→수상한 수풀 · 묘지→무덤', '수치도 원작 데이터와 대조했어요 — 체력·공격력은 거의 일치해서 따로 바꾸지 않았어요'] },
