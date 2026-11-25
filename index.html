@@ -1447,7 +1447,7 @@ const AIP = [
   { n: '쉬움', d: '반응이 느리고 자주 실수해요 · 골드 ×0.6', gold: 0.6, think: [3, 4.6], react: 2.4, off: 10, err: 0.4, spells: 1, spm: 2.6, jit: 2.5, zone: 13.5, smart: 0, ab: 0, evo: 0, sup: 0 },
   { n: '보통', d: '적당히 방어하고 공격해요 · 골드 ×1', gold: 1, think: [1.6, 2.6], react: 1.1, off: 9, err: 0.15, spells: 1, spm: 1.5, jit: 1.2, zone: 16, smart: 0.4, ab: 1, evo: 0.5, sup: 1 },
   { n: '어려움', d: '빠르게 반응하고 스펠·능력도 영리하게 써요 · 골드 ×1.5 · 승리 🏆+30 / 패배 🏆-20', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, spm: 0.8, jit: 0.3, zone: 19, smart: 0.9, ab: 2, evo: 1, sup: 1 },
-  { n: '불가능', d: '실수 없이 반응하고, 상대 엘릭서를 읽어 빈틈을 파고들며, 스펠로 타워를 끝장내요 · 최상위 덱 · 엘릭서 회복 +25% · 골드 ×2.5 · 승리 🏆+50 / 패배 🏆-30 · 승리 상자 ★3+', gold: 2.5, think: [0.45, 0.8], react: 0.15, off: 7, err: 0, spells: 1, spm: 1.0, jit: 0.15, zone: 20, smart: 1, ab: 3, evo: 1, sup: 1, pro: 1, spCd: 1.5, xe: 1.25 }
+  { n: '불가능', d: '실수 없이 반응하고, 상대 엘릭서를 읽어 빈틈을 파고들며, 스펠로 타워를 끝장내요 · 순호(2.6 호그 사이클) 고정: 진화 해골·진화 대포·영웅 머스킷·영웅 얼음 골렘 · 엘릭서 회복 +25% · 골드 ×2.5 · 승리 🏆+50 / 패배 🏆-30 · 승리 상자 ★3+', gold: 2.5, think: [0.45, 0.8], react: 0.15, off: 7, err: 0, spells: 1, spm: 1.0, jit: 0.15, zone: 20, smart: 1, ab: 3, evo: 1, sup: 1, pro: 1, hog: 1, spCd: 1.5, xe: 1.25 }
 ];
 const PRODECKS = [["hog_rider", "musketeer", "ice_golem", "ice_spirit", "skeletons", "cannon", "fireball", "the_log"], ["golem", "night_witch", "baby_dragon", "mega_minion", "lightning", "tornado", "lumberjack", "electro_spirit"], ["pekka", "battle_ram", "bandit", "electro_wizard", "royal_ghost", "zap", "poison", "magic_archer"], ["goblin_barrel", "princess", "knight", "goblin_gang", "ice_spirit", "rocket", "the_log", "inferno_tower"], ["miner", "poison", "knight", "bats", "ice_spirit", "princess", "the_log", "bomb_tower"], ["lava_hound", "balloon", "skeleton_dragons", "mega_minion", "tombstone", "fireball", "arrows", "ice_spirit"], ["x_bow", "tesla", "knight", "archers", "ice_spirit", "fireball", "the_log", "ice_golem"]];   // 불가능 난이도가 쓰는 검증된 덱 (유닛·건물·스펠이 고루 섞인 8장)
 let DIFF = 1;
@@ -1461,7 +1461,9 @@ function drawMode() {
 // ---------- 3단계: AI 상대 (v2: 좌석·팀 기준 봇 — 1대1 상대와 2대2 아군/적군이 같은 코드를 써요) ----------
 const bfy = (a, y) => a.team ? y : H - y;                    // 봇 기준 세로: 0 = 자기 진영 맨 뒤 · 커질수록 앞(상대 쪽). 자기 자신의 역함수
 const uval = u => (u.card.cost || 0.5) / (u.card.count || 1);  // 유닛 하나의 엘릭서 가치
+const HOGDECK = ['hog_rider', 'hero_musketeer', 'hero_ice_golem', 'evo_skeletons', 'evo_cannon', 'ice_spirit', 'fireball', 'the_log'];   // 순호: 진화 해골 · 진화 대포 · 영웅 머스킷 · 영웅 얼음 골렘 고정
 function botDeck(p) {
+  if (p.hog || p.fix) return [...HOGDECK];
   const all = AIDECKS(), d = [...rnd(p.pro ? PRODECKS : p === AIP[0] ? all.slice(0, 6) : all)];
   if (Math.random() < p.evo) { const k = d.findIndex(id => EVO[id] && CARDS['evo_' + id]); if (k >= 0) d[k] = 'evo_' + d[k]; }                 // 진화 카드 한 장
   if (Math.random() < (p.pro ? 1 : p.evo * 0.7)) { const k = d.findIndex(id => HERO[id] && CARDS['hero_' + id] && !CARDS[id].evoOf); if (k >= 0) d[k] = 'hero_' + d[k]; }   // 영웅 카드 한 장
@@ -1479,15 +1481,16 @@ function botTick(a, dt) {
   if ((a.abW -= dt) <= 0) { a.abW = 0.35; if (a.p.ab) botAbility(a); }
   if ((a.wait -= dt) > 0) return;
   a.wait = a.p.think[0] + Math.random() * (a.p.think[1] - a.p.think[0]);
+  if (a.p.hog && a.seq && a.seq.length && botSeq(a)) return;   // 호그 + 지원 카드 연속 배치
   if (botFinish(a)) return;
   if (botSpell(a)) return;
   const foes = G.ents.filter(e => e.team !== a.team && e.kind === 'unit' && e.hp > 0 && e.dep <= 0 && bfy(a, e.y) < a.p.zone).sort((m, n) => bfy(a, m.y) - bfy(a, n.y));
   if (foes.length) {
     if (a.threatT < 0) a.threatT = G.t;
-    if (G.t - a.threatT >= a.p.react) { if (!botDefend(a, foes) && a.el >= a.p.off) botAttack(a); }
+    if (G.t - a.threatT >= a.p.react) { if (!botDefend(a, foes)) { if (a.p.hog) botHog(a, foes); else if (a.el >= a.p.off) botAttack(a); } }
     return;
   }
-  a.threatT = -1; botAttack(a, a.el >= 9.8);
+  a.threatT = -1; if (a.p.hog) botHog(a, null); else botAttack(a, a.el >= 9.8);
 }
 function botPlay(a, i, x, y) {   // x, y 는 실제 좌표. 못 두는 곳이면 가장 가까운 가능한 칸으로
   const id = a.hand[i], c = CARDS[id]; if (!c || a.el < c.cost) return false;
@@ -1588,7 +1591,7 @@ function botDefend(a, thr) {
   a.hand.forEach((id, i) => { const c = CARDS[id]; if (!c || c.type === 'spell' || c.cost > a.el) return; const s = botCounter(c, I) + Math.random() * (p.pro ? 0.05 : 0.5); if (s > bs) { bs = s; best = i; } });
   if (best < 0) return false;
   const c = CARDS[a.hand[best]]; let y;
-  if (c.type === 'building') y = I.win || I.tank ? 9.5 : 8.5;
+  if (c.type === 'building') y = p.hog && (I.win || I.tank) ? 11.5 : I.win || I.tank ? 9.5 : 8.5;
   else if (c.range >= 3 || c.minR) y = Math.max(4, Math.min(11, fy - 5));
   else y = Math.max(4.5, Math.min(13, fy - (I.swarm && c.splash ? 3.2 : 2.5)));
   const x = c.type === 'building' ? 9 + (T.x - 9) * 0.4 : T.x;
@@ -1639,13 +1642,75 @@ function botAttack(a, force) {
   if (fill.length && a.el >= off + 1) { const o = rnd(fill); return botPlay(a, o.i, botJ(a, lx), botY(a, o.c.charge ? 9 : o.c.range >= 3 ? 7.5 : 9)); }
   return false;
 }
+
+// ── 순호(2.6 호그 사이클) 전용 운영 · 인터넷 공략(TrophyCoach · Timesaver · Hazard/Sushi 가이드)을 규칙으로 옮겼어요
+//   · 처음엔 호그를 바로 내지 않고 싼 카드를 뒤에서 돌려요 (상대 덱을 보기 전엔 호그 금지)
+//   · 상대 엘릭서가 낮을 때만 호그를 보내요 (낮을수록 가볍게, 높으면 참고 엘릭서가 넘칠 때만) · 한 번에 6 이하로만 써요
+//   · 호그 + 얼음 정령(5) / 호그 + 얼음 골렘(6) · 상대 공격이 오는 반대 차선으로 · 2배·3배 엘릭서에선 더 자주 · 큰 골렘 푸시는 안 붙여요
+//   · 호그가 없으면 싼 카드(얼음 정령·해골·얼음 골렘)로 사이클 · 머스킷·대포·파이어볼은 수비용으로 아껴요 · 대포는 다리에서 4칸 뒤에
+const botBase = id => { const c = CARDS[id]; return c ? (c.evoOf || c.heroOf || c.id) : ''; };
+function botSeq(a) {
+  const o = a.seq.shift(); if (!o || G.t > o.until) return false;
+  const i = a.hand.findIndex(id => botBase(id) === o.b); if (i < 0 || a.el < CARDS[a.hand[i]].cost) return false;
+  let x = o.x, fy = o.fy;
+  if (o.behind) { const hg = G.ents.find(e => e.team === a.team && e.kind === 'unit' && e.hp > 0 && e.card.id === 'hog_rider'); if (!hg) return false; x = hg.x; fy = Math.min(15, bfy(a, hg.y) - 1.2); }
+  if (a.seq.length) a.wait = 0.2;
+  return botPlay(a, i, botJ(a, x), botY(a, fy));
+}
+function botHog(a, foes) {
+  const t = a.team, el = a.el, mult = G.cur.mult || 1, oe = oppEl(a), def = !!(foes && foes.length);
+  const H = Object.assign({ lo: 3.5, mid: 6, hi: 8.5, a: 0, b: 1, c: 7, d: 9.5, m: 1, df: 1, g: 1, goe: 6, cy1: 7, cy2: 5, cyo: 4, open: 18, g2: 0, gr: 1 }, a.p.hg);   // 시험으로 고른 값 (a.p.hg 로 덮어쓸 수 있어요)
+  const seen = a.seen || (a.seen = new Set());
+  for (const e of G.ents) if (e.team !== t && e.kind !== 'tower' && e.card) seen.add(e.card.evoOf || e.card.heroOf || e.card.id);
+  const at = b => a.hand.findIndex(id => botBase(id) === b), cost = i => CARDS[a.hand[i]].cost;
+  const ih = at('hog_rider'), isp = at('ice_spirit'), isk = at('skeletons'), igo = at('ice_golem'), imu = at('musketeer');
+  // 레인: 수비 중이면 상대 공격의 반대쪽 · 아니면 약한 타워 + 수비가 적은 쪽 (같으면 번갈아)
+  const pr = G.ents.filter(e => e.team !== t && e.tk === 'princess' && e.hp > 0).sort((m, n) => m.hp - n.hp), dead = [0, 1].filter(l => pkT(t, l));
+  let L;
+  if (def) L = foes[0].x < 9 ? 1 : 0;
+  else if (dead.length) L = dead[0];
+  else {
+    const sc = [0, 1].map(l => { const tw = pr.find(e => (e.x < 9 ? 0 : 1) === l), dg = G.ents.filter(e => e.team !== t && e.kind !== 'tower' && e.hp > 0 && (e.x < 9 ? 0 : 1) === l && bfy(a, e.y) > 17).reduce((s, e) => s + e.hp, 0); return (tw ? tw.hp / 3052 * 3 : 0) + dg / 1500; });
+    L = Math.abs(sc[0] - sc[1]) < 0.15 ? (a.lastL == null ? (Math.random() < 0.5 ? 0 : 1) : 1 - a.lastL) : sc[0] < sc[1] ? 0 : 1;
+  }
+  const lx = L ? 14.5 : 3.5, front = pkT(t, L) ? 18 : 12.8;
+  const opening = G.t < H.open && seen.size === 0 && !def;        // 상대 덱을 보기 전엔 호그를 아껴요
+  // 호그 보내기
+  if (ih >= 0 && !opening) {
+    const hc = cost(ih), sp = isp >= 0 ? cost(isp) : 0, go = igo >= 0 ? cost(igo) : 0;
+    let need = oe <= H.lo ? hc + H.a : oe <= H.mid ? hc + H.b : oe <= H.hi ? H.c : H.d;
+    need = Math.max(hc, need - (mult >= 2 ? H.m : 0) - (mult >= 3 ? H.m : 0)) + (def ? H.df : 0);
+    if (el >= need) {
+      a.lastL = L; a.push = { t: G.t, L }; a.hogT = G.t;
+      if (H.g && go && (mult < 2 || H.g2) && oe <= H.goe && el >= hc + go + H.gr) {   // 호그 + 얼음 골렘 (6): 골렘이 타워 공격을 받아줘요
+        a.seq = [{ b: 'hog_rider', x: lx, fy: 11, until: G.t + 2.5 }];
+        if (botPlay(a, igo, botJ(a, lx), botY(a, 11.5))) { a.wait = 0.55; return true; }
+        a.seq = [];
+      }
+      a.seq = sp && el - hc >= sp ? [{ b: 'ice_spirit', behind: 1, until: G.t + 2.2 }] : [];
+      if (botPlay(a, ih, botJ(a, lx), botY(a, front))) { a.wait = 0.2; return true; }
+      a.seq = [];
+    }
+  }
+  if (def) return false;
+  // 사이클: 호그가 없으면 싼 카드로 돌려요 (엘릭서가 넘칠 때 · 상대가 못 막을 때 · 오프닝)
+  const cyc = [isp, isk, igo].filter(i => i >= 0).sort((m, n) => cost(m) - cost(n));
+  if (cyc.length && (ih < 0 || el >= 9.5) && (el >= 9.5 || (el >= H.cy1 && !opening) || (el >= H.cy2 && oe <= H.cyo && !opening))) {
+    const i = cyc[0], b = botBase(a.hand[i]);
+    if (oe <= 6 && b !== 'ice_golem') return botPlay(a, i, botJ(a, lx), botY(a, 13));     // 상대가 비었으면 다리 앞에서 슬쩍 찔러요
+    return botPlay(a, i, botJ(a, 9 + (L ? 2.5 : -2.5)), botY(a, 4.5));                  // 아니면 뒤에서 안전하게
+  }
+  // 엘릭서가 넘치는데 쓸 게 없으면 머스킷을 뒤에 세워요 (역공 준비)
+  if (el >= 9.8 && imu >= 0 && cost(imu) <= el) return botPlay(a, imu, botJ(a, 9), botY(a, 6));
+  return false;
+}
 // ── 챔피언·영웅 능력: 상황이 맞을 때만
 function botAbility(a) { for (const e of heroesOf(a.seat)) if (botAbOne(a, e)) return; }
 function botAbOne(a, e) { const h = abOf(e.card); if (abLeft(e) <= 0 || a.el < h.cost + 1) return;
   const fo = G.ents.filter(u => u.team !== e.team && u.hp > 0 && !hid(u)), nr = r => fo.filter(u => hyp(u.x - e.x, u.y - e.y) - u.r <= r), un = r => nr(r).filter(u => u.kind === 'unit'), low = e.hp < e.max * 0.45;
   const go = {
     taunt: () => un(4).length >= 1 && e.hp < e.max * 0.85 || un(3).length >= 2, guard: () => un(4).length >= 1 && e.hp < e.max * 0.9, meditate: () => un(4).length >= 1 && e.hp < e.max * 0.7,
-    turret: () => nr(5.5).length >= 1, nova: () => un(3.2).length >= 2 || (un(3.2).length >= 1 && nr(3.2).length >= 2), frost: () => un(3.2).length >= 2, blizzard: () => un(3).length >= 2,
+    turret: () => a.p.hog ? un(5.5).length >= 2 || nr(5.5).some(u => u.kind === 'unit' && (u.max >= 1200 || u.fly)) || (low && un(5.5).length >= 1) : nr(5.5).length >= 1, nova: () => un(3.2).length >= 2 || (un(3.2).length >= 1 && nr(3.2).length >= 2), frost: () => un(3.2).length >= 2, blizzard: () => un(3).length >= 2 || (a.p.hog && un(3).length >= 1 && G.ents.some(m => m.team === e.team && m.hp > 0 && m.card && m.card.id === 'hog_rider' && hyp(m.x - e.x, m.y - e.y) < 6)),
     swish: () => un(4.5).length >= 2, pancake: () => nr(3).length >= 1 && e.hp < e.max * 0.75, golemites: () => nr(4).length >= 1, decoy: () => nr(7).length >= 1,
     souls: () => (e.souls | 0) >= 8 && nr(8).length >= 1, dash: () => un(7).length >= 2, escape: () => low && nr(3).length >= 1, getaway: () => low && nr(3).length >= 1,
     cloak: () => nr(6).some(u => u.kind === 'tower'), guardienne: () => nr(5).length >= 1,
