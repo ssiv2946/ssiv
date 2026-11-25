@@ -784,7 +784,7 @@ function spawnPts(c, team, x, y) {
     const row = /royal_recruits$/.test(c.id) && n > 1, full = row && (team ? y <= 14.8 : y >= 17.2),
       px = full ? 0.5 + i * (W - 1) / (n - 1) : row ? Math.min(W - 0.5 - (n - 1) / 2, Math.max(0.5 + (n - 1) / 2, x)) + i - (n - 1) / 2 : Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr));
     let py = row ? y : y + Math.sin(a) * rr; py = team ? Math.min(py, Math.max(y, 14.8)) : Math.max(py, Math.min(y, 17.2));
-    out.push([px, py, (full ? px : x) < 9 ? 0 : 1]);
+    out.push([px, py, px < 9 ? 0 : 1]);   // 레인(어느 쪽 다리·타워로 갈지)은 놓은 자리가 아니라 각 유닛이 실제로 서 있는 자리로 정해요: 왼쪽에 있으면 왼쪽, 오른쪽에 있으면 오른쪽
   }
   return out;
 }
@@ -2325,7 +2325,7 @@ function deployBlast(e) {   // 착지 충격 (메가 나이트 · 일렉트로 �
   if (b.heal) healArea(e, { r: b.r, amt: b.heal });
 }
 function sub(id, n, team, x, y, lane, own) {   // 부하 소환 (마녀 해골 · 골레마이트)
-  for (let i = 0; i < n; i++) { const a = i / n * 6.283, rr = n > 1 ? 0.6 : 0; G.ents.push(Object.assign(mkUnit(id, team, Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr)), y + Math.sin(a) * rr), { id: ++G.n, lane, own })); }
+  for (let i = 0; i < n; i++) { const a = i / n * 6.283, rr = n > 1 ? 0.6 : 0; G.ents.push(Object.assign(mkUnit(id, team, Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr)), y + Math.sin(a) * rr), { id: ++G.n, lane: Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr)) < 9 ? 0 : 1, own })); }   // 부하도 자기 자리 기준 레인
 }
 function deaths() {   // 사망 시 효과 (벌룬 폭탄 · 골렘 분열). 연쇄로 죽은 유닛도 처리
   for (let k = 0; k < 3; k++) {
@@ -2438,6 +2438,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '여러 마리 소환 레인 수정', n: 1, l: ['아처·해골 군대처럼 한 번에 여러 마리가 나오는 카드: 이제 각 유닛이 서 있는 자리를 기준으로 왼쪽에 있으면 왼쪽 다리·타워로, 오른쪽에 있으면 오른쪽으로 가요 (예전엔 놓은 자리 기준으로 한쪽으로 몰려갔어요)'] },
   { d: '11/25', t: '타이 브레이커', n: 1, l: ['5:00까지 연장전에서도 크라운이 같으면 타이 브레이커가 시작돼요 — 모든 타워 체력이 초당 300씩 빠르게 깎이고, 체력이 가장 낮은 타워가 먼저 무너져 그 크라운으로 승부가 나요', '타워가 붉게 깜빡이고 시계에 「타이 브레이커」가 떠요 · 온라인 대전도 똑같이 적용돼요'] },
   { d: '11/25', t: '친구 대전 규칙 선택', n: 1, l: ['1대1 친선전을 신청할 때 규칙을 고를 수 있어요: 엘릭서 배수(1~10배) · 서든데스 · 덱 방식(각자 / 랜덤 덱 / 미러 = 방장 덱)', '상대가 받는 신청 창에도 규칙이 보여요 · 규칙을 바꾼 판은 보상·기록이 없어요 (트로피전은 규칙 없이 그대로)'] },
   { d: '11/25', t: '골드 나이트 돌진', n: 1, l: ['맹돌진이 공중 유닛은 맞히지 않아요 (지상 유닛·타워만 대상)'] },
@@ -2826,7 +2827,7 @@ function strike(e, t) {
   if (c.ramp) { if (e.rpT !== t) { e.rpT = t; e.rpN = 0; } d *= c.ramp.x[Math.min(c.ramp.x.length - 1, Math.floor(e.rpN++ / c.ramp.n))]; }   // 인페르노: 오래 태울수록 강해져요
   if (c.heal) e.hp = Math.min(e.max, e.hp + d * c.heal);                 // 회복 (박쥐 1배 · 페카 0.35배)
   if (c.evoSpawn && G.ents.filter(u => u.team === e.team && u.card === c && u.hp > 0).length < c.evoSpawn)   // 진화 해골: 한 마리씩 늘어남
-    G.ents.push(Object.assign(mkUnit(c.id, e.team, e.x + (Math.random() - 0.5) * 0.6, e.y + (e.team ? 0.4 : -0.4)), { id: ++G.n, lane: e.lane }));
+    G.ents.push(Object.assign(mkUnit(c.id, e.team, e.x + (Math.random() - 0.5) * 0.6, e.y + (e.team ? 0.4 : -0.4)), { id: ++G.n, lane: e.x < 9 ? 0 : 1 }));
   if (c.pull) for (const u of G.ents) if (u.team !== e.team && u.kind === 'unit' && u.hp > 0 && u.dep <= 0) {   // 진화 발키리: 끌어당김
     const dx = e.x - u.x, dy = e.y - u.y, dd = hyp(dx, dy) || 1, go = Math.min(c.pull, dd - e.r - u.r - 0.05);
     if (dd <= c.splash + 0.8 && go > 0) { u.x += dx / dd * go; u.y += dy / dd * go; }
