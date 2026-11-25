@@ -710,7 +710,7 @@ function mkTower(team, k, x, y) {
 }
 function mkUnit(id, team, x, y) {
   const c = CARDS[id], m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
-  return { id: 0, team, kind: c.type === 'building' ? 'building' : 'unit', card: c, x, y, px: x, py: y, hp: c.hp * m, max: c.hp * m, r: c.radius, fly: !!c.flying, tgt: null, cd: 0, dep: c.deployTime ?? 1, m, shield: c.shield || 0, vs: c.stealth ? Math.max(0, 2 - (c.deployTime ?? 1)) : 0 };   // 은신 유닛: 소환한 지 2초 뒤에 숨어요 (소환 시간 동안은 시간이 안 가서 그만큼 빼요)
+  return { id: 0, team, kind: c.type === 'building' ? 'building' : 'unit', card: c, x, y, px: x, py: y, hp: c.hp * m, max: c.hp * m, r: c.radius, fly: !!c.flying, tgt: null, cd: 0, dep: c.deployTime ?? 1, m, shield: c.shield || 0, vs: 0 };   // 은신 유닛(로얄 고스트)은 소환되는 순간부터 숨어 있어요
 }
 function newGame(net, m2) {
   sel = -1; drag = null; hov = null;
@@ -2421,7 +2421,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
-  { d: '11/25', t: '로얄 고스트 은신 · 도둑 직선 돌진', n: 1, l: ['로얄 고스트: 공격하지 않은 지 2초가 지나면 모습이 사라져요 (소환 직후도 2초 뒤에 숨어요)', '도둑·대장 도둑: 돌진할 때 다리나 장애물을 돌지 않고 목표를 향해 일직선으로 달려요 (강도 그대로 건너요)'] },
+  { d: '11/25', t: '로얄 고스트 은신 · 도둑 직선 돌진', n: 1, l: ['로얄 고스트: 소환되는 순간부터 숨어 있고, 공격하면 드러났다가 공격을 멈춘 지 2초가 지나면 다시 사라져요', '도둑·대장 도둑: 돌진할 때 다리나 장애물을 돌지 않고 목표를 향해 일직선으로 달려요 (강도 그대로 건너요)'] },
   { d: '11/25', t: '진화 고블린 통 범위 표시', n: 1, l: ['진화 고블린 통(사이클 2)을 끌어서 놓을 때, 좌우 대칭으로 날아갈 두 번째 도착 범위도 같이 보여요'] },
   { d: '11/25', t: '카드 이름 한글판 맞춤', n: 1, l: ['한국어 공식 이름으로 정정: 파이어볼→파이어 볼 · 창고블린→창 고블린 · 자이언트 눈덩이→거대 눈덩이 · 얼음골렘→얼음 골렘 · 악동들→악동 · 아처퀸→아처 퀸', '벽 파괴자→해골 돌격병 · 미니언 호드→미니언 패거리 · 고블린 기계→고블린 머신 · 수상한 덤불→수상한 수풀 · 묘지→무덤', '수치도 원작 데이터와 대조했어요 — 체력·공격력은 거의 일치해서 따로 바꾸지 않았어요'] },
   { d: '11/25', t: '진화 고블린 통', n: 1, l: ['진화 고블린 통(사이클 2): 통을 던지면 맵 가운데 기준 좌우 대칭인 자리에도 똑같이 한 통이 더 날아가요 (고블린 6마리)'] },
