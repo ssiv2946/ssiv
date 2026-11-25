@@ -631,6 +631,7 @@ const EVO = {   // cy: 이 횟수만큼 낸 뒤부터 진화 (원작의 '사이�
   royal_hogs: { cy: 2, onDeploy: { dmg: 43, r: 2.2 }, desc: '착지할 때 주변 적에게 피해 (43)' },
   electro_dragon: { cy: 1, chain: 8, desc: '번개가 최대 8명까지 이어져요' },
   dart_goblin: { cy: 2, rage: { k: 0.06, max: 10 }, desc: '쏠 때마다 공격 속도·이동 속도가 계속 빨라져요' },
+  x_bow: { cy: 1, range: 99, sight: 99, desc: '사정거리 무한 · 맵 어디에 있든 가장 가까운 적 지상 유닛과 타워를 쏴요' },
   mortar: { cy: 2, echo: { t: 0.8, dmg: 0.6 }, desc: '포탄이 한 번 더 떨어져요 (두 번째는 60% 피해)' },
   firecracker: { cy: 2, dmgX: 1.2, splash: 1.8, desc: '공격력 +20% · 폭발 범위 1.8칸' },
   royal_recruits: { cy: 1, shield: 450, hpX: 1.1, desc: '훈련병 방어막 450 · 체력 +10%' },
@@ -1237,7 +1238,7 @@ function cardInfo(id) {
     if (c.dot) add('지속 시간', c.waves * c.waveGap + '초'); else if (c.waves) add('연속 횟수', c.waves + '회'); if (c.strikes) add('번개 수', c.strikes + '줄기 (체력 높은 적부터)'); add('대상', c.targets === 'ground' ? '지상만' : '공중 + 지상');
   } else {
     add('체력', n(c.hp * m)); add('공격력', n(c.damage * m)); add('공격 속도', c.hitSpeed + '초'); add('초당 피해(DPS)', n(c.damage * m / c.hitSpeed));
-    add('사거리', c.range <= 1.6 ? '근접' : c.range + '칸');
+    add('사거리', c.range <= 1.6 ? '근접' : c.range >= 50 ? '무한' : c.range + '칸');
     add('노리는 대상', c.targets === 'buildings' ? '건물만' : c.targets === 'ground' ? '지상만' : '공중 + 지상');
     if (c.type === 'troop') { add('이동 속도', SPD(c.speed)); add('이동 방식', c.flying ? '공중' : '지상'); }
     if (c.count > 1) add('소환 수', c.count + '마리');
@@ -2407,6 +2408,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '진화 대형 석궁', n: 1, l: ['진화 대형 석궁(사이클 1)은 사정거리가 무한이에요 — 맵 어디서든 가장 가까운 적 지상 유닛과 타워를 쏴요'] },
   { d: '11/25', t: '돌진 메커니즘 수정', n: 1, l: ['프린스·다크 프린스·배틀 램·램 라이더: 기절·빙결·밀치기·끌려감을 당하면 돌진이 풀려요', '도둑·대장 도둑: 적이 3.5~6칸 거리에 있으면 돌진을 시작하고, 돌진하는 동안 무적이에요 (기절·밀치기도 안 먹어요)', '골드 나이트 맹돌진: 빠르게 달리다가 속도가 붙는 돌진, 돌진 중엔 기절·밀치기를 무시해요 (무적은 아니에요)'] },
   { d: '11/25', t: '메가 나이트 점프', n: 1, l: ['3.5~5칸 밖의 적에게 포물선으로 뛰어올라 착지 충격(266 피해, 반지름 2.2칸)을 줘요 · 재사용 1.5초', '점프하는 동안 몸이 떠오르고 그림자는 땅에 남아요 · 진화 메가 나이트는 착지에 1초 기절이 붙어요'] },
   { d: '11/25', t: '통나무 조정', n: 1, l: ['타워 피해 65 → 35, 사정거리(구르는 거리) 11 → 10.1칸 · 광역 피해 268과 너비 3.9칸은 그대로예요'] },
@@ -3399,7 +3401,7 @@ function render(a) {
     const sp = dc.type === 'spell', fr = sp && !dc.roll, px = fr ? cur.x : (snap ? snap[0] : 0), py = fr ? cur.y : (snap ? snap[1] : 0), good = true;
     if (dc.type === 'building') { // 건물: 공격 범위 표시
       cx.fillStyle = good ? 'rgba(255,255,255,.16)' : 'rgba(255,80,80,.16)'; cx.strokeStyle = good ? 'rgba(255,255,255,.8)' : 'rgba(255,120,120,.85)'; cx.lineWidth = 0.1;
-      cx.beginPath(); cx.arc(px, py, dc.range + dc.radius, 0, 7); cx.fill(); cx.stroke();
+      cx.beginPath(); cx.arc(px, py, Math.min(dc.range, 25) + dc.radius, 0, 7); cx.fill(); cx.stroke();
     }
     const uc = !sp && dc.type !== 'building' && dc.evoOf && (G.cyc[0][dc.id] | 0) < dc.cycles ? CARDS[dc.evoOf] : dc, pts = !sp && dc.type !== 'building' ? spawnPts(uc, 0, px, py) : null;   // 진화는 주기가 차기 전엔 기본 유닛이 나와요
     if (pts && pts.length > 1) {   // 여러 마리 카드: 실제로 놓일 자리마다 유닛을 그려요
