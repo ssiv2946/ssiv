@@ -1862,7 +1862,7 @@ function think(e, dt) {
   if (!(e.lock && t0 && t0.hp > 0 && gap(e, t0) <= far && !hid(t0) && !(c.minR && gap(e, t0) < c.minR))) {
     e.lock = false;
     let n = find(e);
-    if (n && t0 && n !== t0 && t0.hp > 0 && gap(e, t0) <= far && gap(e, t0) - gap(e, n) < 0.6) n = t0; // 거의 같은 거리면 갈아타지 않음(좌우 떨림 방지)
+    if (n && t0 && n !== t0 && t0.hp > 0 && !hid(t0) && gap(e, t0) <= far && gap(e, t0) - gap(e, n) < 0.6) n = t0; // 거의 같은 거리면 갈아타지 않음(좌우 떨림 방지)
     if (n !== t0) { e.tgt = n; e.cd = c.firstHit ?? 0.5; } // 타겟이 바뀌면 공격 준비 시간 리셋
   }
   const t = e.tgt;
@@ -1871,7 +1871,7 @@ function think(e, dt) {
   const g = t || goal(e); if (g) { e.mv = 1; move(e, g, dt, sf); }
 }
 
-function tauntOf(e) { const c = e.card; for (const t of G.ents) if (t.taunt > 0 && t.team !== e.team && t.hp > 0 && gap(e, t) <= 6.5 && ok(c, t)) return t; return null; }
+function tauntOf(e) { const c = e.card; for (const t of G.ents) if (t.taunt > 0 && t.team !== e.team && t.hp > 0 && !hid(t) && gap(e, t) <= 6.5 && ok(c, t)) return t; return null; }
 function find(e) {
   const c = e.card; let best = null, bd = 1e9;
   const tn = tauntOf(e); if (tn) return tn;
