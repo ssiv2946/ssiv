@@ -388,7 +388,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
     <div class="vs">VS</div>
     <div class="plate blue"><div class="crowns" id="fn-pc"></div><div class="rib"><b id="fn-pn"></b><small id="fn-pt"></small></div></div>
     <div class="rewlab">보상</div><div id="fn-rw"></div>
-    <div class="fbtns"><button class="ok" onclick="menu()">확인</button><button class="again" onclick="restart(M2)">다시하기</button></div>
+    <div class="fbtns"><button class="ok" onclick="menu()">확인</button><button class="again" onclick="restart(M2,RUN)">다시하기</button></div>
   </div>
   <div id="menu"><div id="mcol">
     <div id="mtop">
@@ -502,8 +502,23 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>대전 모드</h2></div>
         <div class="item"><em>AI 대전<small id="md-sub"></small></em><button class="btn gold" onclick="restart()">시작</button></div>
         <div class="ptabs" id="md-diff"></div>
+        <div class="item" style="flex-wrap:wrap"><em>n배 엘릭서<small>내 엘릭서와 AI 엘릭서가 n배 빨리 차요 · 직접 고르기 · 보상·기록 없음</small></em><button class="btn gold" onclick="restart(0,{xm:XM})">시작</button>
+          <div style="display:flex;align-items:center;gap:10px;width:100%"><input type="range" id="xm-r" min="1" max="10" step="0.5" style="flex:1;min-width:0" oninput="setXM(this.value)" aria-label="엘릭서 배수"><b id="xm-v" style="min-width:46px;text-align:right"></b></div></div>
+        <div class="item"><em>연습 모드<small>내 엘릭서 무한 · 상대 덱을 직접 골라요 · 보상·기록 없음</small></em><button class="btn gold" onclick="showMenu('prac')">설정</button></div>
         <div class="item"><em>1대1 친구 대전<small>소셜 탭에서 접속 중인 친구에게 친선전·트로피전을 신청해요</small></em><button class="btn gold" onclick="showMenu('social')">소셜로</button></div>
         <div class="item"><em>2대2 팀 대전<small>빈 자리는 AI가 채워요 · 친구를 부르면 그 자리에 들어와요</small></em><div style="display:flex;flex-direction:column;gap:6px"><button class="btn gold" onclick="restart(1)">AI와</button><button class="btn" onclick="pv2Host()">친구와</button></div></div>
+      </div>
+
+      <div class="pg" id="pg-prac">
+        <div class="sub"><button class="back" onclick="showMenu('mode')">‹</button><h2>연습 모드</h2></div>
+        <p style="font-size:12px;margin:0">내 엘릭서가 항상 가득 차 있어요. 상대 덱 8장을 고르면 1·2번 칸은 진화, 3·4번 칸은 영웅으로 나와요 (있는 카드만). 보상·기록은 없어요.</p>
+        <div class="ptabs" id="pr-diff"></div>
+        <div class="dgrid" id="pr-slots"></div>
+        <div class="two"><button class="btn" style="flex:1" onclick="prRand()">랜덤 채우기</button><button class="btn" style="flex:1" onclick="prClear()">비우기</button></div>
+        <label class="item" style="cursor:pointer"><em>상대 멈추기<small>상대가 카드를 내지 않아요 (타워 공격 연습)</small></em><input type="checkbox" id="pr-still" onchange="PR.still=this.checked?1:0;prSave()" style="width:22px;height:22px"></label>
+        <button class="btn gold" id="pr-go" onclick="prStart()">연습 시작</button>
+        <div class="sect">카드 고르기</div>
+        <div class="dgrid" id="pr-all"></div>
       </div>
 
       <div class="pg" id="pg-pass">
@@ -690,13 +705,14 @@ function newGame(net, m2) {
   G = { t: 0, ot: 0, res: undefined, n: 0, ents: [], projs: [], fx: [], elixir: CFG.startElixir, cur: CFG.elixir[0],
         q: [...CFG.playerDeck].sort(() => Math.random() - 0.5), hand: [], nxt: null, net: net || null, vfx: [], shake: 0, cyc: [{}, {}], later: [] };
   G.hand = G.q.splice(0, 4); G.nxt = G.q.shift();
+  { const R = !net && !m2 ? RUN : null; G.xm = R && R.xm > 1 ? R.xm : 1; G.prac = R && R.prac ? 1 : 0; G.free = R ? 1 : 0; G.noAI = R && R.still ? 1 : 0; G.rdeck = R && R.deck || null; if (G.prac) G.elixir = 10; }
   if (!net && m2) {   // 2대2: 나(좌석 0) + AI 동료(좌석 1) vs AI 둘(좌석 2·3). 같은 편은 타워를 공유해요
     G.m2 = 1; G.st = [0, 0, 1, 1];
     const pp = AIP[DIFF], al = newBot(0, 1, AIP[Math.max(1, DIFF)]), e1 = newBot(1, 2, pp), e2 = newBot(1, 3, pp);
     G.S = [null, al, e1, e2]; G.bots = [al, e1, e2]; G.ai = null;
     e2.wait += 1.2;   // 두 적이 동시에 움직이지 않게 엇갈리기
   }
-  else if (!net) { G.ai = newAI(); G.bots = [G.ai]; }
+  else if (!net) { G.ai = G.rdeck ? newBot(1, 1, AIP[DIFF], G.rdeck) : newAI(); G.bots = [G.ai]; }
   else if (net.role === 'host' && net.m2) {   // 2대2 방장: 손님 자리는 사람, 나머지는 AI
     G.m2 = 1; G.st = [0, 0, 1, 1]; G.S = [null, null, null, null]; G.bots = []; net.ack = 0; net.seq = 0; net.sc = 0;
     for (let i = 1; i < 4; i++) {
@@ -756,14 +772,14 @@ function play(i, x, y, fromPend) {
   if (PAUSE || G.res !== undefined) return false;
   if (G.elixir < c.cost) {
     if (fromPend) return false;
-    if ((c.cost - G.elixir) * G.cur.sec <= LACK_MS) { G.pend = { i, id, x, y, until: G.t + LACK_MS }; return true; }   // 곧 차요 → 예약
+    if ((c.cost - G.elixir) * G.cur.sec / (G.xm || 1) <= LACK_MS) { G.pend = { i, id, x, y, until: G.t + LACK_MS }; return true; }   // 곧 차요 → 예약
     lack(); return false;                                                                                           // 안 차요 → 취소
   }
   G.pend = null;
   if (c.type !== 'spell' || c.roll) { const q = snapSpot(x, y, c); if (!q) return false; x = q[0]; y = q[1]; } // 못 두는 곳이면 가장 가까운 가능한 칸으로
   if (G.net && G.net.role === 'guest') { guestPlay(G.net, i, id, c, x, y); return true; }
   sfx('deploy');
-  G.elixir -= c.cost; spawn(id, 0, Math.min(W, Math.max(0, x)), Math.min(H, Math.max(0, y)));
+  G.elixir = G.prac ? 10 : G.elixir - c.cost; spawn(id, 0, Math.min(W, Math.max(0, x)), Math.min(H, Math.max(0, y)));
   G.q.push(id); G.hand[i] = G.nxt; G.nxt = G.q.shift(); buildHand();
   return true;
 }
@@ -785,7 +801,7 @@ function tick(dt) {
   if (G.res !== undefined || PAUSE) return;
   G.t += dt;
   let s = CFG.elixir[0]; for (const e of CFG.elixir) if (G.t >= e.from) s = e;
-  G.elixir = Math.min(10, G.elixir + dt / s.sec);
+  G.elixir = G.prac ? 10 : Math.min(10, G.elixir + dt * (G.xm || 1) / s.sec);
   if (s !== G.cur) { G.cur = s; if (s.label) { say(s.label); sfx('elixir'); } }
   if (G.pend) { const q = G.pend;   // 예약된 배치: 엘릭서가 차는 즉시 배치, 시간이 지나면 취소
     if (G.hand[q.i] !== q.id) G.pend = null;
@@ -956,7 +972,7 @@ const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.ge
 
 function loadStore() {
   DEFDECK = [...CFG.playerDeck]; ST = { ...ST, ...LS.get('cf_st', {}) }; { const sp = LS.get('cf_pass', {}) || {}; PASS = { ...PASS, ...sp }; if (sp.w == null) PASS.w = Math.min(10, Math.floor((sp.xp || 0) / 100)); }   // 예전 XP 방식 → 승리 횟수 방식
-  P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(4, Math.max(0, LS.get('cf_diff', 1) | 0));
+  P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(4, Math.max(0, LS.get('cf_diff', 1) | 0)); XM = Math.min(10, Math.max(1, Math.round((+LS.get('cf_xm', 2) || 2) * 2) / 2));
   loadDecks();
 }
 const MAXDK = 10, blankDeck = () => Array(8).fill(null);
@@ -1078,7 +1094,7 @@ function refreshTop() {
   $('t-gold').textContent = fmt(P.gold); $('t-gem').textContent = fmt(P.gems);
 }
 
-const DRAW = { home: () => drawHome(), shop: () => drawShop(), deck: () => { deck = [...DK.list[DK.cur]]; drawDeck(); }, social: () => drawSocial(), wallet: () => drawWallet(),
+const DRAW = { prac: () => drawPrac(), home: () => drawHome(), shop: () => drawShop(), deck: () => { deck = [...DK.list[DK.cur]]; drawDeck(); }, social: () => drawSocial(), wallet: () => drawWallet(),
   pass: () => drawPass(), news: () => drawNews(), mode: () => drawMode(), set: () => drawSet(), stats: () => drawStats(), profile: () => drawProfile(), rank: () => drawRank() };
 function showMenu(p) {
   CURP = p; if (p !== 'social') clearInterval(SOC.t);
@@ -1419,7 +1435,7 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fin').className = w === 0 ? 'win' : w === 1 ? 'lose' : 'draw';
   $('fn-title').textContent = forfeit ? '기권패' : w === 0 ? '승리!' : w === 1 ? '패배' : '무승부';
   $('fn-ec').innerHTML = crownRow(crowns(1), '#e5445a'); $('fn-pc').innerHTML = crownRow(crowns(0), '#3b82f6');
-  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : nt.m2 ? '2대2 친선전' : '1대1 친선전') : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
+  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : nt.m2 ? '2대2 친선전' : '1대1 친선전') : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : G.prac ? '연습 모드 · ' + AIP[DIFF].n : G.xm > 1 ? '엘릭서 ' + G.xm + '배 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
   $('fn-rw').innerHTML = rw.length ? rw.map(r => `<div class="rb2">${r.i}<span>${r.t}</span></div>`).join('') : '<p>받은 보상이 없어요</p>';
   $('fin').style.display = 'flex'; $('fin-pt').querySelectorAll('.pt').forEach(e => e.remove()); $('fin').scrollTop = 0; if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); for (let i = 0, n = crowns(0); i < n; i++) setTimeout(() => { if ($('fin').style.display === 'flex') sfx('crown'); }, 450 + i * 330); pubSoon();
 }
@@ -1429,6 +1445,7 @@ function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
 }
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
 function end(w) {
+  if (G.free) { G.res = w; showFinal(w, [], false); return; }   // 연습 · n배 엘릭서: 보상·전적·트로피 없음
   G.res = w; evSync(); const g = Math.round((w === 0 ? 200 : w === 1 ? 60 : 100) * (G.net ? 1 : AIP[DIFF].gold)); let m = w === 0 ? 3 : 0, evNew = 0;   // 이기면 보석 +3 (학교용: 바로바로 보상)
   let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF >= 2 ? (DIFF >= 3 ? 3 : 2) : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
   if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
@@ -1439,16 +1456,17 @@ function end(w) {
   if (evNew) rw.push({ i: '<span style="font-size:20px">📦</span>', t: '이벤트 상자 ★' + (evNew >= 3 ? 3 : 2) + '+ (홈에서 열기)' });
   rw.push(...trRw(td)); showFinal(w, rw, false);
 }
-let M2 = 0;
-function restart(m2) { M2 = m2 ? 1 : 0; pubSoon(); pvLeave(); newGame(null, M2); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false; }
+let M2 = 0, RUN = null;   // RUN: 특별 모드 설정 { xm: 엘릭서 배수, prac: 연습, deck: 상대 덱, still: 상대 멈춤 } · 보상·기록 없음
+function restart(m2, opt) { M2 = m2 ? 1 : 0; RUN = opt || null; pubSoon(); pvLeave(); newGame(null, M2); buildHand(); $('res').style.display = 'none'; $('fin').style.display = 'none'; $('menu').style.display = 'none'; PAUSE = false; }
 function askForfeit() {
   if (G.res !== undefined || PAUSE) return;
   if (!G.net) PAUSE = true;   // 온라인 대전은 멈출 수 없음
-  showRes('기권할까요?', '패배로 기록되고 보상은 받을 수 없어요', '<button onclick="resume()">계속하기</button><button class="red" onclick="forfeit()">기권하기</button>');
+  showRes('기권할까요?', G.free ? '기록 없이 끝나요' : '패배로 기록되고 보상은 받을 수 없어요', '<button onclick="resume()">계속하기</button><button class="red" onclick="forfeit()">기권하기</button>');
 }
 function resume() { $('res').style.display = 'none'; PAUSE = false; }
 function forfeit() {
   if (G.res !== undefined) return;
+  if (G.free) { G.res = 1; showFinal(1, [], true); return; }
   G.res = 1; evSync(); P.l++; P.hist.unshift({ r: 1, c: crowns(0) + ':' + crowns(1), at: Date.now(), f: 1 }); P.hist.length = Math.min(P.hist.length, 10); saveP();
   showFinal(1, trRw(trophyApply(1)), true);
   const n = G.net; if (n && n.role === 'guest') { const f = () => n.room.emit('ff', {}).catch(() => {}); f(); setTimeout(f, 300); setTimeout(f, 800); }
@@ -1467,8 +1485,32 @@ const PRODECKS = [["giant", "prince", "mini_pekka", "musketeer", "mega_minion", 
 let DIFF = 1;
 const rnd = a => a[Math.random() * a.length | 0];
 function setDiff(i) { DIFF = i; LS.set('cf_diff', i); drawMode(); }
+let XM = 2;
+function setXM(v) { XM = Math.min(10, Math.max(1, Math.round(+v * 2) / 2 || 2)); LS.set('cf_xm', XM); xmUI(); }
+function xmUI() { const r = $('xm-r'); if (r) r.value = XM; const v = $('xm-v'); if (v) v.textContent = '×' + XM; }
+// 연습 모드: 상대 덱을 직접 골라요 (내 엘릭서는 항상 10)
+const PR = { deck: [], still: 0, ok: 0 };
+const oEff = (id, k) => k < 2 && EVO[id] && CARDS['evo_' + id] ? 'evo_' + id : k >= 2 && k < 4 && HERO[id] && CARDS['hero_' + id] ? 'hero_' + id : id;
+function prLoad() { if (PR.ok) return; PR.ok = 1; const s = LS.get('cf_prac', {}) || {}; PR.deck = (Array.isArray(s.deck) ? s.deck : []).slice(0, 8).map(i => CARDS[i] && !CARDS[i].hidden && !CARDS[i].evoOf && !CARDS[i].heroOf ? i : null); PR.still = s.still ? 1 : 0; }
+function prSave() { LS.set('cf_prac', { deck: PR.deck, still: PR.still }); }
+function drawPrac() {
+  prLoad(); while (PR.deck.length < 8) PR.deck.push(null); PR.deck.length = 8;
+  $('pr-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:${AIP.length > 4 ? 62 : AIP.length > 3 ? 78 : 96}px" onclick="setDiff(${i});drawPrac()">${p.n}</button>`).join('');
+  $('pr-slots').innerHTML = PR.deck.map((id, k) => id ? dcard(id, 'sl-' + SLOT(k)) .replace('<div class="dc', `<div onclick="prDel(${k})" class="dc`) : `<div class="dc empty sl-${SLOT(k)}">${SLOT(k) === 'evo' ? '진화 칸' : SLOT(k) === 'hero' ? '영웅 칸' : ''}</div>`).join('');
+  $('pr-all').innerHTML = COLL().slice().sort((a, b) => CARDS[a].cost - CARDS[b].cost || CARDS[a].name.localeCompare(CARDS[b].name, 'ko')).map(i => dcard(i, PR.deck.includes(i) ? 'used' : '').replace('<div class="dc', `<div onclick="prAdd('${i}')" class="dc`)).join('');
+  $('pr-still').checked = !!PR.still; const n = PR.deck.filter(Boolean).length; $('pr-go').textContent = n === 8 ? '연습 시작' : '연습 시작 · 비운 칸은 랜덤 (' + n + '/8)';
+}
+function prAdd(id) { const k = PR.deck.indexOf(id); if (k >= 0) PR.deck[k] = null; else { const e = PR.deck.indexOf(null); if (e < 0) return toast('8장이 찼어요 · 위 카드를 눌러 빼세요'); PR.deck[e] = id; } prSave(); drawPrac(); }
+function prDel(k) { PR.deck[k] = null; prSave(); drawPrac(); }
+function prClear() { PR.deck = Array(8).fill(null); prSave(); drawPrac(); }
+function prRand() { const all = COLL(), d = []; while (d.length < 8) { const i = rnd(all); if (!d.includes(i)) d.push(i); } PR.deck = d; prSave(); drawPrac(); }
+function prStart() {
+  prLoad(); const all = COLL();
+  for (let k = 0; k < 8; k++) if (!PR.deck[k]) { let c; do c = rnd(all); while (PR.deck.includes(c)); PR.deck[k] = c; }   // 빈 칸은 랜덤으로
+  prSave(); restart(0, { prac: 1, deck: PR.deck.map((id, k) => oEff(id, k)), still: PR.still });
+}
 function drawMode() {
-  pvUI();
+  pvUI(); xmUI();
   $('md-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:${AIP.length > 4 ? 62 : AIP.length > 3 ? 78 : 96}px" onclick="setDiff(${i})">${p.n}</button>`).join('');
   $('md-sub').textContent = AIP[DIFF].d;
 }
@@ -1490,7 +1532,7 @@ function newBot(team, seat, p, deck) {   // 손패 4장 + 다음 카드 · 엘�
 const newAI = () => newBot(1, 1, AIP[DIFF]);
 function aiTick(dt) { for (const a of G.bots || []) botTick(a, dt); }
 function botTick(a, dt) {
-  a.el = Math.min(10, a.el + dt * (a.p.xe || 1) / G.cur.sec);   // 불가능만 엘릭서 회복 보너스(xe) — 설명에 공개
+  a.el = Math.min(10, a.el + dt * (a.p.xe || 1) * (G.xm || 1) / G.cur.sec);   // 불가능만 엘릭서 회복 보너스(xe) — 설명에 공개
   if (G.noAI) return;
   if ((a.abW -= dt) <= 0) { a.abW = 0.35; if (a.p.ab) botAbility(a); }
   if ((a.wait -= dt) > 0) return;
@@ -1616,7 +1658,7 @@ function botDefend(a, thr) {
 const botSup = c => (c.range >= 3 ? 2 : 0) + (c.targets === 'air_ground' ? 1 : 0) + (c.splash ? 1.5 : 0) - c.cost * 0.2;
 const oppEl = a => { const o = (G.bots || []).filter(b => b.team !== a.team).map(b => b.el); if (a.team) o.push(G.elixir); return o.length ? o.reduce((x, y) => x + y, 0) / o.length : 5; };   // 상대 팀 엘릭서 (불가능 AI는 정확히 세요)
 function botAttack(a, force) {
-  const p = a.p, t = a.team, fw = t ? 1 : -1, mult = G.cur.mult || 1, off = force ? 0 : Math.max(5, p.off - (mult - 1) * 1.3);
+  const p = a.p, t = a.team, fw = t ? 1 : -1, mult = (G.cur.mult || 1) * (G.xm || 1), off = force ? 0 : Math.max(5, p.off - (mult - 1) * 1.3);
   const A = a.hand.map((id, i) => ({ i, c: CARDS[id] })).filter(o => o.c && o.c.cost <= a.el), U = A.filter(o => o.c.type !== 'spell');
   const pr = G.ents.filter(e => e.team !== t && e.tk === 'princess' && e.hp > 0).sort((m, n) => m.hp - n.hp);
   if (p.sup && U.length && a.el >= 3 && G.t - (a.supT || -9) > 2.2) {   // 앞서가는 아군 탱커 뒤에 지원
@@ -1672,7 +1714,7 @@ function botSeq(a) {
   return botPlay(a, i, botJ(a, x), botY(a, fy));
 }
 function botHog(a, foes) {
-  const t = a.team, el = a.el, mult = G.cur.mult || 1, oe = oppEl(a), def = !!(foes && foes.length);
+  const t = a.team, el = a.el, mult = (G.cur.mult || 1) * (G.xm || 1), oe = oppEl(a), def = !!(foes && foes.length);
   const H = Object.assign({ lo: 3.5, mid: 6, hi: 8.5, a: 0, b: 1, c: 7, d: 9.5, m: 1, df: 1, g: 1, goe: 6, cy1: 7, cy2: 5, cyo: 4, open: 18, g2: 0, gr: 1 }, a.p.hg);   // 시험으로 고른 값 (a.p.hg 로 덮어쓸 수 있어요)
   const seen = a.seen || (a.seen = new Set());
   for (const e of G.ents) if (e.team !== t && e.kind !== 'tower' && e.card) seen.add(e.card.evoOf || e.card.heroOf || e.card.id);
@@ -2271,6 +2313,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '새 모드: 연습 모드 · n배 엘릭서', n: 1, l: ['대전 모드에서 엘릭서 배수를 1~10배(0.5 단위)로 직접 골라 AI와 싸울 수 있어요 — 내 엘릭서와 AI 엘릭서가 같이 빨라져요', '연습 모드: 내 엘릭서가 항상 가득 차고, 상대 덱 8장을 직접 골라요 (1·2번 칸 진화 · 3·4번 칸 영웅) · 상대 멈추기도 가능', '두 모드 모두 보상·전적·트로피는 없어요'] },
   { d: '11/25', t: '연출 · 손맛 업데이트', n: 1, l: ['스펠 연출: 번개(하늘에서 내리침) · 독(보글보글 장판) · 얼음(얼음 조각) · 지진(갈라지는 땅) · 토네이도(회오리) · 보이드(빨려드는 구멍) · 덩굴 · 감전 · 분노 · 눈덩이 · 화살 · 파이어볼/로켓 폭발', '유닛이 걸을 때 통통 튀고, 땅에 그림자가 생기고, 소환될 때 마법진이 줄어들며, 죽을 때 반짝이며 사라져요', '타워가 부서지면 폭발 · 파편 · 번쩍임 · 화면 흔들림 · 크라운이 떠올라요', '크라운 점수가 오를 때 커졌다 돌아와요', '결과 화면: 제목 → 크라운이 하나씩 쾅 하고 나타나요 → 보상이 차례로 올라와요 (소리도 같이)'] },
   { d: '11/25', t: '공지에 패치내역 · 건의사항', n: 1, l: ['공지 화면에서 업데이트 내용을 볼 수 있어요', '건의사항 탭에서 글을 보내면 관리자(ssiv)가 읽어요 · 로그인한 계정만, 하루 10개까지'] },
   { d: '11/25', t: '날아가는 스펠 · 땅속을 달리는 광부', n: 1, l: ['파이어볼·로켓·자이언트 눈덩이·고블린 통·화살이 내 킹타워에서 날아가요 (택배는 하늘에서 내려와요)', '날아가는 거리에 따라 도착 시간이 달라지고, 피해·소환은 도착한 뒤에 일어나요', '광부가 땅속으로 흙먼지를 일으키며 달려가요 · 거리에 따라 0.5~1.3초 뒤 튀어나와요', '카드 정보창에 도착 시간이 보여요'] },
@@ -3129,11 +3172,11 @@ function hudClock() {
   cx.beginPath(); cx.moveTo(bx + r, by); cx.arcTo(bx + bw, by, bx + bw, by + bh, r); cx.arcTo(bx + bw, by + bh, bx, by + bh, r); cx.arcTo(bx, by + bh, bx, by, r); cx.arcTo(bx, by, bx + bw, by, r); cx.closePath(); cx.fill(); cx.stroke();
   cx.fillStyle = '#c9d3ea'; cx.font = 'bold 0.62px sans-serif'; cx.fillText(ot ? '연장 시간' : '남은 시간', bx + bw / 2, by + 0.62);
   cx.fillStyle = low ? '#ff6a6a' : '#fff'; cx.font = 'bold 1.35px sans-serif'; cx.fillText(txt, bx + bw / 2, by + 1.6);
-  const mu = G.cur.mult;
-  if (mu > 1) {   // 엘릭서 2배 · 3배: 보라 물방울
+  const mu = +((G.cur.mult || 1) * (G.xm || 1)).toFixed(1), mlab = G.prac ? '∞' : 'x' + mu;
+  if (mu > 1 || G.prac) {   // 엘릭서 2배 · 3배: 보라 물방울
     const px = W - 1.25, py = by + bh + 1.35, pr = 1.0; cx.beginPath(); cx.arc(px, py, pr, 0, 7); cx.moveTo(px - pr * 0.72, py - pr * 0.72); cx.lineTo(px + pr * 0.15, py - pr * 1.55); cx.lineTo(px + pr * 0.85, py - pr * 0.55); cx.closePath();
     const g = cx.createLinearGradient(px, py - pr, px, py + pr); g.addColorStop(0, '#d56bff'); g.addColorStop(1, '#7d22c9'); cx.fillStyle = g; cx.fill(); cx.strokeStyle = '#fff'; cx.lineWidth = 0.1; cx.stroke();
-    cx.fillStyle = '#fff'; cx.strokeStyle = '#4a1180'; cx.lineWidth = 0.12; cx.font = 'italic bold 1.05px sans-serif'; cx.strokeText('x' + mu, px, py + 0.08); cx.fillText('x' + mu, px, py + 0.08);
+    cx.fillStyle = '#fff'; cx.strokeStyle = '#4a1180'; cx.lineWidth = 0.12; cx.font = 'italic bold 1.05px sans-serif'; cx.strokeText(mlab, px, py + 0.08); cx.fillText(mlab, px, py + 0.08);
   }
   // 마지막 10초 카운트다운 · 60초 남음 안내
   const big = !ot && rem <= 10 && G.res === undefined ? Math.ceil(rem) : !ot && rem <= 60 && rem > 57 ? 60 : 0;
