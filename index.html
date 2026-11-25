@@ -60,7 +60,12 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 #rb button{font:inherit;font-weight:700;font-size:16px;padding:12px 22px;border:0;border-radius:10px;background:#3b82f6;color:#fff;cursor:pointer}
 #rb button+button{background:#3a4352}
 input{-webkit-user-select:text;user-select:text}
-#fin{position:absolute;inset:0;z-index:6;display:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px;background:linear-gradient(180deg,rgba(140,30,80,.86),rgba(18,16,40,.9) 48%,rgba(20,60,150,.88));-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);overflow:hidden}
+#fin{position:absolute;inset:0;z-index:6;display:none;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:10px;background:linear-gradient(180deg,rgba(140,30,80,.86),rgba(18,16,40,.9) 48%,rgba(20,60,150,.88));-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);overflow:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:0}
+#fin-pt{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+#fin>#fn-title{margin-top:auto}
+#fin .fbtns{position:sticky;bottom:0;margin-top:auto;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));width:100%;justify-content:center;background:linear-gradient(transparent,rgba(18,16,40,.92) 35%);z-index:3}
+#fin>.fbtns{margin-bottom:0}
+@media (max-height:760px){#fn-title{font-size:34px;margin-bottom:0}.crowns{margin-bottom:-12px}.rib{padding:16px 16px 6px}.rib b{font-size:18px}.vs{font-size:22px;margin:0}.rewlab{margin-top:2px}.rb2{min-width:78px;padding:8px 10px 6px;font-size:16px;gap:3px}.rb2 span{text-align:center}.plate{width:min(80%,360px)}.fbtns button{padding:10px 24px;font-size:16px}}
 #fn-title{font-size:46px;font-weight:900;letter-spacing:2px;text-shadow:0 3px 0 rgba(0,0,0,.45);margin-bottom:6px}
 #fin.win #fn-title{color:#ffd24d;text-shadow:0 3px 0 rgba(0,0,0,.45),0 0 18px rgba(255,200,80,.7)}
 #fin.lose #fn-title{color:#b9c6e4}#fin.draw #fn-title{color:#fff}
@@ -350,7 +355,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
   <div id="sm" onclick="if(event.target===this&&!SM.lock)smClose()"><div class="box" id="sm-box"></div></div>
   <div id="banner"></div><div id="lack">엘릭서가 부족합니다!</div>
   <div id="res"><h1 id="rt"></h1><p id="rs"></p><div id="rb"></div></div>
-  <div id="fin">
+  <div id="fin"><div id="fin-pt"></div>
     <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#e09a12"/></linearGradient></defs></svg>
     <div id="fn-title"></div>
     <div class="plate red"><div class="crowns" id="fn-ec"></div><div class="rib"><b id="fn-en">연습 상대</b><small id="fn-es">AI 대전</small></div></div>
@@ -1369,7 +1374,7 @@ const GOLD_CROWN = '<svg viewBox="0 0 100 84"><path d="M6 18L28 42L50 6L72 42L94
 const cushion = c => `<svg viewBox="0 0 100 60"><path d="M6 52Q2 22 28 18Q50 6 72 18Q98 22 94 52Z" fill="${c}" stroke="rgba(0,0,0,.35)" stroke-width="2.5"/><path d="M28 18Q50 30 72 18" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="3"/></svg>`;
 const crownRow = (n, c) => [0, 1, 2].map(i => i < n ? GOLD_CROWN : cushion(c)).join('');
 function confetti() {
-  const f = $('fin'); f.querySelectorAll('.pt').forEach(e => e.remove());
+  const f = $('fin-pt'); f.querySelectorAll('.pt').forEach(e => e.remove());
   for (let i = 0; i < 16; i++) { const e = document.createElement('i'); e.className = 'pt'; e.style.left = Math.random() * 100 + '%'; e.style.background = ['#ff6b8b', '#e5445a', '#ffd24d', '#ff9ab0'][i % 4];
     e.style.animationDuration = 3 + Math.random() * 3 + 's'; e.style.animationDelay = -Math.random() * 5 + 's'; f.appendChild(e); }
 }
@@ -1380,7 +1385,7 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fn-ec').innerHTML = crownRow(crowns(1), '#e5445a'); $('fn-pc').innerHTML = crownRow(crowns(0), '#3b82f6');
   const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : nt.m2 ? '2대2 친선전' : '1대1 친선전') : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
   $('fn-rw').innerHTML = rw.length ? rw.map(r => `<div class="rb2">${r.i}<span>${r.t}</span></div>`).join('') : '<p>받은 보상이 없어요</p>';
-  $('fin').style.display = 'flex'; $('fin').querySelectorAll('.pt').forEach(e => e.remove()); if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); pubSoon();
+  $('fin').style.display = 'flex'; $('fin-pt').querySelectorAll('.pt').forEach(e => e.remove()); $('fin').scrollTop = 0; if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); pubSoon();
 }
 function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
   if (!((G.net && G.net.mode === 'trophy') || (!G.net && !G.m2 && DIFF >= 2))) return null;   // 친구 트로피전 · AI 어려움/불가능
