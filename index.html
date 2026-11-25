@@ -943,7 +943,7 @@ const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.ge
 
 function loadStore() {
   DEFDECK = [...CFG.playerDeck]; ST = { ...ST, ...LS.get('cf_st', {}) }; { const sp = LS.get('cf_pass', {}) || {}; PASS = { ...PASS, ...sp }; if (sp.w == null) PASS.w = Math.min(10, Math.floor((sp.xp || 0) / 100)); }   // 예전 XP 방식 → 승리 횟수 방식
-  P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(3, Math.max(0, LS.get('cf_diff', 1) | 0));
+  P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(4, Math.max(0, LS.get('cf_diff', 1) | 0));
   loadDecks();
 }
 const MAXDK = 10, blankDeck = () => Array(8).fill(null);
@@ -1412,12 +1412,12 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
 }
 function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
   if (!((G.net && G.net.mode === 'trophy') || (!G.net && !G.m2 && DIFF >= 2))) return null;   // 친구 트로피전 · AI 어려움/불가능
-  const hd = !G.net && DIFF === 3, d = w === 0 ? (hd ? 50 : 30) : w === 1 ? (hd ? -30 : -20) : 0, old = P.tr | 0, nv = Math.max(0, old + d); P.tr = nv; saveP(); return nv - old;
+  const hd = !G.net && DIFF >= 3, d = w === 0 ? (hd ? 50 : 30) : w === 1 ? (hd ? -30 : -20) : 0, old = P.tr | 0, nv = Math.max(0, old + d); P.tr = nv; saveP(); return nv - old;
 }
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
 function end(w) {
   G.res = w; evSync(); const g = Math.round((w === 0 ? 200 : w === 1 ? 60 : 100) * (G.net ? 1 : AIP[DIFF].gold)); let m = w === 0 ? 3 : 0, evNew = 0;   // 이기면 보석 +3 (학교용: 바로바로 보상)
-  let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF >= 2 ? (DIFF === 3 ? 3 : 2) : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
+  let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF >= 2 ? (DIFF >= 3 ? 3 : 2) : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
   if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
   P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
   const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); if (w === 0) passWin();
@@ -1447,15 +1447,16 @@ const AIP = [
   { n: '쉬움', d: '반응이 느리고 자주 실수해요 · 골드 ×0.6', gold: 0.6, think: [3, 4.6], react: 2.4, off: 10, err: 0.4, spells: 1, spm: 2.6, jit: 2.5, zone: 13.5, smart: 0, ab: 0, evo: 0, sup: 0 },
   { n: '보통', d: '적당히 방어하고 공격해요 · 골드 ×1', gold: 1, think: [1.6, 2.6], react: 1.1, off: 9, err: 0.15, spells: 1, spm: 1.5, jit: 1.2, zone: 16, smart: 0.4, ab: 1, evo: 0.5, sup: 1 },
   { n: '어려움', d: '빠르게 반응하고 스펠·능력도 영리하게 써요 · 골드 ×1.5 · 승리 🏆+30 / 패배 🏆-20', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, spm: 0.8, jit: 0.3, zone: 19, smart: 0.9, ab: 2, evo: 1, sup: 1 },
-  { n: '불가능', d: '실수 없이 반응하고, 상대 엘릭서를 읽어 빈틈을 파고들며, 스펠로 타워를 끝장내요 · 순호(2.6 호그 사이클) 고정: 진화 해골·진화 대포·영웅 머스킷·영웅 얼음 골렘 · 엘릭서 회복 +25% · 골드 ×2.5 · 승리 🏆+50 / 패배 🏆-30 · 승리 상자 ★3+', gold: 2.5, think: [0.45, 0.8], react: 0.15, off: 7, err: 0, spells: 1, spm: 1.0, jit: 0.15, zone: 20, smart: 1, ab: 3, evo: 1, sup: 1, pro: 1, hog: 1, spCd: 1.5, xe: 1.25 }
+  { n: '불가능', d: '실수 없이 반응하고, 상대 엘릭서를 읽어 빈틈을 파고들며, 스펠로 타워를 끝장내요 · 최상위 덱 · 엘릭서 회복 +25% · 골드 ×2.5 · 승리 🏆+50 / 패배 🏆-30 · 승리 상자 ★3+', gold: 2.5, think: [0.45, 0.8], react: 0.15, off: 7, err: 0, spells: 1, spm: 1.0, jit: 0.15, zone: 20, smart: 1, ab: 3, evo: 1, sup: 1, pro: 1, spCd: 1.5, xe: 1.25 }
 ];
+AIP.push({ ...AIP[3], n: '순호', d: '2.6 호그 사이클만 써요: 진화 해골·진화 대포·영웅 머스킷·영웅 얼음 골렘 · 호그는 상대 엘릭서가 낮을 때 보내고 싼 카드로 사이클 · 엘릭서 회복 +25% · 골드 ×2.5 · 승리 🏆+50 / 패배 🏆-30 · 승리 상자 ★3+', hog: 1 });   // 순호 난이도 (순호 전용 운영 botHog)
 const PRODECKS = [["hog_rider", "musketeer", "ice_golem", "ice_spirit", "skeletons", "cannon", "fireball", "the_log"], ["golem", "night_witch", "baby_dragon", "mega_minion", "lightning", "tornado", "lumberjack", "electro_spirit"], ["pekka", "battle_ram", "bandit", "electro_wizard", "royal_ghost", "zap", "poison", "magic_archer"], ["goblin_barrel", "princess", "knight", "goblin_gang", "ice_spirit", "rocket", "the_log", "inferno_tower"], ["miner", "poison", "knight", "bats", "ice_spirit", "princess", "the_log", "bomb_tower"], ["lava_hound", "balloon", "skeleton_dragons", "mega_minion", "tombstone", "fireball", "arrows", "ice_spirit"], ["x_bow", "tesla", "knight", "archers", "ice_spirit", "fireball", "the_log", "ice_golem"]];   // 불가능 난이도가 쓰는 검증된 덱 (유닛·건물·스펠이 고루 섞인 8장)
 let DIFF = 1;
 const rnd = a => a[Math.random() * a.length | 0];
 function setDiff(i) { DIFF = i; LS.set('cf_diff', i); drawMode(); }
 function drawMode() {
   pvUI();
-  $('md-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:${AIP.length > 3 ? 78 : 96}px" onclick="setDiff(${i})">${p.n}</button>`).join('');
+  $('md-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:${AIP.length > 4 ? 62 : AIP.length > 3 ? 78 : 96}px" onclick="setDiff(${i})">${p.n}</button>`).join('');
   $('md-sub').textContent = AIP[DIFF].d;
 }
 // ---------- 3단계: AI 상대 (v2: 좌석·팀 기준 봇 — 1대1 상대와 2대2 아군/적군이 같은 코드를 써요) ----------
