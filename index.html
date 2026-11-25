@@ -515,7 +515,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="item"><em>랜덤 덱 대전<small>나도 AI도 아무 카드 8장으로 시작 (진화·영웅 없음) · 보상·기록 없음</small></em><button class="btn gold" onclick="randRun()">시작</button></div>
         <div class="item"><em>미러 대전<small>AI가 내 덱 그대로 싸워요 · 덱 실력 확인용 · 보상·기록 없음</small></em><button class="btn gold" onclick="restart(0,{deck:[...CFG.playerDeck],label:'미러 대전'})">시작</button></div>
         <div class="item"><em>연습 모드<small>내 엘릭서 무한 · 상대 덱을 직접 골라요 · 보상·기록 없음</small></em><button class="btn gold" onclick="showMenu('prac')">설정</button></div>
-        <div class="item"><em>1대1 친구 대전<small>소셜 탭에서 접속 중인 친구에게 친선전·트로피전을 신청해요</small></em><button class="btn gold" onclick="showMenu('social')">소셜로</button></div>
+        <div class="item"><em>1대1 친구 대전<small>소셜 탭에서 접속 중인 친구에게 친선전·트로피전을 신청해요 · 친선전은 엘릭서 배수·서든데스·랜덤/미러 덱 규칙을 고를 수 있어요</small></em><button class="btn gold" onclick="showMenu('social')">소셜로</button></div>
         <div class="item"><em>2대2 팀 대전<small>빈 자리는 AI가 채워요 · 친구를 부르면 그 자리에 들어와요</small></em><div style="display:flex;flex-direction:column;gap:6px"><button class="btn gold" onclick="restart(1)">AI와</button><button class="btn" onclick="pv2Host()">친구와</button></div></div>
       </div>
 
@@ -719,6 +719,7 @@ function newGame(net, m2) {
   G.hand = G.q.splice(0, 4); G.nxt = G.q.shift();
   { const R = !net && !m2 ? RUN : null; G.xm = R && R.xm > 1 ? R.xm : 1; G.prac = R && R.prac ? 1 : 0; G.free = R ? 1 : 0; G.noAI = R && R.still ? 1 : 0; G.rdeck = R && R.deck || null; G.sd = R && R.sd ? 1 : 0; G.mlab = R && R.label || ''; if (G.prac) G.elixir = 10;
     if (R && R.mine) { G.q = [...R.mine].sort(() => Math.random() - 0.5); G.hand = G.q.splice(0, 4); G.nxt = G.q.shift(); } }
+  if (net && !net.m2 && net.rule) { G.xm = net.rule.x; G.sd = net.rule.s; G.nr = 1; }   // 친구 대전 규칙: 엘릭서 배수 · 서든데스 · (보상·기록 없음)
   if (!net && m2) {   // 2대2: 나(좌석 0) + AI 동료(좌석 1) vs AI 둘(좌석 2·3). 같은 편은 타워를 공유해요
     G.m2 = 1; G.st = [0, 0, 1, 1];
     const pp = AIP[DIFF], al = newBot(0, 1, AIP[Math.max(1, DIFF)]), e1 = newBot(1, 2, pp), e2 = newBot(1, 3, pp);
@@ -734,7 +735,11 @@ function newGame(net, m2) {
       else { const b = newBot(tm, i, AIP[tm ? DIFF : Math.max(1, DIFF)]); b.wait += i * 0.4; G.S[i] = b; G.bots.push(b); }
     }
   }
-  else if (net.role === 'host') { const q = [...net.oppDeck].sort(() => Math.random() - 0.5); G.o = { el: CFG.startElixir, hand: q.splice(0, 4), nxt: q.shift(), q }; net.ack = 0; net.seen = new Set(); net.sc = 0; net.seq = 0; }
+  else if (net.role === 'host') {
+    let od = net.oppDeck; const dr = net.rule ? net.rule.d : 0;
+    if (dr === 1) { od = rndDeck(); G.q = rndDeck().sort(() => Math.random() - 0.5); G.hand = G.q.splice(0, 4); G.nxt = G.q.shift(); }   // 랜덤 덱: 둘 다 아무 카드 8장
+    else if (dr === 2) od = [...CFG.playerDeck];                                                                                          // 미러: 둘 다 방장 덱
+    const q = [...od].sort(() => Math.random() - 0.5); G.o = { el: CFG.startElixir, hand: q.splice(0, 4), nxt: q.shift(), q }; net.ack = 0; net.seen = new Set(); net.sc = 0; net.seq = 0; }
   else { G.gm = new Map(); net.snapAt = performance.now(); net.snapDt = 100; net.pending = []; net.lastS = -1; net.buf = null; net.lastSnap = Date.now(); net.pq = 0; }
   if (!net || net.role === 'host') for (const team of [0, 1])
     for (const [k, x, y] of [['princess', 3.5, team ? 6.5 : 25.5], ['princess', 14.5, team ? 6.5 : 25.5], ['king', 9, team ? 2.5 : 29.5]]) G.ents.push(Object.assign(mkTower(team, k, x, y), { id: ++G.n }));
@@ -828,7 +833,7 @@ function tick(dt) {
     else if (G.elixir >= CARDS[q.id].cost) { G.pend = null; play(q.i, q.x, q.y, 1); }
     else if (G.t >= q.until) { G.pend = null; lack(); } }
   if (G.net && G.net.role === 'guest') return;   // 게스트는 스냅샷으로만 갱신
-  if (G.o) G.o.el = Math.min(10, G.o.el + dt / s.sec);
+  if (G.o) G.o.el = Math.min(10, G.o.el + dt * (G.xm || 1) / s.sec);
   if (G.m2 && G.S) for (const so of G.S) if (so && so.human) so.el = Math.min(10, so.el + dt / s.sec);
   aiTick(dt);
   for (const e of G.ents) { e.px = e.x; e.py = e.y; }
@@ -1458,7 +1463,7 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fin').className = w === 0 ? 'win' : w === 1 ? 'lose' : 'draw';
   $('fn-title').textContent = forfeit ? '기권패' : w === 0 ? '승리!' : w === 1 ? '패배' : '무승부';
   $('fn-ec').innerHTML = crownRow(crowns(1), '#e5445a'); $('fn-pc').innerHTML = crownRow(crowns(0), '#3b82f6');
-  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : nt.m2 ? '2대2 친선전' : '1대1 친선전') : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : G.mlab ? G.mlab + ' · ' + AIP[DIFF].n : G.prac ? '연습 모드 · ' + AIP[DIFF].n : G.xm > 1 ? '엘릭서 ' + G.xm + '배 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
+  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : nt.m2 ? '2대2 친선전' : '1대1 친선전' + (nt.rule ? ' · ' + ruleLabel(nt.rule) : '')) : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : G.mlab ? G.mlab + ' · ' + AIP[DIFF].n : G.prac ? '연습 모드 · ' + AIP[DIFF].n : G.xm > 1 ? '엘릭서 ' + G.xm + '배 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
   $('fn-rw').innerHTML = rw.length ? rw.map(r => `<div class="rb2">${r.i}<span>${r.t}</span></div>`).join('') : '<p>받은 보상이 없어요</p>';
   $('fin').style.display = 'flex'; $('fin-pt').querySelectorAll('.pt').forEach(e => e.remove()); $('fin').scrollTop = 0; if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); for (let i = 0, n = crowns(0); i < n; i++) setTimeout(() => { if ($('fin').style.display === 'flex') sfx('crown'); }, 450 + i * 330); pubSoon();
 }
@@ -1468,7 +1473,7 @@ function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
 }
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
 function end(w) {
-  if (G.free) { G.res = w; showFinal(w, [], false); return; }   // 연습 · n배 엘릭서: 보상·전적·트로피 없음
+  if (G.free || G.nr) { G.res = w; showFinal(w, [], false); return; }   // 친구 규칙전 · 연습 · n배 엘릭서: 보상·전적·트로피 없음
   G.res = w; evSync(); const g = Math.round((w === 0 ? 200 : w === 1 ? 60 : 100) * (G.net ? 1 : AIP[DIFF].gold)); let m = w === 0 ? 3 : 0, evNew = 0;   // 이기면 보석 +3 (학교용: 바로바로 보상)
   let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF >= 2 ? (DIFF >= 3 ? 3 : 2) : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
   if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
@@ -1484,14 +1489,15 @@ function restart(m2, opt) { M2 = m2 ? 1 : 0; RUN = opt || null; pubSoon(); pvLea
 function askForfeit() {
   if (G.res !== undefined || PAUSE) return;
   if (!G.net) PAUSE = true;   // 온라인 대전은 멈출 수 없음
-  showRes('기권할까요?', G.free ? '기록 없이 끝나요' : '패배로 기록되고 보상은 받을 수 없어요', '<button onclick="resume()">계속하기</button><button class="red" onclick="forfeit()">기권하기</button>');
+  showRes('기권할까요?', G.free || G.nr ? '기록 없이 끝나요' : '패배로 기록되고 보상은 받을 수 없어요', '<button onclick="resume()">계속하기</button><button class="red" onclick="forfeit()">기권하기</button>');
 }
 function resume() { $('res').style.display = 'none'; PAUSE = false; }
 function forfeit() {
   if (G.res !== undefined) return;
-  if (G.free) { G.res = 1; showFinal(1, [], true); return; }
+  if (G.free || G.nr) { G.res = 1; showFinal(1, [], true); }   // 규칙전은 기록 없이 끝나요 (손님이면 아래에서 호스트에게 기권을 알려요)
+  else {
   G.res = 1; evSync(); P.l++; P.hist.unshift({ r: 1, c: crowns(0) + ':' + crowns(1), at: Date.now(), f: 1 }); P.hist.length = Math.min(P.hist.length, 10); saveP();
-  showFinal(1, trRw(trophyApply(1)), true);
+  showFinal(1, trRw(trophyApply(1)), true); }
   const n = G.net; if (n && n.role === 'guest') { const f = () => n.room.emit('ff', {}).catch(() => {}); f(); setTimeout(f, 300); setTimeout(f, 800); }
 }
 function menu() { pubSoon(); $('res').style.display = 'none'; $('fin').style.display = 'none'; PAUSE = true; pvLeave(); showMenu('home'); }
@@ -1876,7 +1882,15 @@ function pvUI() {
   sub.textContent = !n ? '방을 만들고 코드를 친구에게 알려주세요' : n.state === 'wait' ? '방 코드 ' + n.code + ' · 친구를 기다리는 중…' : n.state === 'join' ? '방 ' + n.code + ' 입장 중…' : '대전 중';
   b.textContent = n && n.role === 'host' ? '취소' : '방 만들기'; b.disabled = !!n && n.role === 'guest';
 }
-async function pvHost(mode, m2) {
+// ── 친구 대전 규칙(1대1 친선전): 방장이 엘릭서 배수 · 서든데스 · 덱 방식(0 각자 / 1 랜덤 / 2 미러)을 정해요. 규칙이 있으면 보상·기록은 없어요
+const sanRule = r => { if (!r || typeof r !== 'object') return null; const x = Math.min(10, Math.max(1, Math.round((+r.x || 1) * 2) / 2)), sd = r.s ? 1 : 0, d = r.d === 1 || r.d === 2 ? r.d : 0; return x > 1 || sd || d ? { x, s: sd, d } : null; };
+const ruleLabel = r => r ? [r.x > 1 ? '엘릭서 ' + r.x + '배' : '', r.s ? '서든데스' : '', r.d === 1 ? '랜덤 덱' : r.d === 2 ? '미러 덱(방장 덱)' : ''].filter(Boolean).join(' · ') : '';
+let FRR = { x: 1, s: 0, d: 0 };
+function frRule() {   // 신청 창의 규칙 칸을 읽어 둬요
+  const x = $('fr-x'), s = $('fr-s'), d = $('fr-d'); if (!x) return;
+  FRR = { x: +x.value || 1, s: s.checked ? 1 : 0, d: +d.value | 0 }; $('fr-xv').textContent = FRR.x > 1 ? FRR.x + '배' : '기본';
+}
+async function pvHost(mode, m2, rule) {
   if (NET) { pvLeave(); pvUI(); return; }
   toast('방을 만드는 중…');
   const R = await pvRoom(); if (!R) { toast('온라인 연결을 쓸 수 없어요 · 초대받은 사람만 이 링크로 연결돼요'); return; }
@@ -1886,7 +1900,7 @@ async function pvHost(mode, m2) {
     try { room = await R.join(code.toLowerCase(), 'host'); } catch (e) { room = null; }
   }
   if (!room) { toast('방을 만들지 못했어요. 잠시 뒤 다시 해 주세요'); return; }
-  const n = NET = { role: 'host', code, room, state: m2 ? 'lobby' : 'wait', unsubs: [], lastPing: Date.now(), mode: mode === 'trophy' ? 'trophy' : 'friendly' };
+  const n = NET = { role: 'host', code, room, state: m2 ? 'lobby' : 'wait', unsubs: [], lastPing: Date.now(), mode: mode === 'trophy' ? 'trophy' : 'friendly', rule: mode === 'trophy' || m2 ? null : sanRule(rule) };
   if (m2) { n.m2 = 1; n.seat = 0; n.seats = [{ name: P.name }, null, null, null]; room.cap = 3; }
   n.unsubs.push(room.on('hello', m => hostHello(n, m)), room.on('play', m => hostPlay(n, m)), room.on('hab', m => hostHab(n, m)),
     room.on('ff', m => hostFF(n, m)), room.on('ping', m => hostPing(n, m)), room.on('peerleft', m => hostLeft(n, m)));
@@ -1896,11 +1910,11 @@ async function pvHost(mode, m2) {
 function hostHello(n, m) {
   if (n.m2) return hostHello2(n, m);
   if (m.isMe || NET !== n) return; const d = m.data || {};
-  if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
+  if (n.state !== 'wait') { if (d.tok === n.tok) n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode, rule: n.rule }).catch(() => {}); else n.room.emit('full', { tok: d.tok }).catch(() => {}); return; }
   const deck = Array.isArray(d.deck) ? d.deck.map(i => CIDS[i]) : [];
   if (deck.length !== 8 || deck.some(x => !x || CARDS[x].hidden) || new Set(deck).size !== 8 || !deckRules(deck)) return;
   n.tok = String(d.tok); n.opp = String(d.name || '친구').slice(0, 12); n.oppDeck = deck; n.state = 'play'; n.lastPing = Date.now();
-  n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode }).catch(() => {});
+  n.room.emit('start', { tok: n.tok, host: P.name, mode: n.mode, rule: n.rule }).catch(() => {});
   pvBegin(n);
 }
 async function pvJoin(codeArg, want) {
@@ -1911,7 +1925,7 @@ async function pvJoin(codeArg, want) {
   let room; try { room = await R.join(code.toLowerCase(), 'guest'); } catch (e) { toast('방을 찾지 못했어요. 코드를 다시 확인해 주세요'); return; }
   const n = NET = { role: 'guest', code, room, state: 'join', unsubs: [], tok: Math.random().toString(36).slice(2, 10), lastSnap: Date.now() };
   n.unsubs.push(
-    room.on('start', m => { const d = m.data || {}; if (m.isMe || (n.state !== 'join' && n.state !== 'lobby') || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); n.mode = d.mode === 'trophy' ? 'trophy' : 'friendly'; clearTimeout(n.t1);
+    room.on('start', m => { const d = m.data || {}; if (m.isMe || (n.state !== 'join' && n.state !== 'lobby') || d.tok !== n.tok) return; n.state = 'play'; n.opp = String(d.host || '친구').slice(0, 12); n.mode = d.mode === 'trophy' ? 'trophy' : 'friendly'; n.rule = n.mode === 'trophy' ? null : sanRule(d.rule); clearTimeout(n.t1);
       n.flip = d.m2 ? (d.seat >= 2 ? 1 : 0) : 1;   // 1대1 손님·2대2 상대 팀은 화면을 뒤집어 보고, 같은 팀은 그대로 봐요
       if (d.m2) { n.m2 = 1; n.seat = d.seat; n.names = d.names || []; n.opp = (d.seat >= 2 ? [n.names[0], n.names[1]] : [n.names[2], n.names[3]]).join(' · '); smClose(); }
       pvBegin(n); }),
@@ -2422,6 +2436,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '친구 대전 규칙 선택', n: 1, l: ['1대1 친선전을 신청할 때 규칙을 고를 수 있어요: 엘릭서 배수(1~10배) · 서든데스 · 덱 방식(각자 / 랜덤 덱 / 미러 = 방장 덱)', '상대가 받는 신청 창에도 규칙이 보여요 · 규칙을 바꾼 판은 보상·기록이 없어요 (트로피전은 규칙 없이 그대로)'] },
   { d: '11/25', t: '골드 나이트 돌진', n: 1, l: ['맹돌진이 공중 유닛은 맞히지 않아요 (지상 유닛·타워만 대상)'] },
   { d: '11/25', t: '로얄 고스트 은신 · 도둑 직선 돌진', n: 1, l: ['로얄 고스트: 소환되는 순간부터 숨어 있고, 공격하면 드러났다가 공격을 멈춘 지 2초가 지나면 다시 사라져요', '도둑·대장 도둑: 돌진할 때 다리나 장애물을 돌지 않고 목표를 향해 일직선으로 달려요 (강도 그대로 건너요)'] },
   { d: '11/25', t: '진화 고블린 통 범위 표시', n: 1, l: ['진화 고블린 통(사이클 2)을 끌어서 놓을 때, 좌우 대칭으로 날아갈 두 번째 도착 범위도 같이 보여요'] },
@@ -2645,16 +2660,20 @@ function renderFriends() {
 function frMenu(uid) {
   const o = FR.find(x => x.uid === uid); if (!o) return; const can = isOn(o) && o.st !== 'play' && !NET;
   smOpen(`<div style="display:flex;justify-content:center">${avH(o.n, o.uid)}</div><h3>${esc(o.n)}</h3><p>🏆 ${o.tr | 0} · ${o.w | 0}승 ${o.l | 0}패 ${o.d | 0}무</p>${can ? '' : `<p style="color:#ffb4b4">${o.st === 'play' ? '지금 대전 중이에요' : NET ? '이미 방이 열려 있어요' : '오프라인이에요'}</p>`}
+    ${can ? `<div class="item" style="flex-wrap:wrap;gap:8px;text-align:left"><em>친선전 규칙<small>친선전에만 적용 · 규칙을 바꾸면 보상·기록이 없어요</small></em>
+      <div style="display:flex;align-items:center;gap:10px;width:100%"><span style="font-size:12px;min-width:48px">엘릭서</span><input type="range" id="fr-x" min="1" max="10" step="0.5" value="${FRR.x}" oninput="frRule()" style="flex:1;min-width:0;padding:0;border:0;background:none;width:auto" aria-label="엘릭서 배수"><b id="fr-xv" style="min-width:40px;text-align:right;font-size:13px"></b></div>
+      <label style="display:flex;align-items:center;gap:10px;width:100%;font-size:13px"><input type="checkbox" id="fr-s" ${FRR.s ? 'checked' : ''} onchange="frRule()" style="width:22px;height:22px;padding:0;flex:none"> 서든데스 (먼저 타워를 부수면 승리)</label>
+      <div style="display:flex;align-items:center;gap:10px;width:100%"><span style="font-size:12px;min-width:48px">덱</span><select id="fr-d" onchange="frRule()" style="flex:1;font:inherit;font-size:14px;padding:8px;border-radius:10px;border:2px solid #2d6aa8;background:#0b1b30;color:#fff"><option value="0" ${FRR.d === 0 ? 'selected' : ''}>각자 내 덱</option><option value="1" ${FRR.d === 1 ? 'selected' : ''}>랜덤 덱 (둘 다 아무 카드 8장)</option><option value="2" ${FRR.d === 2 ? 'selected' : ''}>미러 (둘 다 방장 덱)</option></select></div></div>` : ''}
     <button class="btn gold" ${can ? '' : 'disabled'} onclick="challenge('${uid}','friendly')">친선전<small style="display:block;font-weight:500;font-size:11px">트로피 변화 없음</small></button>
     <button class="btn" ${can ? '' : 'disabled'} onclick="challenge('${uid}','trophy')">트로피전<small style="display:block;font-weight:500;font-size:11px">승리 +30 · 패배 -20</small></button>
-    <button class="btn" onclick="smClose()">닫기</button>`);
+    <button class="btn" onclick="smClose()">닫기</button>`); frRule();
 }
 async function challenge(uid, type) {
-  const o = FR.find(x => x.uid === uid); if (!o || NET) return; smClose();
-  const code = await pvHost(type); if (!code) return;
-  const at = Date.now(); PUBX.to = uid; PUBX.inv = { code, type, at, from: AUTH.uid };
+  const o = FR.find(x => x.uid === uid); if (!o || NET) return; frRule(); const rule = type === 'trophy' ? null : sanRule(FRR); smClose();
+  const code = await pvHost(type, 0, rule); if (!code) return;
+  const at = Date.now(); PUBX.to = uid; PUBX.inv = { code, type, at, from: AUTH.uid, ...(rule ? { rule } : {}) };
   try { await pubPush(); } catch (e) { cancelChallenge(1); toast('신청을 보내지 못했어요'); return; }
-  SM.lock = 1; smOpen(`<h3>${esc(o.n)}님에게 신청 중…</h3><p>${type === 'trophy' ? '트로피전' : '친선전'} · 수락을 기다려요 (45초)</p><button class="btn" onclick="cancelChallenge(1)">취소</button>`);
+  SM.lock = 1; smOpen(`<h3>${esc(o.n)}님에게 신청 중…</h3><p>${type === 'trophy' ? '트로피전' : '친선전' + (rule ? ' · ' + ruleLabel(rule) : '')} · 수락을 기다려요 (45초)</p><button class="btn" onclick="cancelChallenge(1)">취소</button>`);
   clearInterval(SOC.w); const t0 = Date.now();
   SOC.w = setInterval(async () => {
     if (!NET || NET.role !== 'host') return stopWait();
@@ -2678,7 +2697,7 @@ async function invPoll() {
 }
 function showInvite(v) {
   INVS.cur = v; SM.lock = 1; sfx('elixir');
-  smOpen(`<h3>${esc(v.n)}님의 ${v.type === '2v2' ? '2대2 초대' : '대전 신청'}</h3><p>${v.type === '2v2' ? (v.seat < 2 ? '같은 팀' : '상대 팀') + '으로 들어가요 · 빈 자리는 AI가 채워요' : v.type === 'trophy' ? '트로피전 · 승리 +30 / 패배 -20' : '친선전 · 트로피 변화 없음'}</p><div class="row"><button class="btn" onclick="invNo()">거절</button><button class="btn gold" onclick="invYes()">수락</button></div>`);
+  smOpen(`<h3>${esc(v.n)}님의 ${v.type === '2v2' ? '2대2 초대' : '대전 신청'}</h3><p>${v.type === '2v2' ? (v.seat < 2 ? '같은 팀' : '상대 팀') + '으로 들어가요 · 빈 자리는 AI가 채워요' : v.type === 'trophy' ? '트로피전 · 승리 +30 / 패배 -20' : sanRule(v.rule) ? '친선전 · ' + ruleLabel(sanRule(v.rule)) + ' · 보상·기록 없음' : '친선전 · 트로피 변화 없음'}</p><div class="row"><button class="btn" onclick="invNo()">거절</button><button class="btn gold" onclick="invYes()">수락</button></div>`);
   setTimeout(() => { if (INVS.cur === v) { INVS.seen[v.from + ':' + v.at] = 1; INVS.cur = null; smClose(); } }, Math.max(1000, v.at + 45000 - Date.now()));
 }
 function invYes() { const v = INVS.cur; if (!v) return smClose(); INVS.seen[v.from + ':' + v.at] = 1; INVS.cur = null; smClose(); pvJoin(v.code, v.type === '2v2' ? v.seat : 0); }
