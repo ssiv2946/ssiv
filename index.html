@@ -625,6 +625,7 @@ async function boot() {
   const c = CARDS_DATA, f = CFG_DATA;
   c.forEach(x => { CARDS[x.id] = x; if (x.towerDamage) x.towerRatio = x.towerDamage / x.damage; }); CFG = f; mkVariants(); CIDS = Object.keys(CARDS);
   if (FBON()) await authGate();
+  if (DEVREQ) { try { localStorage.setItem('cf_dev', devId()); } catch (e) {} }   // ?dev=1 로 연 그 계정에만 테스트 지원 허용
   loadStore(); READY = 1; if (AUTH && SYNC.first) cloudDirty(); if (AUTH) socStart(); newGame(); buildHand(); resize(); addEventListener('resize', resize); showMenu('home');
   let last = performance.now(), acc = 0;
   (function loop(now) {
@@ -1313,10 +1314,14 @@ function passPick(i, id) {
 
 // 설정 / 전적 / 프로필
 function setST(k, v) { ST[k] = v; LS.set('cf_st', ST); if (k === 'hs') resize(); if (k === 'wake') wakeUpdate(); if (k === 'mus') bgmApply(); }
-// 테스트용: 주소 끝에 ?dev=1 을 붙여 한 번 열면 이 기기 설정 화면에 '테스트 지원' 버튼이 생겨요 (?dev=0 으로 끄기)
-try { const q = new URLSearchParams(location.search).get('dev'); if (q === '1') localStorage.setItem('cf_dev', '1'); else if (q === '0') localStorage.removeItem('cf_dev'); } catch (e) {}
-const DEV = () => { try { return !!localStorage.getItem('cf_dev'); } catch (e) { return false; } };
+// 테스트용: 주소 끝에 ?dev=1 을 붙여 열면, 그때 로그인돼 있는 '그 계정 하나'에만 설정 화면의 '테스트 지원' 버튼이 생겨요 (?dev=0 으로 끄기)
+// 같은 기기에서 다른 계정으로 로그인하면 버튼이 보이지 않아요.
+let DEVREQ = false;
+try { const q = new URLSearchParams(location.search).get('dev'); if (q === '1') DEVREQ = true; else if (q === '0') localStorage.removeItem('cf_dev'); } catch (e) {}
+const devId = () => 'u:' + (AUTH ? AUTH.uid : 'local');
+const DEV = () => { try { return localStorage.getItem('cf_dev') === devId(); } catch (e) { return false; } };
 function devGrant() {
+  if (!DEV()) return;
   P.gold = 1000000; P.gems = 1000000; PASS.w = 10; LS.set('cf_pass', PASS); saveP(); refreshTop(); toast('골드·보석 100만, 로얄패스 10단계 완료');
 }
 function drawSet() {
