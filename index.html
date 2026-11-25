@@ -120,6 +120,19 @@ input{-webkit-user-select:text;user-select:text}
 .item em{flex:1;font-style:normal;font-weight:700}
 .item small{display:block;color:#a9c4e6;font-size:12px;font-weight:500;margin-top:1px}
 .item.dim{opacity:.6}
+#nw-body{display:flex;flex-direction:column;gap:8px}
+.pn{background:rgba(5,20,40,.5);border-radius:12px;padding:0}
+.pn summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:11px 12px;font-weight:800;font-size:15px}
+.pn summary::-webkit-details-marker{display:none}
+.pn summary i{margin-left:auto;font-style:normal;font-size:12px;font-weight:600;color:#9fbbe0}
+.pn summary:after{content:'▾';color:#9fbbe0;font-size:12px}.pn[open] summary:after{content:'▴'}
+.pn ul{margin:0;padding:0 14px 12px 28px;color:#c9daf2;font-size:13px;line-height:1.55}
+.pn li{margin:2px 0}.pn .nw{color:#ffd24d;font-weight:800;font-size:11px;margin-left:2px}
+.pnh{color:#9fbbe0;font-size:12px;font-weight:800;margin:6px 2px 0}
+.sgbox{width:100%;box-sizing:border-box;min-height:110px;resize:vertical;font:inherit;font-size:15px;padding:10px 12px;border-radius:12px;border:2px solid #2d6aa8;background:#0b1b30;color:#fff;outline:0;-webkit-user-select:text;user-select:text}
+.sgn{display:flex;align-items:center;justify-content:space-between;color:#9fbbe0;font-size:12px;font-weight:700}
+.sg-i{align-items:flex-start}.sg-i em{text-align:left;min-width:0;word-break:break-word}.sg-i small.tx{white-space:pre-wrap;color:#e6f0ff;font-size:13px;margin-top:3px}
+.sg-i.done{opacity:.55}
 .sw{width:26px;height:26px;border-radius:6px;flex:none;border:2px solid rgba(255,255,255,.5)}
 .sect{margin:6px 2px 0;font-size:14px;font-weight:800;color:#cfe0f5}
 .code{font-size:30px;font-weight:900;letter-spacing:6px;text-align:center;color:#ffd24d}
@@ -507,10 +520,8 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
 
       <div class="pg" id="pg-news">
         <div class="sub"><button class="back" onclick="showMenu('home')">‹</button><h2>공지</h2></div>
-        <div class="item"><em>메인 화면 개편<small>상점 · 덱 · 전투 · 소셜 · 재화 탭, 골드와 보석 도입</small></em></div>
-        <div class="item"><em>2단계: 승패 판정<small>크라운, 3분 비교, 연장전, 5분 종료 판정</small></em></div>
-        <div class="item"><em>3단계: AI 대전<small>난이도 3단계(쉬움·보통·어려움), AI 덱과 방어·공격 판단</small></em></div>
-        <div class="item dim"><em>다음 예정<small>4단계 1대1 · 5단계 2대2</small></em></div>
+        <div class="ptabs" id="nw-tabs"><button class="ptab on" data-t="patch" style="width:110px" onclick="newsTab('patch')">패치내역</button><button class="ptab" data-t="sug" style="width:110px" onclick="newsTab('sug')">건의사항</button></div>
+        <div id="nw-body"></div>
       </div>
     </div>
     <div id="nav">
@@ -1055,7 +1066,7 @@ function refreshTop() {
 }
 
 const DRAW = { home: () => drawHome(), shop: () => drawShop(), deck: () => { deck = [...DK.list[DK.cur]]; drawDeck(); }, social: () => drawSocial(), wallet: () => drawWallet(),
-  pass: () => drawPass(), mode: () => drawMode(), set: () => drawSet(), stats: () => drawStats(), profile: () => drawProfile(), rank: () => drawRank() };
+  pass: () => drawPass(), news: () => drawNews(), mode: () => drawMode(), set: () => drawSet(), stats: () => drawStats(), profile: () => drawProfile(), rank: () => drawRank() };
 function showMenu(p) {
   CURP = p; if (p !== 'social') clearInterval(SOC.t);
   $('menu').style.display = 'flex';
@@ -2177,6 +2188,76 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
     if (rc) chestShow(ch, star, { g, m, got }, '쿠폰 상자 · ★' + ch + '+ 확정');
     else smOpen(`<h3>🎁 쿠폰 보상</h3>${g ? `<div class="item"><em>골드 +${fmt(g)}</em></div>` : ''}${m ? `<div class="item"><em>보석 +${m}</em></div>` : ''}${got.map(t => `<div class="item"><em>${esc(t)}</em></div>`).join('')}<button class="btn gold" onclick="smClose();drawHome()">확인</button>`);
   } catch (e) { fail(errKo(e)); }
+}
+
+// ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
+const PATCHES = [
+  { d: '11/25', t: '공지에 패치내역 · 건의사항', n: 1, l: ['공지 화면에서 업데이트 내용을 볼 수 있어요', '건의사항 탭에서 글을 보내면 관리자(ssiv)가 읽어요 · 로그인한 계정만, 하루 10개까지'] },
+  { d: '11/25', t: '날아가는 스펠 · 땅속을 달리는 광부', n: 1, l: ['파이어볼·로켓·자이언트 눈덩이·고블린 통·화살이 내 킹타워에서 날아가요 (택배는 하늘에서 내려와요)', '날아가는 거리에 따라 도착 시간이 달라지고, 피해·소환은 도착한 뒤에 일어나요', '광부가 땅속으로 흙먼지를 일으키며 달려가요 · 거리에 따라 0.5~1.3초 뒤 튀어나와요', '카드 정보창에 도착 시간이 보여요'] },
+  { d: '11/25', t: '공성유닛 건물 어그로 수정', n: 1, l: ['골렘·자이언트·호그라이더 등이 가운데나 옆 차선, 8칸 안의 대포·건물에도 끌려와요'] },
+  { d: '11/25', t: '폰에서 결과 화면에 갇히던 문제 수정', n: 1, l: ['결과 화면이 스크롤되고, 확인·다시하기 버튼이 항상 아래에 보여요'] },
+  { d: '11/25', t: '불가능 난이도 AI', n: 1, l: ['최상위 덱 · 엘릭서를 읽는 공격 타이밍 · 스펠로 타워 마무리 · 엘릭서 회복 +25%', '이기면 골드 ×2.5 · 🏆+50 · ★3+ 상자 (지면 🏆-30)'] },
+  { d: '11/25', t: '메인 화면 개선', l: ['전체화면 버튼과 쿠폰 입력칸을 메인 화면에 넣었어요', '테스트 지원은 본인 계정에서만 쓸 수 있어요'] },
+  { d: '11/25', t: '카드 · 스펠 원작 맞춤', l: ['통나무·바바리안 통이 굴러가고, 시작 부분은 내 진영에서만 쓸 수 있어요', '여러 마리 카드는 손가락을 올리면 실제 배치될 자리가 다 보여요', '수상한 덤불: 은신 → 건물 앞이나 피해를 받으면 고블린 2마리 · 테슬라 은신 + 넉백', '은신한 유닛은 어그로가 풀려요'] },
+  { d: '이전', t: '게임 기본 기능', l: ['로그인 계정 · 소셜(친선·트로피전) · 순위표 · 로얄패스', '상자 · 쿠폰 · 진화 · 영웅 카드', '1대1 · 2대2 · AI 난이도 쉬움/보통/어려움'] }
+];
+let NW = 'patch';
+function newsTab(t) { NW = t; drawNews(); }
+function drawNews() {
+  document.querySelectorAll('#nw-tabs .ptab').forEach(b => b.classList.toggle('on', b.dataset.t === NW));
+  const B = $('nw-body'); if (!B) return;
+  if (NW === 'sug') { sugDraw(); return; }
+  B.innerHTML = PATCHES.map((p, i) => `<details class="pn"${i === 0 ? ' open' : ''}><summary>${esc(p.t)}${p.n ? '<span class="nw">NEW</span>' : ''}<i>${esc(p.d)}</i></summary><ul>${p.l.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`).join('');
+}
+const sgFv = f => ({ s: k => (f[k] && f[k].stringValue) || '', n: k => f[k] && f[k].integerValue ? +f[k].integerValue : 0, b: k => !!(f[k] && f[k].booleanValue) });
+const sgTime = t => t ? new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+let SG_LAST = 0;
+function sugDraw() {
+  const B = $('nw-body');
+  if (IS_ADMIN()) { sugList(); return; }
+  const hist = LS.get('cf_sug', []);
+  B.innerHTML = `<p>게임에 바라는 점, 버그, 추가했으면 하는 카드를 적어서 보내 주세요. 관리자(ssiv)가 읽어요.</p>
+    <textarea id="sg-in" class="sgbox" maxlength="500" placeholder="건의사항을 적어 주세요 (최대 500자)" oninput="$('sg-n').textContent=this.value.length+' / 500'"></textarea>
+    <div class="sgn"><span id="sg-n">0 / 500</span><span id="sg-msg" style="color:#ffb4b4">${AUTH && FBON() ? '' : '로그인한 계정에서만 보낼 수 있어요'}</span></div>
+    <button class="btn gold" id="sg-go" onclick="sugSend()" style="align-self:center;padding:11px 36px">보내기</button>
+    ${hist.length ? `<div class="pnh">내가 보낸 건의 (이 기기에 최근 ${hist.length}개)</div>` + hist.map(h => `<div class="item sg-i"><em><small>${esc(sgTime(h.at))}</small><small class="tx">${esc(h.text)}</small></em></div>`).join('') : ''}`;
+}
+async function sugSend() {
+  const msg = t => { const e = $('sg-msg'); if (e) e.textContent = t; };
+  if (!FBON() || !AUTH) return msg('로그인한 계정에서만 보낼 수 있어요');
+  const text = $('sg-in').value.trim(); if (text.length < 2) return msg('내용을 입력해 주세요');
+  if (Date.now() - SG_LAST < 20000) return msg('잠시 뒤에 다시 보내 주세요');
+  const day = new Date().toDateString(), q = LS.get('cf_sugq', { d: '', n: 0 }); if (q.d === day && q.n >= 10) return msg('오늘은 더 보낼 수 없어요 (하루 10개)');
+  const b = $('sg-go'); b.disabled = true; msg('보내는 중…');
+  try {
+    await tokenOk();
+    const at = Date.now();
+    await jf(fsRoot() + '/suggestions', { method: 'POST', headers: { ...JH, ...hdr() }, body: JSON.stringify({ fields: { uid: { stringValue: AUTH.uid }, id: { stringValue: AUTH.id }, name: { stringValue: String(P.name || '') }, text: { stringValue: text }, at: { integerValue: String(at) }, done: { booleanValue: false } } }) });
+    SG_LAST = Date.now(); LS.set('cf_sugq', { d: day, n: (q.d === day ? q.n : 0) + 1 }, 1);
+    const h = LS.get('cf_sug', []); h.unshift({ at, text }); h.length = Math.min(h.length, 5); LS.set('cf_sug', h, 1);
+    toast('건의사항을 보냈어요 · 고마워요!'); sfx('coin'); sugDraw();
+  } catch (e) { b.disabled = false; msg(e.code === 403 ? '서버에서 아직 건의를 받을 수 없어요 (관리자 설정 필요)' : errKo(e)); }
+}
+async function sugList() {
+  const B = $('nw-body'); B.innerHTML = '<p>불러오는 중…</p>';
+  try {
+    await tokenOk(); const j = await jf(fsRoot() + '/suggestions?pageSize=300', { headers: hdr() }); const docs = (j.documents || []).map(d => ({ d, v: sgFv(d.fields || {}) })).sort((a, b) => b.v.n('at') - a.v.n('at'));
+    const open = docs.filter(x => !x.v.b('done')).length;
+    B.innerHTML = `<div class="sgn"><span>건의 ${docs.length}개 · 안 읽음 ${open}개</span><button class="btn" style="padding:6px 12px;font-size:12px" onclick="sugList()">새로고침</button></div>` +
+      (docs.length ? docs.map(({ d, v }) => { const id = d.name.split('/').pop();
+        return `<div class="item sg-i${v.b('done') ? ' done' : ''}"><em><b>${esc(v.s('name') || v.s('id'))}</b> <small style="display:inline">(${esc(v.s('id'))}) · ${esc(sgTime(v.n('at')))}</small><small class="tx">${esc(v.s('text'))}</small></em>
+          <div style="display:flex;flex-direction:column;gap:5px"><button class="btn" style="padding:6px 9px;font-size:12px" onclick="sugDone('${esc(id)}',${v.b('done') ? 0 : 1})">${v.b('done') ? '안읽음' : '읽음'}</button><button class="btn" style="padding:6px 9px;font-size:12px;background:#9b2c3a;box-shadow:0 2px 0 #5e1a23" onclick="sugDel('${esc(id)}')">삭제</button></div></div>`; }).join('') : '<p>아직 받은 건의가 없어요</p>') +
+      `<p style="font-size:11px;word-break:break-all">관리자 UID(서버 규칙에 넣어요): ${esc(AUTH.uid)}</p>`;
+  } catch (e) { B.innerHTML = `<p>${esc(e.code === 403 ? '건의 목록을 읽을 수 없어요 · Firestore 규칙에 suggestions 읽기 권한을 넣어 주세요' : errKo(e))}</p><p style="font-size:11px;word-break:break-all">관리자 UID: ${esc(AUTH.uid)}</p><button class="btn" onclick="sugList()">다시 시도</button>`; }
+}
+async function sugDone(id, on) {
+  try { await tokenOk(); await jf(fsRoot() + '/suggestions/' + id + '?updateMask.fieldPaths=done', { method: 'PATCH', headers: { ...JH, ...hdr() }, body: JSON.stringify({ fields: { done: { booleanValue: !!on } } }) }); } catch (e) { toast(errKo(e)); }
+  sugList();
+}
+async function sugDel(id) {
+  if (!confirm('이 건의를 삭제할까요?')) return;
+  try { await tokenOk(); await jf(fsRoot() + '/suggestions/' + id, { method: 'DELETE', headers: hdr() }); } catch (e) { toast(errKo(e)); }
+  sugList();
 }
 // ----- 관리자(ssiv 계정): 쿠폰 만들기/목록 -----
 function cpAdmin() {
