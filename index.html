@@ -632,6 +632,7 @@ const EVO = {   // cy: 이 횟수만큼 낸 뒤부터 진화 (원작의 '사이�
   electro_dragon: { cy: 1, chain: 8, desc: '번개가 최대 8명까지 이어져요' },
   dart_goblin: { cy: 2, rage: { k: 0.06, max: 10 }, desc: '쏠 때마다 공격 속도·이동 속도가 계속 빨라져요' },
   x_bow: { cy: 1, range: 99, sight: 99, desc: '사정거리 무한 · 맵 어디에 있든 가장 가까운 적 지상 유닛과 타워를 쏴요' },
+  goblin_barrel: { cy: 2, mirror: 1, desc: '맵 가운데를 기준으로 좌우 대칭인 자리에도 똑같이 고블린 통이 하나 더 날아가요 (고블린 6마리)' },
   mortar: { cy: 2, echo: { t: 0.8, dmg: 0.6 }, desc: '포탄이 한 번 더 떨어져요 (두 번째는 60% 피해)' },
   firecracker: { cy: 2, dmgX: 1.2, splash: 1.8, desc: '공격력 +20% · 폭발 범위 1.8칸' },
   royal_recruits: { cy: 1, shield: 450, hpX: 1.1, desc: '훈련병 방어막 450 · 체력 +10%' },
@@ -747,7 +748,13 @@ function spawn(id, team, x, y, seat) {
   (G.hist || (G.hist = [])).push([G.t, team, seat ?? team, id]);   // 카드 사용 기록: 불가능 AI가 상대 덱을 기억하는 데 써요
   let c = CARDS[id]; const m = lv(team ? CFG.enemyLevel : CFG.playerLevel);
   if (c.evoOf) { if (cycNext(team, id)) { /* 진화! */ } else { id = c.evoOf; c = CARDS[id]; } }   // 사이클이 차기 전에는 기본 카드로 소환 (진화로 나오면 주기가 다시 0부터)
-  if (c.type === 'spell') { const F = c.fly, T = F ? flyT(F, team, x, y) : c.delay; G.fx.push({ x, y, r: c.radius, t: T, max: T, c, team, m, left: c.waves || 1, fl: F ? 1 : 0 }); if (F && !F.fixed) sfx('whoosh'); return; }
+  if (c.type === 'spell') { const F = c.fly, T = F ? flyT(F, team, x, y) : c.delay; G.fx.push({ x, y, r: c.radius, t: T, max: T, c, team, m, left: c.waves || 1, fl: F ? 1 : 0 }); if (F && !F.fixed) sfx('whoosh');
+    if (c.mirror) {   // 진화 고블린 통: 맵 가운데(세로 중심선)를 기준으로 좌우 대칭인 자리에도 똑같이 한 통이 더 날아가요
+      let mx = W - x; if (Math.abs(mx - x) < 1.4) mx = x + (x < W / 2 ? 1.4 : -1.4);
+      mx = Math.min(W - 0.3, Math.max(0.3, mx)); const T2 = F ? flyT(F, team, mx, y) : c.delay;
+      G.fx.push({ x: mx, y, r: c.radius, t: T2, max: T2, c, team, m, left: c.waves || 1, fl: F ? 1 : 0 });
+    }
+    return; }
   if (c.dig) { const T = flyT(c.dig, team, x, y); G.fx.push({ x, y, r: 0.5, t: T, max: T, c, team, m, left: 1, fl: 1, uid: id, sd: seat ?? team }); sfx('dig'); return; }   // 광부: 땅속을 달려 도착한 뒤에 튀어나와요
   spawnPts(c, team, x, y).forEach(([px, py, ln]) => G.ents.push(Object.assign(mkUnit(id, team, px, py), { id: ++G.n, lane: ln, sd: seat ?? team })));   // lane: 소환한 쪽(0=왼쪽, 1=오른쪽)
 }
@@ -2408,6 +2415,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '진화 고블린 통', n: 1, l: ['진화 고블린 통(사이클 2): 통을 던지면 맵 가운데 기준 좌우 대칭인 자리에도 똑같이 한 통이 더 날아가요 (고블린 6마리)'] },
   { d: '11/25', t: '진화 대형 석궁', n: 1, l: ['진화 대형 석궁(사이클 1)은 사정거리가 무한이에요 — 맵 어디서든 가장 가까운 적 지상 유닛과 타워를 쏴요'] },
   { d: '11/25', t: '돌진 메커니즘 수정', n: 1, l: ['프린스·다크 프린스·배틀 램·램 라이더: 기절·빙결·밀치기·끌려감을 당하면 돌진이 풀려요', '도둑·대장 도둑: 적이 3.5~6칸 거리에 있으면 돌진을 시작하고, 돌진하는 동안 무적이에요 (기절·밀치기도 안 먹어요)', '골드 나이트 맹돌진: 빠르게 달리다가 속도가 붙는 돌진, 돌진 중엔 기절·밀치기를 무시해요 (무적은 아니에요)'] },
   { d: '11/25', t: '메가 나이트 점프', n: 1, l: ['3.5~5칸 밖의 적에게 포물선으로 뛰어올라 착지 충격(266 피해, 반지름 2.2칸)을 줘요 · 재사용 1.5초', '점프하는 동안 몸이 떠오르고 그림자는 땅에 남아요 · 진화 메가 나이트는 착지에 1초 기절이 붙어요'] },
