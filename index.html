@@ -44,6 +44,12 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 #banner.show{opacity:1}
 #lack{position:absolute;left:0;right:0;top:58%;text-align:center;font-size:26px;font-weight:900;color:#ff3030;text-shadow:0 2px 0 #000,0 0 10px rgba(0,0,0,.8);opacity:0;pointer-events:none;z-index:4}
 #lack.show{opacity:1}
+#tut{position:absolute;inset:0;z-index:14;display:none;align-items:center;justify-content:center;background:rgba(5,10,20,.82)}
+#tut .box{width:min(92%,380px);max-height:94%;overflow-y:auto;background:#12304f;border:2px solid #2d6aa8;border-radius:16px;padding:18px 16px 14px;display:flex;flex-direction:column;gap:10px;text-align:center;touch-action:pan-y}
+#tut .ti{font-size:54px;line-height:1.1}#tut h3{margin:0;font-size:20px}#tut .tl{display:flex;flex-direction:column;gap:7px;text-align:left;font-size:14px;line-height:1.45;color:#dbe8f8}
+#tut .tl div{background:rgba(5,20,40,.5);border-radius:10px;padding:8px 10px}#tut .tl b{color:#ffd24d}
+#tut .tdots{display:flex;gap:6px;justify-content:center}#tut .tdots i{width:8px;height:8px;border-radius:50%;background:#3a5f8a}#tut .tdots i.on{background:#ffd24d;width:18px;border-radius:5px}
+#tut .tbtn{display:flex;gap:8px}#tut .tbtn .btn{flex:1}
 #ci{position:absolute;inset:0;z-index:12;display:none;align-items:center;justify-content:center;background:rgba(5,10,20,.72)}
 #ci .box{width:min(92%,380px);max-height:92%;overflow-y:auto;background:#12304f;border:2px solid #2d6aa8;border-radius:14px;padding:14px 16px;touch-action:pan-y}
 #ci-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
@@ -379,6 +385,7 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
   <div id="ci" onclick="if(event.target===this)ciClose()"><div class="box"><div id="ci-head"></div><div id="ci-body"></div><div id="ci-acts"></div><div class="cib"><button class="btn" onclick="ciClose()">닫기</button></div></div></div>
   <div id="cho"></div>
   <div id="sm" onclick="if(event.target===this&&!SM.lock)smClose()"><div class="box" id="sm-box"></div></div>
+  <div id="tut" role="dialog" aria-label="튜토리얼"><div class="box" id="tut-box"></div></div>
   <div id="banner"></div><div id="lack">엘릭서가 부족합니다!</div>
   <div id="res"><h1 id="rt"></h1><p id="rs"></p><div id="rb"></div></div>
   <div id="fin"><div id="fin-pt"></div>
@@ -683,7 +690,7 @@ async function boot() {
   c.forEach(x => { CARDS[x.id] = x; if (x.towerDamage) x.towerRatio = x.towerDamage / x.damage; }); CFG = f; applyFly(); mkVariants(); CIDS = Object.keys(CARDS);
   if (FBON()) await authGate();
   if (DEVREQ) { try { localStorage.setItem('cf_dev', devId()); } catch (e) {} }   // ?dev=1 로 연 그 계정에만 테스트 지원 허용
-  loadStore(); READY = 1; if (AUTH && SYNC.first) cloudDirty(); if (AUTH) socStart(); newGame(); buildHand(); resize(); addEventListener('resize', resize); showMenu('home');
+  loadStore(); READY = 1; if (AUTH && SYNC.first) cloudDirty(); if (AUTH) socStart(); newGame(); buildHand(); resize(); addEventListener('resize', resize); showMenu('home'); if (!P.tut) setTimeout(() => { if (!P.tut && CURP === 'home') tutOpen(); }, 500);
   let last = performance.now(), acc = 0;
   (function loop(now) {
     acc += Math.min(0.25, (now - last) / 1000); last = now;
@@ -1406,6 +1413,7 @@ function drawSet() {
     `<label class="item"><em>효과음</em><input type="range" min="0" max="100" value="${ST.vol}" oninput="setST('vol',+this.value)"></label>` +
     row('grid', '소환 격자 표시') + row('banner', '엘릭서 배율 알림') + row('lift', '터치 시 소환 위치 위로 띄우기') + row('wake', '플레이 중 화면 꺼짐 방지') + row('afs', '시작할 때 자동 전체화면') +
     `<div class="item"><em>손패 크기</em><span style="display:flex;gap:6px">${['작게', '보통', '크게'].map((n, i) => `<button class="btn${(ST.hs ?? 1) === i ? ' gold' : ''}" style="${sm}" onclick="setST('hs',${i});drawSet()">${n}</button>`).join('')}</span></div>` +
+    `<div class="item"><em>튜토리얼<small>이 게임만의 기능을 다시 볼 수 있어요</small></em><button class="btn" style="${sm}" onclick="tutOpen()">보기</button></div>` +
     `<div class="item"><em>전체화면<small>패드에서 주소창을 숨겨요</small></em><button class="btn" style="${sm}" onclick="toggleFS()">전환</button></div>` +
     (DEV() ? `<div class="item"><em>테스트 지원<small>골드·보석 100만, 로얄패스 10단계</small></em><button class="btn gold" style="${sm}" onclick="devGrant()">받기</button></div>` : '') +
     (AUTH ? `<div class="item"><em>로그아웃</em><button class="btn" style="${sm}" onclick="logout(this)">로그아웃</button></div>` +
@@ -2284,13 +2292,43 @@ let AC = null; const SFXT = {};
 // ---------- 공용 모달 / 이름 / 계정 삭제 ----------
 let SM = { lock: 0 }, CURP = 'home';
 const esc = x => String(x).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+// ---------- 튜토리얼: 클래시 로얄과 다른 점 위주 ----------
+const TUT = () => [
+  { i: '📖', t: '클래시 프렌즈에 온 걸 환영해요', l: ['클래시 로얄과 비슷하지만 <b>다른 점</b>이 많아요. 이 안내는 달라진 점만 짧게 알려 줘요.', '나중에 다시 보려면 홈 위쪽 <b>☰ 메뉴 → 튜토리얼</b> 또는 <b>설정</b>에서 열어요.'] },
+  { i: '👆', t: '카드를 꾹 누르면 정보가 나와요', l: ['덱 탭에서 카드를 <b>길게 누르면</b> 체력·공격력·초당 피해·사거리와 특수 능력이 자세히 떠요.', '그냥 <b>누르면</b> 덱에 넣고 빼고, <b>끌어서</b> 원하는 칸에 놓을 수 있어요.', '해금·진화·영웅 버튼도 이 창에 있어요.'], go: ['deck', '덱 보러 가기'] },
+  { i: '🧬', t: '진화·영웅은 칸이 따로 있어요', l: ['덱의 <b>1~2번 칸은 진화</b>, <b>3~4번 칸은 영웅</b>, 5~8번 칸은 일반이에요.', '진화·영웅을 <b>갖고 있는 카드만</b> 그 칸에서 변신해요. 없으면 일반 모습으로 나와요.', '덱은 최대 ' + MAXDK + '개까지 저장하고, 덱 위 ☰로 복사·붙여넣기도 할 수 있어요.'], go: ['deck', '덱 보러 가기'] },
+  { i: '🛒', t: '해금은 상점에서 해요', l: ['잠긴 카드(페카·골렘 등)는 <b>골드</b>로 해금해요.', '<b>진화는 보석 ' + EVOP + '개</b>, <b>영웅은 보석 ' + HEROP + '개</b>. 타워 색상도 상점에 있어요.', '보석은 <b>승리(+3)</b>·이벤트·로얄패스로 모아요. 결제 기능은 없어요.'], go: ['shop', '상점 가기'] },
+  { i: '⚡', t: '영웅·챔피언 능력은 버튼으로', l: ['영웅·챔피언 카드를 <b>전장에 내려놓은 뒤</b> 화면에 생기는 능력 버튼을 눌러요.', '능력마다 <b>엘릭서</b>가 들고, 다시 쓰려면 기다려야 해요 (버튼에 「대기」가 떠요).', '챔피언은 덱에 <b>1장만</b> 넣을 수 있어요. 어떤 능력인지는 카드를 꾹 눌러 미리 볼 수 있어요.'] },
+  { i: '🚀', t: '스펠은 날아가고, 광부는 땅속을 달려요', l: ['파이어볼·로켓·화살·고블린 통은 <b>킹타워에서 날아가</b> 도착해야 터져요. 멀수록 늦게 도착해요.', '광부는 <b>땅속을 달려</b> 튀어나오고, 택배는 하늘에서 내려와요.', '카드 정보에 도착까지 걸리는 시간이 적혀 있어요.'] },
+  { i: '🎁', t: '보상은 바로바로 받아요', l: ['이기면 <b>보석 +3</b>과 <b>승리 상자</b>를 받아요 (상자는 홈에서 열어요).', '오늘의 이벤트는 <b>승리 3번</b>이면 완료, 이벤트 상자가 나와요.', '<b>로얄패스</b>는 승리할 때마다 1단계씩 올라가요. 🎁 일일 보상과 쿠폰도 있어요.'], go: ['pass', '로얄패스 보기'] },
+  { i: '🏆', t: '난이도와 트로피', l: ['AI는 <b>쉬움 · 보통 · 어려움 · 불가능 · 순호</b> 중에서 골라요. 어려울수록 골드를 더 줘요.', '<b>어려움 이상</b>에서는 이기면 🏆이 오르고 지면 내려가요 (0 아래로는 안 내려가요).', '친구와 하는 <b>트로피전</b>도 있어요.'], go: ['mode', '모드 보러 가기'] },
+  { i: '🎮', t: '다양한 모드', l: ['<b>n배 엘릭서</b>(1~10배 직접 고르기) · <b>연습 모드</b>(엘릭서 무한, 상대 덱 선택) · <b>서든데스</b> · <b>랜덤 덱</b> · <b>미러 대전</b>', '<b>2대2 팀 대전</b>은 빈 자리를 AI가 채우고, 소셜 탭에서 친구를 부를 수 있어요.', '특별 모드는 <b>보상·전적·트로피가 없어요</b>.'], go: ['mode', '모드 보러 가기'] },
+  { i: '⚙️', t: '내 취향대로, 어디서든', l: ['설정에서 <b>손패 크기</b>, 소환 격자, <b>터치 시 소환 위치 띄우기</b>(손가락에 안 가리게), 전체화면, 음악을 바꿔요.', '<b>공지</b>에서 패치 내역을 보고, <b>건의사항</b>을 보내면 관리자가 읽어요.', '아이디로 <b>로그인</b>하면 다른 기기에서도 이어서 해요.'], go: ['set', '설정 열기'] },
+];
+let TP = 0;
+function tutOpen(p) { TP = p | 0; tutDraw(); $('tut').style.display = 'flex'; }
+function tutDraw() {
+  const T = TUT(), n = T.length, x = T[TP], last = TP === n - 1;
+  $('tut-box').innerHTML = `<div class="ti">${x.i}</div><h3>${x.t}</h3><div class="tl">${x.l.map(t => `<div>${t}</div>`).join('')}</div>` +
+    (x.go ? `<button class="btn" onclick="tutGo('${x.go[0]}')">${x.go[1]}</button>` : '') +
+    `<div class="tdots">${T.map((_, i) => `<i class="${i === TP ? 'on' : ''}"></i>`).join('')}</div>` +
+    `<div class="tbtn"><button class="btn" onclick="${TP ? 'tutNav(-1)' : 'tutClose()'}">${TP ? '이전' : '건너뛰기'}</button><button class="btn gold" onclick="${last ? 'tutClose()' : 'tutNav(1)'}">${last ? '시작하기' : '다음 (' + (TP + 1) + '/' + n + ')'}</button></div>`;
+  $('tut-box').scrollTop = 0;
+}
+function tutNav(d) { TP = Math.min(TUT().length - 1, Math.max(0, TP + d)); tutDraw(); }
+function tutClose() { $('tut').style.display = 'none'; if (P && !P.tut) { P.tut = 1; saveP(); } }
+function tutGo(m) { tutClose(); showMenu(m); }
+{ let tx = null; const el = () => $('tut');
+  document.addEventListener('touchstart', e => { tx = el().style.display === 'flex' && e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
+  document.addEventListener('touchend', e => { if (tx === null) return; const d = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(d) > 60) tutNav(d < 0 ? 1 : -1); }, { passive: true });
+  document.addEventListener('keydown', e => { if (el().style.display !== 'flex') return; if (e.key === 'ArrowRight') tutNav(1); else if (e.key === 'ArrowLeft') tutNav(-1); else if (e.key === 'Escape') tutClose(); }); }
 const smOpen = h => { $('sm-box').innerHTML = h; $('sm').style.display = 'flex'; };
 const smClose = () => { SM.lock = 0; $('sm').style.display = 'none'; };
 const AVC = ['#3b82f6', '#10b981', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 const avH = (name, key) => { let h = 0; for (const c of String(key || name)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return `<span class="av" style="background:${AVC[h % 8]}">${esc(Array.from(String(name))[0] || '?')}</span>`; };
 const ago = t => { const m = Math.floor((Date.now() - t) / 60000); return !t ? '오래전 접속' : m < 1 ? '방금 전 접속' : m < 60 ? m + '분 전 접속' : m < 1440 ? Math.floor(m / 60) + '시간 전 접속' : Math.floor(m / 1440) + '일 전 접속'; };
 function openMenu() {
-  smOpen(`<h3>메뉴</h3><button class="btn" onclick="smClose();showMenu('stats')">전투 기록</button><button class="btn" onclick="smClose();showMenu('rank')">순위표</button><button class="btn" onclick="cpModal()">🎁 쿠폰 입력</button><button class="btn" onclick="smClose();showMenu('set')">설정</button>${IS_ADMIN() ? '<button class="btn" style="background:#6b4bd0;box-shadow:0 3px 0 #3f2a8a" onclick="cpAdmin()">쿠폰 관리 (관리자)</button>' : ''}<button class="btn" onclick="smClose()">닫기</button>`);
+  smOpen(`<h3>메뉴</h3><button class="btn" onclick="smClose();showMenu('stats')">전투 기록</button><button class="btn" onclick="smClose();showMenu('rank')">순위표</button><button class="btn" onclick="smClose();tutOpen()">📖 튜토리얼 · 도움말</button><button class="btn" onclick="cpModal()">🎁 쿠폰 입력</button><button class="btn" onclick="smClose();showMenu('set')">설정</button>${IS_ADMIN() ? '<button class="btn" style="background:#6b4bd0;box-shadow:0 3px 0 #3f2a8a" onclick="cpAdmin()">쿠폰 관리 (관리자)</button>' : ''}<button class="btn" onclick="smClose()">닫기</button>`);
 }
 // ---------- 쿠폰 (Firestore coupons/<코드>, 사용 기록 coupons/<코드>/used/<uid> → 계정당 1회) ----------
 const IS_ADMIN = () => !!(FBON() && AUTH && AUTH.id.normalize('NFC').toLowerCase() === 'ssiv');
@@ -2342,6 +2380,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '튜토리얼 추가', n: 1, l: ['클래시 로얄과 다른 점 위주의 안내: 카드 꾹 누르기 · 진화/영웅 칸 · 상점 해금 · 능력 버튼 · 날아가는 스펠 · 보상 · 모드', '처음 켜면 자동으로 나오고, ☰ 메뉴나 설정에서 다시 볼 수 있어요'] },
   { d: '11/25', t: '새 모드: 서든데스 · 랜덤 덱 · 미러', n: 1, l: ['서든데스: 먼저 타워를 하나라도 부순 쪽이 바로 승리', '랜덤 덱 대전: 나도 AI도 아무 카드 8장으로 싸워요', '미러 대전: AI가 내 덱 그대로 나와요', '세 모드 모두 보상·전적·트로피는 없어요'] },
   { d: '11/25', t: '새 모드: 연습 모드 · n배 엘릭서', n: 1, l: ['대전 모드에서 엘릭서 배수를 1~10배(0.5 단위)로 직접 골라 AI와 싸울 수 있어요 — 내 엘릭서와 AI 엘릭서가 같이 빨라져요', '연습 모드: 내 엘릭서가 항상 가득 차고, 상대 덱 8장을 직접 골라요 (1·2번 칸 진화 · 3·4번 칸 영웅) · 상대 멈추기도 가능', '두 모드 모두 보상·전적·트로피는 없어요'] },
   { d: '11/25', t: '연출 · 손맛 업데이트', n: 1, l: ['스펠 연출: 번개(하늘에서 내리침) · 독(보글보글 장판) · 얼음(얼음 조각) · 지진(갈라지는 땅) · 토네이도(회오리) · 보이드(빨려드는 구멍) · 덩굴 · 감전 · 분노 · 눈덩이 · 화살 · 파이어볼/로켓 폭발', '유닛이 걸을 때 통통 튀고, 땅에 그림자가 생기고, 소환될 때 마법진이 줄어들며, 죽을 때 반짝이며 사라져요', '타워가 부서지면 폭발 · 파편 · 번쩍임 · 화면 흔들림 · 크라운이 떠올라요', '크라운 점수가 오를 때 커졌다 돌아와요', '결과 화면: 제목 → 크라운이 하나씩 쾅 하고 나타나요 → 보상이 차례로 올라와요 (소리도 같이)'] },
