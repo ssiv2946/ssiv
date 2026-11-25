@@ -1934,7 +1934,10 @@ function find(e) {
 }
 
 // 소환한 차선의 반대쪽 프린세스 타워는 멀게 취급해요. (내 쪽 프세타워가 부서졌을 때 반대 차선으로 건너가지 않고 킹타워로 가도록)
-const lanePen = (e, t) => e.lane != null && t.tk !== 'king' && (t.kind === 'tower' || t.kind === 'building') && (t.x < 9 ? 0 : 1) !== e.lane ? 12 : 0;   // 반대 차선의 건물(석궁 등)로 건너가지 않아요
+const lanePen = (e, t) => {   // 반대 차선의 타워는 멀게 취급해요. 건물(대포·석궁 등)은 가까이(8칸 안) 있으면 차선과 상관없이 끌려와요 (원작: 가운데·옆 차선에 둔 대포도 공성유닛을 끌어요)
+  if (e.lane == null || t.tk === 'king' || (t.kind !== 'tower' && t.kind !== 'building') || (t.x < 9 ? 0 : 1) === e.lane) return 0;
+  return t.kind === 'building' && gap(e, t) <= (e.tgt === t ? 10 : 8) ? 0 : 12;
+};
 function goal(e) { // 기본 이동 목표 = 가장 가까운 적 타워
   let best = null, bd = 1e9;
   for (const t of G.ents) if (t.team !== e.team && t.kind === 'tower' && t.hp > 0) { const d = hyp(t.x - e.x, t.y - e.y) + lanePen(e, t); if (d < bd) { bd = d; best = t; } }
