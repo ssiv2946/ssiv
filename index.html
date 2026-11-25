@@ -915,7 +915,7 @@ const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.ge
 
 function loadStore() {
   DEFDECK = [...CFG.playerDeck]; ST = { ...ST, ...LS.get('cf_st', {}) }; { const sp = LS.get('cf_pass', {}) || {}; PASS = { ...PASS, ...sp }; if (sp.w == null) PASS.w = Math.min(10, Math.floor((sp.xp || 0) / 100)); }   // 예전 XP 방식 → 승리 횟수 방식
-  P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(2, Math.max(0, LS.get('cf_diff', 1) | 0));
+  P = { ...DEFP(), ...LS.get('cf_prof', {}) }; saveP(); applySkin(); DIFF = Math.min(3, Math.max(0, LS.get('cf_diff', 1) | 0));
   loadDecks();
 }
 const MAXDK = 10, blankDeck = () => Array(8).fill(null);
@@ -1383,13 +1383,13 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fin').style.display = 'flex'; $('fin').querySelectorAll('.pt').forEach(e => e.remove()); if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); pubSoon();
 }
 function trophyApply(w) {   // 트로피전에서만 증감 · 0 미만 없음
-  if (!((G.net && G.net.mode === 'trophy') || (!G.net && !G.m2 && DIFF === 2))) return null;   // 친구 트로피전 · AI 어려움
-  const d = w === 0 ? 30 : w === 1 ? -20 : 0, old = P.tr | 0, nv = Math.max(0, old + d); P.tr = nv; saveP(); return nv - old;
+  if (!((G.net && G.net.mode === 'trophy') || (!G.net && !G.m2 && DIFF >= 2))) return null;   // 친구 트로피전 · AI 어려움/불가능
+  const hd = !G.net && DIFF === 3, d = w === 0 ? (hd ? 50 : 30) : w === 1 ? (hd ? -30 : -20) : 0, old = P.tr | 0, nv = Math.max(0, old + d); P.tr = nv; saveP(); return nv - old;
 }
 const trRw = td => td === null ? [] : [{ i: '<i>🏆</i>', t: (td > 0 ? '+' : '') + td }];
 function end(w) {
   G.res = w; evSync(); const g = Math.round((w === 0 ? 200 : w === 1 ? 60 : 100) * (G.net ? 1 : AIP[DIFF].gold)); let m = w === 0 ? 3 : 0, evNew = 0;   // 이기면 보석 +3 (학교용: 바로바로 보상)
-  let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF === 2 ? 2 : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
+  let wcMin = 0; if (w === 0) { if (!Array.isArray(P.wc)) P.wc = []; wcMin = !G.net && DIFF >= 2 ? (DIFF === 3 ? 3 : 2) : 1; P.wc.push(wcMin); }   // 어떤 판이든 승리하면 상자 · AI 어려움은 ★2+ 확정
   if (w === 0) { P.w++; P.evWins++; if (P.evWins <= 3) evNew = P.evWins; } else if (w === 1) P.l++; else P.d++;
   P.hist.unshift({ r: w, c: crowns(0) + ':' + crowns(1), at: Date.now() }); P.hist.length = Math.min(P.hist.length, 10);
   const td = trophyApply(w); earn(g, m, w === 0 ? '승리 보상' : '대전 보상'); if (w === 0) passWin();
@@ -1418,23 +1418,25 @@ function menu() { pubSoon(); $('res').style.display = 'none'; $('fin').style.dis
 const AIP = [
   { n: '쉬움', d: '반응이 느리고 자주 실수해요 · 골드 ×0.6', gold: 0.6, think: [3, 4.6], react: 2.4, off: 10, err: 0.4, spells: 1, spm: 2.6, jit: 2.5, zone: 13.5, smart: 0, ab: 0, evo: 0, sup: 0 },
   { n: '보통', d: '적당히 방어하고 공격해요 · 골드 ×1', gold: 1, think: [1.6, 2.6], react: 1.1, off: 9, err: 0.15, spells: 1, spm: 1.5, jit: 1.2, zone: 16, smart: 0.4, ab: 1, evo: 0.5, sup: 1 },
-  { n: '어려움', d: '빠르게 반응하고 스펠·능력도 영리하게 써요 · 골드 ×1.5 · 승리 🏆+30 / 패배 🏆-20', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, spm: 0.8, jit: 0.3, zone: 19, smart: 0.9, ab: 2, evo: 1, sup: 1 }
+  { n: '어려움', d: '빠르게 반응하고 스펠·능력도 영리하게 써요 · 골드 ×1.5 · 승리 🏆+30 / 패배 🏆-20', gold: 1.5, think: [0.7, 1.2], react: 0.4, off: 7, err: 0.03, spells: 1, spm: 0.8, jit: 0.3, zone: 19, smart: 0.9, ab: 2, evo: 1, sup: 1 },
+  { n: '불가능', d: '실수 없이 반응하고, 상대 엘릭서를 읽어 빈틈을 파고들며, 스펠로 타워를 끝장내요 · 최상위 덱 · 엘릭서 회복 +25% · 골드 ×2.5 · 승리 🏆+50 / 패배 🏆-30 · 승리 상자 ★3+', gold: 2.5, think: [0.45, 0.8], react: 0.15, off: 7, err: 0, spells: 1, spm: 1.0, jit: 0.15, zone: 20, smart: 1, ab: 3, evo: 1, sup: 1, pro: 1, spCd: 1.5, xe: 1.25 }
 ];
+const PRODECKS = [["hog_rider", "musketeer", "ice_golem", "ice_spirit", "skeletons", "cannon", "fireball", "the_log"], ["golem", "night_witch", "baby_dragon", "mega_minion", "lightning", "tornado", "lumberjack", "electro_spirit"], ["pekka", "battle_ram", "bandit", "electro_wizard", "royal_ghost", "zap", "poison", "magic_archer"], ["goblin_barrel", "princess", "knight", "goblin_gang", "ice_spirit", "rocket", "the_log", "inferno_tower"], ["miner", "poison", "knight", "bats", "ice_spirit", "princess", "the_log", "bomb_tower"], ["lava_hound", "balloon", "skeleton_dragons", "mega_minion", "tombstone", "fireball", "arrows", "ice_spirit"], ["x_bow", "tesla", "knight", "archers", "ice_spirit", "fireball", "the_log", "ice_golem"]];   // 불가능 난이도가 쓰는 검증된 덱 (유닛·건물·스펠이 고루 섞인 8장)
 let DIFF = 1;
 const rnd = a => a[Math.random() * a.length | 0];
 function setDiff(i) { DIFF = i; LS.set('cf_diff', i); drawMode(); }
 function drawMode() {
   pvUI();
-  $('md-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:96px" onclick="setDiff(${i})">${p.n}</button>`).join('');
+  $('md-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:${AIP.length > 3 ? 78 : 96}px" onclick="setDiff(${i})">${p.n}</button>`).join('');
   $('md-sub').textContent = AIP[DIFF].d;
 }
 // ---------- 3단계: AI 상대 (v2: 좌석·팀 기준 봇 — 1대1 상대와 2대2 아군/적군이 같은 코드를 써요) ----------
 const bfy = (a, y) => a.team ? y : H - y;                    // 봇 기준 세로: 0 = 자기 진영 맨 뒤 · 커질수록 앞(상대 쪽). 자기 자신의 역함수
 const uval = u => (u.card.cost || 0.5) / (u.card.count || 1);  // 유닛 하나의 엘릭서 가치
 function botDeck(p) {
-  const all = AIDECKS(), d = [...rnd(p === AIP[0] ? all.slice(0, 6) : all)];
+  const all = AIDECKS(), d = [...rnd(p.pro ? PRODECKS : p === AIP[0] ? all.slice(0, 6) : all)];
   if (Math.random() < p.evo) { const k = d.findIndex(id => EVO[id] && CARDS['evo_' + id]); if (k >= 0) d[k] = 'evo_' + d[k]; }                 // 진화 카드 한 장
-  if (Math.random() < p.evo * 0.7) { const k = d.findIndex(id => HERO[id] && CARDS['hero_' + id] && !CARDS[id].evoOf); if (k >= 0) d[k] = 'hero_' + d[k]; }   // 영웅 카드 한 장
+  if (Math.random() < (p.pro ? 1 : p.evo * 0.7)) { const k = d.findIndex(id => HERO[id] && CARDS['hero_' + id] && !CARDS[id].evoOf); if (k >= 0) d[k] = 'hero_' + d[k]; }   // 영웅 카드 한 장
   return d;
 }
 function newBot(team, seat, p, deck) {   // 손패 4장 + 다음 카드 · 엘릭서는 플레이어와 같은 규칙
@@ -1444,11 +1446,12 @@ function newBot(team, seat, p, deck) {   // 손패 4장 + 다음 카드 · 엘�
 const newAI = () => newBot(1, 1, AIP[DIFF]);
 function aiTick(dt) { for (const a of G.bots || []) botTick(a, dt); }
 function botTick(a, dt) {
-  a.el = Math.min(10, a.el + dt / G.cur.sec);               // 플레이어와 같은 엘릭서 속도 (속임수 없음)
+  a.el = Math.min(10, a.el + dt * (a.p.xe || 1) / G.cur.sec);   // 불가능만 엘릭서 회복 보너스(xe) — 설명에 공개
   if (G.noAI) return;
   if ((a.abW -= dt) <= 0) { a.abW = 0.35; if (a.p.ab) botAbility(a); }
   if ((a.wait -= dt) > 0) return;
   a.wait = a.p.think[0] + Math.random() * (a.p.think[1] - a.p.think[0]);
+  if (botFinish(a)) return;
   if (botSpell(a)) return;
   const foes = G.ents.filter(e => e.team !== a.team && e.kind === 'unit' && e.hp > 0 && e.dep <= 0 && bfy(a, e.y) < a.p.zone).sort((m, n) => bfy(a, m.y) - bfy(a, n.y));
   if (foes.length) {
@@ -1491,8 +1494,31 @@ function spellVal(a, c, x, y) {
   if (c.buff && v < 1.3) return 0;                              // 분노: 아군 3기 정도는 있어야
   return v;
 }
+// ── 불가능 AI: 스펠 합산 피해로 타워를 부술 수 있으면 바로 끝장내요 (크라운 = 서든데스 승리) · 5분 종료 직전엔 상대 최저 타워를 내 최저 타워 아래로 깎아요
+function botFinish(a) {
+  if (!a.p.pro) return false;
+  const m = lv(a.team ? CFG.enemyLevel : CFG.playerLevel), eT = G.ents.filter(e => e.team !== a.team && e.kind === 'tower' && e.hp > 0 && (e.tk !== 'king' || e.active)).sort((x, y) => x.hp - y.hp);
+  if (!eT.length) return false;
+  const S = a.hand.map((id, i) => ({ i, c: CARDS[id] })).filter(o => o.c && o.c.type === 'spell' && o.c.damage && !o.c.roll && !o.c.strikes && !o.c.drag && !o.c.buff && a.el >= o.c.cost)
+    .map(o => ({ ...o, td: (o.c.towerDamage || o.c.damage) * (o.c.waves || 1) * m })).sort((x, y) => y.td - x.td);
+  if (!S.length) return false;
+  const done = t => (a.fin && a.fin.id === t && G.t < a.fin.until ? a.fin.dmg : 0);
+  const kill = (t, rem) => {   // 지금 가진 엘릭서·손패로 rem 이상 줄 수 있을 때만 던져요
+    let el = a.el, sum = 0; const pick = [];
+    for (const o of S) if (o.c.cost <= el && sum < rem) { pick.push(o); sum += o.td; el -= o.c.cost; }
+    if (sum < rem || !pick.length) return false;
+    let did = false; for (const o of pick) if (botPlay(a, o.i, t.x, t.y)) { did = true; a.fin = { id: t.id ?? t.tk + t.x, dmg: done(t.id ?? t.tk + t.x) + o.td, until: G.t + 2.6 }; }
+    return did;
+  };
+  for (const t of eT) { const rem = t.hp - done(t.id ?? t.tk + t.x); if (rem > 0 && kill(t, rem)) return true; }
+  if (G.t >= 288) {   // 5:00 판정 = 가장 약한 타워 쪽이 패배
+    const mine = Math.min(...G.ents.filter(e => e.team === a.team && e.kind === 'tower' && e.hp > 0).map(e => e.hp)), t = eT[0], rem = t.hp - mine + 1 - done(t.id ?? t.tk + t.x);
+    if (rem > 0 && kill(t, rem)) return true;
+  }
+  return false;
+}
 function botSpell(a) {
-  const p = a.p; if (!p.spells || G.t - (a.spT || -9) < 2.5) return false;
+  const p = a.p; if (!p.spells || G.t - (a.spT || -9) < (p.spCd || 2.5)) return false;
   const S = a.hand.map((id, i) => ({ i, c: CARDS[id] })).filter(o => o.c && o.c.type === 'spell' && o.c.damage && o.c.cost <= a.el);
   if (!S.length) return false;
   const tg = G.ents.filter(e => e.team !== a.team && e.hp > 0 && (e.kind !== 'tower' || e.tk === 'princess' || e.active));
@@ -1525,13 +1551,13 @@ function botDefend(a, thr) {
   const p = a.p, T = thr[0], tl = T.x < 9 ? 0 : 1, fy = bfy(a, T.y);
   const cl = thr.filter(e => hyp(e.x - T.x, e.y - T.y) < 3.2), hp = cl.reduce((s, e) => s + e.hp, 0), cv = cl.reduce((s, e) => s + uval(e), 0);
   if (Math.random() < p.err) return false;                       // 실수: 못 본 척
-  if (hp < 450 && a.el < 9) return false;                       // 약한 적은 타워에게 맡김
+  if (hp < (p.pro ? 300 : 450) && a.el < 9) return false;                       // 약한 적은 타워에게 맡김
   const mine = G.ents.filter(e => e.team === a.team && e.kind !== 'tower' && e.hp > 0 && hyp(e.x - T.x, e.y - T.y) < 5.5).reduce((s, e) => s + e.hp, 0);
   if (mine >= hp * 0.8) return false;                            // 이미 아군이 막고 있어요
   if ((G.bots || []).some(b => b !== a && b.team === a.team && b.defL === tl && G.t - b.defT < 2.2)) return false;   // 같은 편 봇이 막는 중
   const I = { T, fy, n: cl.length, hp, cv, tank: T.card.targets === 'buildings' || T.max >= 1500, win: T.card.targets === 'buildings', swarm: cl.length >= 4 && T.max < 400, anyFly: cl.some(e => e.fly), allFly: cl.every(e => e.fly) };
   let best = -1, bs = 0.5;
-  a.hand.forEach((id, i) => { const c = CARDS[id]; if (!c || c.type === 'spell' || c.cost > a.el) return; const s = botCounter(c, I) + Math.random() * 0.5; if (s > bs) { bs = s; best = i; } });
+  a.hand.forEach((id, i) => { const c = CARDS[id]; if (!c || c.type === 'spell' || c.cost > a.el) return; const s = botCounter(c, I) + Math.random() * (p.pro ? 0.05 : 0.5); if (s > bs) { bs = s; best = i; } });
   if (best < 0) return false;
   const c = CARDS[a.hand[best]]; let y;
   if (c.type === 'building') y = I.win || I.tank ? 9.5 : 8.5;
@@ -1543,6 +1569,7 @@ function botDefend(a, thr) {
 }
 // ── 공격: 레인 선택 → 승리 카드(탱커 뒤 지원 · 빠른 카드는 다리 앞) · 광부류 · 포켓
 const botSup = c => (c.range >= 3 ? 2 : 0) + (c.targets === 'air_ground' ? 1 : 0) + (c.splash ? 1.5 : 0) - c.cost * 0.2;
+const oppEl = a => { const o = (G.bots || []).filter(b => b.team !== a.team).map(b => b.el); if (a.team) o.push(G.elixir); return o.length ? o.reduce((x, y) => x + y, 0) / o.length : 5; };   // 상대 팀 엘릭서 (불가능 AI는 정확히 세요)
 function botAttack(a, force) {
   const p = a.p, t = a.team, fw = t ? 1 : -1, mult = G.cur.mult || 1, off = force ? 0 : Math.max(5, p.off - (mult - 1) * 1.3);
   const A = a.hand.map((id, i) => ({ i, c: CARDS[id] })).filter(o => o.c && o.c.cost <= a.el), U = A.filter(o => o.c.type !== 'spell');
@@ -1555,7 +1582,9 @@ function botAttack(a, force) {
       if (botPlay(a, o.i, botJ(a, lead.x), botY(a, Math.min(14.3, Math.max(3, bfy(a, lead.y) - 3))))) return true;
     }
   }
-  if (a.el < off) return false;
+  let off2 = off;
+  if (p.pro && !force) { const oe = oppEl(a); if (oe <= 3.2 && a.el >= 5) off2 = 0; else if (oe >= 8.5 && a.el < 8.5 && !(a.push && G.t - a.push.t < 6)) off2 = Math.max(off, 8); }   // 상대 엘릭서가 바닥이면 바로 몰아치고, 가득 찼으면 기다려요
+  if (a.el < off2) return false;
   if (Math.random() < p.err && a.el >= 5 && U.length) { const o = rnd(U); if (o.c.type === 'troop') return botPlay(a, o.i, 1 + Math.random() * 16, botY(a, 6 + Math.random() * 7)); }   // 실수: 엉뚱한 소환
   // 레인: 보통은 무작위, 똑똑한 AI는 약한 타워 · 적은 수비 · 포켓 쪽
   const dead = [0, 1].filter(L => pkT(t, L)), rec = a.push && G.t - a.push.t < 9 ? a.push.L : -1; let L = Math.random() < 0.5 ? 0 : 1;
