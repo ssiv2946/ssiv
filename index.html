@@ -504,6 +504,9 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
         <div class="ptabs" id="md-diff"></div>
         <div class="item" style="flex-wrap:wrap"><em>n배 엘릭서<small>내 엘릭서와 AI 엘릭서가 n배 빨리 차요 · 직접 고르기 · 보상·기록 없음</small></em><button class="btn gold" onclick="restart(0,{xm:XM})">시작</button>
           <div style="display:flex;align-items:center;gap:10px;width:100%"><input type="range" id="xm-r" min="1" max="10" step="0.5" style="flex:1;min-width:0" oninput="setXM(this.value)" aria-label="엘릭서 배수"><b id="xm-v" style="min-width:46px;text-align:right"></b></div></div>
+        <div class="item"><em>서든데스<small>먼저 타워를 하나라도 부수면 바로 승리 · 보상·기록 없음</small></em><button class="btn gold" onclick="restart(0,{sd:1,label:'서든데스'})">시작</button></div>
+        <div class="item"><em>랜덤 덱 대전<small>나도 AI도 아무 카드 8장으로 시작 (진화·영웅 없음) · 보상·기록 없음</small></em><button class="btn gold" onclick="randRun()">시작</button></div>
+        <div class="item"><em>미러 대전<small>AI가 내 덱 그대로 싸워요 · 덱 실력 확인용 · 보상·기록 없음</small></em><button class="btn gold" onclick="restart(0,{deck:[...CFG.playerDeck],label:'미러 대전'})">시작</button></div>
         <div class="item"><em>연습 모드<small>내 엘릭서 무한 · 상대 덱을 직접 골라요 · 보상·기록 없음</small></em><button class="btn gold" onclick="showMenu('prac')">설정</button></div>
         <div class="item"><em>1대1 친구 대전<small>소셜 탭에서 접속 중인 친구에게 친선전·트로피전을 신청해요</small></em><button class="btn gold" onclick="showMenu('social')">소셜로</button></div>
         <div class="item"><em>2대2 팀 대전<small>빈 자리는 AI가 채워요 · 친구를 부르면 그 자리에 들어와요</small></em><div style="display:flex;flex-direction:column;gap:6px"><button class="btn gold" onclick="restart(1)">AI와</button><button class="btn" onclick="pv2Host()">친구와</button></div></div>
@@ -705,7 +708,8 @@ function newGame(net, m2) {
   G = { t: 0, ot: 0, res: undefined, n: 0, ents: [], projs: [], fx: [], elixir: CFG.startElixir, cur: CFG.elixir[0],
         q: [...CFG.playerDeck].sort(() => Math.random() - 0.5), hand: [], nxt: null, net: net || null, vfx: [], shake: 0, cyc: [{}, {}], later: [] };
   G.hand = G.q.splice(0, 4); G.nxt = G.q.shift();
-  { const R = !net && !m2 ? RUN : null; G.xm = R && R.xm > 1 ? R.xm : 1; G.prac = R && R.prac ? 1 : 0; G.free = R ? 1 : 0; G.noAI = R && R.still ? 1 : 0; G.rdeck = R && R.deck || null; if (G.prac) G.elixir = 10; }
+  { const R = !net && !m2 ? RUN : null; G.xm = R && R.xm > 1 ? R.xm : 1; G.prac = R && R.prac ? 1 : 0; G.free = R ? 1 : 0; G.noAI = R && R.still ? 1 : 0; G.rdeck = R && R.deck || null; G.sd = R && R.sd ? 1 : 0; G.mlab = R && R.label || ''; if (G.prac) G.elixir = 10;
+    if (R && R.mine) { G.q = [...R.mine].sort(() => Math.random() - 0.5); G.hand = G.q.splice(0, 4); G.nxt = G.q.shift(); } }
   if (!net && m2) {   // 2대2: 나(좌석 0) + AI 동료(좌석 1) vs AI 둘(좌석 2·3). 같은 편은 타워를 공유해요
     G.m2 = 1; G.st = [0, 0, 1, 1];
     const pp = AIP[DIFF], al = newBot(0, 1, AIP[Math.max(1, DIFF)]), e1 = newBot(1, 2, pp), e2 = newBot(1, 3, pp);
@@ -838,7 +842,8 @@ function judge() {
   const a = crowns(0), b = crowns(1);
   if (a === 3 || b === 3) return end(a === b ? -1 : a > b ? 0 : 1);          // 킹 타워 파괴 = 즉시 승리
   if (G.t >= 180 && !G.ot) { if (a !== b) return end(a > b ? 0 : 1); G.ot = 1; say('연장전!'); return; } // 3:00 크라운 비교
-  if (G.ot && a !== b) return end(a > b ? 0 : 1);                             // 서든데스
+  if (G.sd && a !== b) return end(a > b ? 0 : 1);                             // 서든데스 모드: 먼저 크라운을 딴 쪽이 승리
+  if (G.ot && a !== b) return end(a > b ? 0 : 1);                             // 연장전 서든데스
   if (G.t >= 300) { const L = G.ents.filter(e => e.kind === 'tower' && e.hp > 0).sort((p, q) => p.hp - q.hp); end(L[0].team === 0 ? 1 : 0); } // 5:00 최저 체력 타워 쪽 패배
 }
 // ---------- 저장 데이터 / 메인 화면 ----------
@@ -1435,7 +1440,7 @@ function showFinal(w, rw, forfeit) { // 경기 종료 화면: 크라운 · 상�
   $('fin').className = w === 0 ? 'win' : w === 1 ? 'lose' : 'draw';
   $('fn-title').textContent = forfeit ? '기권패' : w === 0 ? '승리!' : w === 1 ? '패배' : '무승부';
   $('fn-ec').innerHTML = crownRow(crowns(1), '#e5445a'); $('fn-pc').innerHTML = crownRow(crowns(0), '#3b82f6');
-  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : nt.m2 ? '2대2 친선전' : '1대1 친선전') : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : G.prac ? '연습 모드 · ' + AIP[DIFF].n : G.xm > 1 ? '엘릭서 ' + G.xm + '배 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
+  const nt = G.net; $('fn-es').textContent = nt ? (nt.mode === 'trophy' ? '1대1 트로피전' : nt.m2 ? '2대2 친선전' : '1대1 친선전') : G.m2 ? '2대2 팀 대전 · ' + AIP[DIFF].n : G.mlab ? G.mlab + ' · ' + AIP[DIFF].n : G.prac ? '연습 모드 · ' + AIP[DIFF].n : G.xm > 1 ? '엘릭서 ' + G.xm + '배 · ' + AIP[DIFF].n : 'AI 대전 · ' + AIP[DIFF].n; $('fn-en').textContent = nt ? nt.opp : G.m2 ? 'AI 2명' : '연습 상대'; document.querySelector('#fin .again').style.display = nt ? 'none' : ''; $('fn-pn').textContent = P.name; $('fn-pt').textContent = '🏆 ' + (P.tr | 0);
   $('fn-rw').innerHTML = rw.length ? rw.map(r => `<div class="rb2">${r.i}<span>${r.t}</span></div>`).join('') : '<p>받은 보상이 없어요</p>';
   $('fin').style.display = 'flex'; $('fin-pt').querySelectorAll('.pt').forEach(e => e.remove()); $('fin').scrollTop = 0; if (w === 0) confetti(); sfx(w === 0 ? 'win' : w === 1 ? 'lose' : 'elixir'); for (let i = 0, n = crowns(0); i < n; i++) setTimeout(() => { if ($('fin').style.display === 'flex') sfx('crown'); }, 450 + i * 330); pubSoon();
 }
@@ -1509,6 +1514,8 @@ function prStart() {
   for (let k = 0; k < 8; k++) if (!PR.deck[k]) { let c; do c = rnd(all); while (PR.deck.includes(c)); PR.deck[k] = c; }   // 빈 칸은 랜덤으로
   prSave(); restart(0, { prac: 1, deck: PR.deck.map((id, k) => oEff(id, k)), still: PR.still });
 }
+function rndDeck() { const all = COLL(), d = []; while (d.length < 8) { const i = rnd(all); if (!d.includes(i)) d.push(i); } return d; }
+function randRun() { restart(0, { mine: rndDeck(), deck: rndDeck(), label: '랜덤 덱 대전' }); }
 function drawMode() {
   pvUI(); xmUI();
   $('md-diff').innerHTML = AIP.map((p, i) => `<button class="ptab${i === DIFF ? ' on' : ''}" style="width:${AIP.length > 4 ? 62 : AIP.length > 3 ? 78 : 96}px" onclick="setDiff(${i})">${p.n}</button>`).join('');
@@ -2313,6 +2320,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '새 모드: 서든데스 · 랜덤 덱 · 미러', n: 1, l: ['서든데스: 먼저 타워를 하나라도 부순 쪽이 바로 승리', '랜덤 덱 대전: 나도 AI도 아무 카드 8장으로 싸워요', '미러 대전: AI가 내 덱 그대로 나와요', '세 모드 모두 보상·전적·트로피는 없어요'] },
   { d: '11/25', t: '새 모드: 연습 모드 · n배 엘릭서', n: 1, l: ['대전 모드에서 엘릭서 배수를 1~10배(0.5 단위)로 직접 골라 AI와 싸울 수 있어요 — 내 엘릭서와 AI 엘릭서가 같이 빨라져요', '연습 모드: 내 엘릭서가 항상 가득 차고, 상대 덱 8장을 직접 골라요 (1·2번 칸 진화 · 3·4번 칸 영웅) · 상대 멈추기도 가능', '두 모드 모두 보상·전적·트로피는 없어요'] },
   { d: '11/25', t: '연출 · 손맛 업데이트', n: 1, l: ['스펠 연출: 번개(하늘에서 내리침) · 독(보글보글 장판) · 얼음(얼음 조각) · 지진(갈라지는 땅) · 토네이도(회오리) · 보이드(빨려드는 구멍) · 덩굴 · 감전 · 분노 · 눈덩이 · 화살 · 파이어볼/로켓 폭발', '유닛이 걸을 때 통통 튀고, 땅에 그림자가 생기고, 소환될 때 마법진이 줄어들며, 죽을 때 반짝이며 사라져요', '타워가 부서지면 폭발 · 파편 · 번쩍임 · 화면 흔들림 · 크라운이 떠올라요', '크라운 점수가 오를 때 커졌다 돌아와요', '결과 화면: 제목 → 크라운이 하나씩 쾅 하고 나타나요 → 보상이 차례로 올라와요 (소리도 같이)'] },
   { d: '11/25', t: '공지에 패치내역 · 건의사항', n: 1, l: ['공지 화면에서 업데이트 내용을 볼 수 있어요', '건의사항 탭에서 글을 보내면 관리자(ssiv)가 읽어요 · 로그인한 계정만, 하루 10개까지'] },
