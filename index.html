@@ -2120,6 +2120,7 @@ function think(e, dt) {
   if (c.aura) { e.auT = (e.auT || 0) - dt; if (e.auT <= 0) { e.auT = 0.25; for (const u of G.ents) if (u.kind === 'unit' && u.hp > 0 && hyp(u.x - e.x, u.y - e.y) <= c.aura.r) { if (u.team === e.team) { if (u !== e) { u.bfT = Math.max(u.bfT || 0, 0.4); u.bfK = Math.max(u.bfK || 0, c.aura.ak); } } else { u.slowT = Math.max(u.slowT || 0, 0.4); u.slowK = Math.max(u.slowK || 0, c.aura.fk); } } } }
   if (c.collector) { e.clT = (e.clT ?? c.collector.first) - dt; if (e.clT <= 0) { e.clT = c.collector.every; elAdd(e.sd ?? e.team, c.collector.n); if (G.vfx && G.vfx.length < 90) G.vfx.push({ type: 'num', x: e.x, y: e.y - 1, at: performance.now(), max: 800, txt: '+' + c.collector.n }); sfx('elixir'); } }
   const sf = (e.slowT > 0 ? 1 - (e.slowK || 0) : 1) * (e.bfT > 0 ? 1 + (e.bfK || 0) : 1);
+  if (e.kind === 'unit') { if (e.x < 8.4) e.lane = 0; else if (e.x > 9.6) e.lane = 1; }   // 레인은 지금 서 있는 자리 기준: 왼쪽에 있으면 왼쪽, 오른쪽에 있으면 오른쪽 (킹 타워 뒤에 놓아 밀려난 유닛도 따라가요 · 가운데 ±0.6칸은 떨림 방지로 이전 레인 유지)
   // 타겟팅: 공격을 시작하기 전(이동 중)에는 매 틱 가장 가까운 적으로 갈아타고, 사거리에 들어와 공격을 시작하면 그 타겟에 고정(lock)돼요.
   // 고정된 타겟은 죽거나 시야(sight) 밖으로 나가야 풀려요. (원작: 새로 나온 유닛이 공격 중인 유닛을 끌어오지 못함, 이동 중엔 가까운 쪽으로 끌려옴)
   const tn = e.taunt > 0 ? null : tauntOf(e); if (tn && e.tgt !== tn) e.lock = false;   // 도발: 고정된 타겟도 풀고 영웅을 노려요
@@ -2441,6 +2442,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '이동 방향(레인) 버그 수정', n: 1, l: ['킹 타워 뒤에 삼총사 같은 여러 마리 카드를 놓으면 타워에 밀려 왼쪽으로 간 유닛이 오른쪽 길로 가던 버그를 고쳤어요 — 이제 유닛은 지금 서 있는 자리 기준으로 왼쪽에 있으면 왼쪽 다리·타워로, 오른쪽에 있으면 오른쪽으로 가요 (소환된 뒤 밀려나도 따라가요)'] },
   { d: '11/25', t: '해골 돌격병 수치 · 진화', n: 1, l: ['해골 돌격병 수치 정정: 체력 331 · 광역 피해 350 (레벨 11)', '새 진화 해골 돌격병(사이클 2): 광역 피해 392 · 배럴이 터지면 러너(체력 164 · 피해 196)가 튀어나와 걸어서 건물을 계속 공격해요', '배럴이 터지기 전에 부서져도 폭발(195)하고 러너가 나와요 · 러너는 부서질 때 폭발하지 않아요'] },
   { d: '11/25', t: '로얄 택배 배치 제한', n: 1, l: ['로얄 택배는 우리 진영(강 아래)에만 놓을 수 있어요 — 상대 진영·상대 타워 앞 포켓에는 못 놓아요 (놓을 수 있는 칸이 격자로 표시돼요)'] },
   { d: '11/25', t: '여러 마리 소환 레인 수정', n: 1, l: ['아처·해골 군대처럼 한 번에 여러 마리가 나오는 카드: 이제 각 유닛이 서 있는 자리를 기준으로 왼쪽에 있으면 왼쪽 다리·타워로, 오른쪽에 있으면 오른쪽으로 가요 (예전엔 놓은 자리 기준으로 한쪽으로 몰려갔어요)'] },
