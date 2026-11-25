@@ -835,6 +835,7 @@ function tick(dt) {
   if (G.net && G.net.role === 'guest') return;   // 게스트는 스냅샷으로만 갱신
   if (G.o) G.o.el = Math.min(10, G.o.el + dt * (G.xm || 1) / s.sec);
   if (G.m2 && G.S) for (const so of G.S) if (so && so.human) so.el = Math.min(10, so.el + dt / s.sec);
+  if (G.tb) for (const e of G.ents) if (e.kind === 'tower' && e.hp > 0) { e.hp -= TBD * dt; if (e.tk === 'king') e.active = true; }   // 타이 브레이커: 타워 체력이 계속 줄어요
   aiTick(dt);
   for (const e of G.ents) { e.px = e.x; e.py = e.y; }
   for (const e of G.ents) if (e.hp > 0) think(e, dt);
@@ -852,6 +853,7 @@ function tick(dt) {
 }
 
 // ---------- 2단계: 크라운 / 승패 / 포켓 ----------
+const TBD = 300;   // 타이 브레이커: 모든 타워가 초당 깎이는 체력 (체력이 가장 낮은 타워가 먼저 무너져요)
 const POCKET = 11; // 상대 프린세스 타워를 부순 레인에서 소환 가능한 최전방 y
 function okSpotT(t, x, y) { const ym = t ? H - y : y; return ym <= 31.5 && x >= 0.5 && x <= W - 0.5 && (ym >= 17.5 || (ym >= POCKET && ym < RIV[0] && pkT(t, x < 9 ? 0 : 1))); }
 function pkT(t, i) { return G.ents.some(e => e.team === 1 - t && e.tk === 'princess' && e.hp <= 0 && (i === 0 ? e.x < 9 : e.x > 9)); }
@@ -865,7 +867,7 @@ function judge() {
   if (G.t >= 180 && !G.ot) { if (a !== b) return end(a > b ? 0 : 1); G.ot = 1; say('연장전!'); return; } // 3:00 크라운 비교
   if (G.sd && a !== b) return end(a > b ? 0 : 1);                             // 서든데스 모드: 먼저 크라운을 딴 쪽이 승리
   if (G.ot && a !== b) return end(a > b ? 0 : 1);                             // 연장전 서든데스
-  if (G.t >= 300) { const L = G.ents.filter(e => e.kind === 'tower' && e.hp > 0).sort((p, q) => p.hp - q.hp); end(L[0].team === 0 ? 1 : 0); } // 5:00 최저 체력 타워 쪽 패배
+  if (G.t >= 300 && !G.tb) { G.tb = 1; say('타이 브레이커!'); sfx('elixir'); }   // 5:00에도 비기면 타이 브레이커: 모든 타워 체력이 빠르게 깎여서 가장 약한 타워가 먼저 무너져요 (그 크라운으로 승부)
 }
 // ---------- 저장 데이터 / 메인 화면 ----------
 let PAUSE = true, ST = { grid: 1, banner: 1, lift: 0, vol: 70, mus: 40, wake: 1, hs: 1, afs: 1 }, PASS = { w: 0, claimed: [] }, deck = [], DEFDECK = [], DK = null, P = null, rsArm = 0, tt;
@@ -2036,7 +2038,7 @@ function sendSnap(n) {
   const tg = m2 ? (G.S || []).filter(o => o && o.human).map(o => ({ o, to: o.conn, a: o.ack })) : [{ o: G.o, to: undefined, a: n.ack }];
   for (const t of tg) for (let i = 0; i < cn; i++) {
     const d = { s, i, c: cn, E: E.slice(i * N, i * N + N) };
-    if (i === 0) Object.assign(d, { t: Math.round(G.t * 100), ot: G.ot ? 1 : 0, r: G.res === undefined ? -2 : G.res, a: t.a, el: Math.round(t.o.el * 100), h: t.o.hand.map(x => CIDS.indexOf(x)), nx: CIDS.indexOf(t.o.nxt), P: Pj, F: Fx });
+    if (i === 0) Object.assign(d, { t: Math.round(G.t * 100), ot: G.tb ? 2 : G.ot ? 1 : 0, r: G.res === undefined ? -2 : G.res, a: t.a, el: Math.round(t.o.el * 100), h: t.o.hand.map(x => CIDS.indexOf(x)), nx: CIDS.indexOf(t.o.nxt), P: Pj, F: Fx });
     n.room.emit('snap', d, t.to).catch(() => {});
   }
 }
@@ -2084,7 +2086,7 @@ function applySnap(n, b) {
   G.ents = G.ents.filter(e => seen.has(e.hid));
   G.projs = (m.P || []).map(p => ({ x: FL ? W - p[0] / 10 : p[0] / 10, y: FL ? H - p[1] / 10 : p[1] / 10, st: PSN[p[2] | 0] || 'dot', ang: (p[3] || 0) / 10 + (FL ? Math.PI : 0) }));   // 게스트 화면은 180° 뒤집혀 있어요
   G.fx = (m.F || []).map(f => ({ x: FL ? W - f[0] / 10 : f[0] / 10, y: FL ? H - f[1] / 10 : f[1] / 10, r: f[2] / 10, t: f[3] / 100, max: f[4] / 100, vis: f[5], c: f[6] >= 0 ? CARDS[CIDS[f[6]]] : null, team: TM(f[7]), fl: f[9] ? 1 : 0, rl: f[8] >= 0 ? { d: f[8] / 10 } : null }));
-  G.t = m.t / 100; if (m.ot && !G.ot) { G.ot = 1; say('연장전!'); }
+  G.t = m.t / 100; if (m.ot && !G.ot) { G.ot = 1; say('연장전!'); } if (m.ot === 2 && !G.tb) { G.tb = 1; say('타이 브레이커!'); sfx('elixir'); }
   n.pending = n.pending.filter(p => p.seq > m.a);
   G.elixir = Math.max(0, m.el / 100 - n.pending.reduce((s, p) => s + p.cost, 0));
   const hand = m.h.map(i => CIDS[i]), nxt = CIDS[m.nx];
@@ -2436,6 +2438,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/25', t: '타이 브레이커', n: 1, l: ['5:00까지 연장전에서도 크라운이 같으면 타이 브레이커가 시작돼요 — 모든 타워 체력이 초당 300씩 빠르게 깎이고, 체력이 가장 낮은 타워가 먼저 무너져 그 크라운으로 승부가 나요', '타워가 붉게 깜빡이고 시계에 「타이 브레이커」가 떠요 · 온라인 대전도 똑같이 적용돼요'] },
   { d: '11/25', t: '친구 대전 규칙 선택', n: 1, l: ['1대1 친선전을 신청할 때 규칙을 고를 수 있어요: 엘릭서 배수(1~10배) · 서든데스 · 덱 방식(각자 / 랜덤 덱 / 미러 = 방장 덱)', '상대가 받는 신청 창에도 규칙이 보여요 · 규칙을 바꾼 판은 보상·기록이 없어요 (트로피전은 규칙 없이 그대로)'] },
   { d: '11/25', t: '골드 나이트 돌진', n: 1, l: ['맹돌진이 공중 유닛은 맞히지 않아요 (지상 유닛·타워만 대상)'] },
   { d: '11/25', t: '로얄 고스트 은신 · 도둑 직선 돌진', n: 1, l: ['로얄 고스트: 소환되는 순간부터 숨어 있고, 공격하면 드러났다가 공격을 멈춘 지 2초가 지나면 다시 사라져요', '도둑·대장 도둑: 돌진할 때 다리나 장애물을 돌지 않고 목표를 향해 일직선으로 달려요 (강도 그대로 건너요)'] },
@@ -3230,6 +3233,7 @@ function drawTower(e, x, y) {
   const r = e.r, s = r * 2, king = e.tk === 'king', col = TC[e.team];
   if (e.hp <= 0) { cx.fillStyle = '#7b7f8d'; cx.fillRect(x - r, y - r * 0.4, s, r * 0.8); cx.fillStyle = '#5d6170'; cx.fillRect(x - r * 0.6, y - r * 0.7, r * 0.55, r * 0.5); cx.fillRect(x + r * 0.1, y - r * 0.55, r * 0.5, r * 0.4); return; }
   cx.fillStyle = 'rgba(0,0,0,.18)'; cx.fillRect(x - r + 0.15, y - r + 0.25, s, s);
+  if (G.tb) { cx.fillStyle = 'rgba(255,60,60,' + (0.28 + 0.18 * Math.sin(performance.now() / 120)).toFixed(2) + ')'; cx.beginPath(); cx.arc(x, y, r * 1.3, 0, 7); cx.fill(); }   // 타이 브레이커: 붉게 깜빡여요
   const gr = cx.createLinearGradient(x - r, 0, x + r, 0); gr.addColorStop(0, '#b8b2a4'); gr.addColorStop(0.5, '#e3ddcf'); gr.addColorStop(1, '#9d978a');
   cx.fillStyle = gr; cx.fillRect(x - r, y - r, s, s);
   const n = king ? 5 : 4, w = s / (n * 2 - 1); cx.fillStyle = '#cfc9ba'; for (let i = 0; i < n; i++) cx.fillRect(x - r + i * 2 * w, y - r - 0.3, w, 0.35);
@@ -3304,13 +3308,13 @@ function drawProj(st, x, y, a, t) {   // 진행 방향(a)을 +x 로 보고 그�
 
 // ---------- 인게임 시계 · 엘릭서 배율 (아레나 오른쪽 위) ----------
 function hudClock() {
-  const ot = G.t >= 180, rem = ot ? Math.max(0, 300 - G.t) : 180 - G.t, mm = rem / 60 | 0, ss = Math.floor(rem % 60), txt = mm + ':' + String(ss).padStart(2, '0'), low = !ot && rem <= 30;
+  const ot = G.t >= 180, rem = ot ? Math.max(0, 300 - G.t) : 180 - G.t, mm = rem / 60 | 0, ss = Math.floor(rem % 60), txt = mm + ':' + String(ss).padStart(2, '0'), low = !ot && rem <= 30, tb = !!G.tb;
   cx.save(); cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.lineJoin = 'round';
   const bx = W - 5.2, by = 0.35, bw = 4.9, bh = 2.4, r = 0.5;
-  cx.fillStyle = 'rgba(8,10,22,.82)'; cx.strokeStyle = low ? 'rgba(255,90,90,.9)' : 'rgba(255,255,255,.25)'; cx.lineWidth = 0.07;
+  cx.fillStyle = 'rgba(8,10,22,.82)'; cx.strokeStyle = low || tb ? 'rgba(255,90,90,.9)' : 'rgba(255,255,255,.25)'; cx.lineWidth = 0.07;
   cx.beginPath(); cx.moveTo(bx + r, by); cx.arcTo(bx + bw, by, bx + bw, by + bh, r); cx.arcTo(bx + bw, by + bh, bx, by + bh, r); cx.arcTo(bx, by + bh, bx, by, r); cx.arcTo(bx, by, bx + bw, by, r); cx.closePath(); cx.fill(); cx.stroke();
-  cx.fillStyle = '#c9d3ea'; cx.font = 'bold 0.62px sans-serif'; cx.fillText(ot ? '연장 시간' : '남은 시간', bx + bw / 2, by + 0.62);
-  cx.fillStyle = low ? '#ff6a6a' : '#fff'; cx.font = 'bold 1.35px sans-serif'; cx.fillText(txt, bx + bw / 2, by + 1.6);
+  cx.fillStyle = '#c9d3ea'; cx.font = 'bold 0.62px sans-serif'; cx.fillText(tb ? '타이 브레이커' : ot ? '연장 시간' : '남은 시간', bx + bw / 2, by + 0.62);
+  cx.fillStyle = low || tb ? '#ff6a6a' : '#fff'; cx.font = 'bold 1.35px sans-serif'; cx.fillText(tb ? '⚡ ' + txt : txt, bx + bw / 2, by + 1.6);
   const mu = +((G.cur.mult || 1) * (G.xm || 1)).toFixed(1), mlab = G.prac ? '∞' : 'x' + mu;
   if (mu > 1 || G.prac) {   // 엘릭서 2배 · 3배: 보라 물방울
     const px = W - 1.25, py = by + bh + 1.35, pr = 1.0; cx.beginPath(); cx.arc(px, py, pr, 0, 7); cx.moveTo(px - pr * 0.72, py - pr * 0.72); cx.lineTo(px + pr * 0.15, py - pr * 1.55); cx.lineTo(px + pr * 0.85, py - pr * 0.55); cx.closePath();
