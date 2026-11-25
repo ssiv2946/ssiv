@@ -682,9 +682,12 @@ function spawn(id, team, x, y, seat) {
   const n = c.count || 1;
   for (let i = 0; i < n; i++) {
     const a = i / n * 6.283, rr = n > 1 ? Math.min(1.6, 0.4 * Math.sqrt(n)) : 0;
-    const row = /royal_recruits$/.test(c.id) && n > 1, px = row ? Math.min(W - 0.5 - (n - 1) / 2, Math.max(0.5 + (n - 1) / 2, x)) + i - (n - 1) / 2 : Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr));   // 로얄 훈련병: 가로 한 줄 · 1칸 간격(격자점)
+    // 로얄 훈련병: 내 진영에 놓으면 왼쪽 끝~오른쪽 끝까지 같은 간격으로 한 줄 (왼쪽 유닛은 왼쪽 차선, 오른쪽 유닛은 오른쪽 차선으로 가요)
+    // 상대 진영 쪽 칸(타워가 부서져 생긴 자리)에 놓을 때는 놓은 자리 근처에 1칸 간격 한 줄
+    const row = /royal_recruits$/.test(c.id) && n > 1, full = row && (team ? y <= 14.8 : y >= 17.2),
+      px = full ? 0.5 + i * (W - 1) / (n - 1) : row ? Math.min(W - 0.5 - (n - 1) / 2, Math.max(0.5 + (n - 1) / 2, x)) + i - (n - 1) / 2 : Math.min(W - 0.5, Math.max(0.5, x + Math.cos(a) * rr));
     let py = row ? y : y + Math.sin(a) * rr; py = team ? Math.min(py, Math.max(y, 14.8)) : Math.max(py, Math.min(y, 17.2));
-    G.ents.push(Object.assign(mkUnit(id, team, px, py), { id: ++G.n, lane: x < 9 ? 0 : 1, sd: seat ?? team }));   // lane: 소환한 쪽(0=왼쪽, 1=오른쪽)
+    G.ents.push(Object.assign(mkUnit(id, team, px, py), { id: ++G.n, lane: (full ? px : x) < 9 ? 0 : 1, sd: seat ?? team }));   // lane: 소환한 쪽(0=왼쪽, 1=오른쪽)
   }
 }
 
