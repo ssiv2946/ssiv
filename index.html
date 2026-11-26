@@ -168,6 +168,10 @@ input{-webkit-user-select:text;user-select:text}
 .prof{background:rgba(0,0,0,.3);border-radius:12px;padding:8px 14px;min-width:130px}
 .prof b{display:block;font-size:18px}.prof small{color:#bcd0ea;font-size:12px}
 .h-r{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.h-l{display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:0}
+.nbs{display:flex;gap:6px;flex-wrap:wrap}
+.nbtn{position:relative;height:32px;padding:0 10px;border-radius:10px;border:2px solid #0b2a4d;background:linear-gradient(#2f78c6,#1b4f86);box-shadow:0 3px 0 #08203b,inset 0 1px 0 rgba(255,255,255,.28);color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;touch-action:manipulation}.nbtn:active{transform:translateY(2px);box-shadow:0 1px 0 #08203b}
+.rd{position:absolute;right:-5px;top:-6px;width:13px;height:13px;border-radius:50%;background:#e5383b;border:2px solid #fff;display:none;box-shadow:0 0 6px rgba(229,56,59,.8);pointer-events:none}
 .icons{display:flex;gap:6px}
 .ib{width:40px;height:40px;border-radius:10px;background:#1c4f86;border:2px solid #0b2a4d;color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
 .ib svg{width:22px;height:22px}
@@ -418,11 +422,14 @@ input[type=text]{font:inherit;font-weight:700;padding:10px 12px;border-radius:10
     <div id="mbody">
       <div class="pg" id="pg-home">
         <div class="h-top">
-          <div class="prof"><div class="av" id="h-av">?</div><div class="pn"><b id="h-name"></b><small id="h-title"></small></div></div>
+          <div class="h-l">
+            <div class="prof"><div class="av" id="h-av">?</div><div class="pn"><b id="h-name"></b><small id="h-title"></small></div></div>
+            <div class="nbs"><button class="nbtn" onclick="openNews('patch')">📢 패치내역<span class="rd" id="nb-pd"></span></button><button class="nbtn" onclick="openNews('sug')">💬 건의사항</button></div>
+          </div>
           <div class="h-r">
             <div class="icons">
               <button class="ib" aria-label="프로필" onclick="showMenu('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-7 8-7s8 2.5 8 7"/></svg></button>
-              <button class="ib" aria-label="공지" onclick="showMenu('news')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></button>
+              <button class="ib" aria-label="공지" onclick="showMenu('news')" style="position:relative"><span class="rd" id="nb-id"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></button>
               <button class="ib" aria-label="메뉴" onclick="openMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
             </div>
             <button class="passbtn" onclick="showMenu('pass')">로얄패스<small id="h-pass"></small><span class="badge" id="h-pb"></span></button>
@@ -1160,6 +1167,7 @@ function drawHome() {
   const t = passTier(), n = REW.reduce((s, r, i) => s + (i < t && !PASS.claimed.includes(i) ? 1 : 0), 0);
   $('h-pass').textContent = '단계 ' + t + '/10'; setBadge('h-pb', n);
   const can = P.daily !== today(); $('h-daily').textContent = can ? '골드 +300' : '내일 다시'; setBadge('h-db', can ? '!' : 0);
+  try { newsDot(); } catch (e) {}
   $('h-rec').textContent = P.w + '승 ' + P.l + '패'; $('h-fsub').textContent = 'AI 대전 · ' + AIP[DIFF].n;
   const ready = [0, 1, 2].filter(i => i < P.evWins && !P.evOpen.includes(i)).length;
   $('h-evt').textContent = P.evOpen.length >= 3 ? '오늘의 이벤트 완료!' : '오늘의 이벤트 · 승리하면 상자' + (ready ? ' · 열 수 있어요!' : '');
@@ -2524,6 +2532,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/27', t: '메인 화면에 패치내역 · 건의사항 버튼', l: ['메인 화면 왼쪽 위(프로필 아래)에 「패치내역」과 「건의사항」 버튼이 생겼어요', '아직 안 읽은 새 패치가 있으면 패치내역 버튼에 빨간 점이 떠요 · 열어서 보면 사라져요'] },
   { d: '11/26', t: '방어막 규칙 수정', n: 1, l: ['다크 프린스·로얄 훈련병·근위병 같은 방어막 유닛이 방어막보다 큰 피해(로켓 등)를 한 번에 받으면, 방어막만 깨지고 본체 체력은 그대로예요 (남는 피해는 사라져요) — 클로처럼요', '챔피언 능력으로 생기는 방어막도 같은 규칙이에요'] },
   { d: '11/26', t: '분노 마법 · 나무꾼 분노 떨어트리기', n: 1, l: ['분노 마법이 놓은 자리에 4.5초 동안 보랏빛 장판으로 남아요 — 안에 있는 아군 유닛은 이동·공격 속도 +30%, 건물·타워는 공격 속도와 소환 속도 +30%, 장판을 벗어나도 1초 더 유지돼요 (마법 카드는 영향 없음)', '분노 마법 크라운 타워 피해 54 (레벨 11)', '나무꾼이 죽으면 그 자리에 분노 마법이 떨어져 4.5초 장판이 남고 주변 아군이 빨라져요'] },
   { d: '11/26', t: '전투 기록 · 프로필 보기 · 덱 복사', n: 1, l: ['메인화면 전적에 클래시 로얄처럼 전투 기록이 생겼어요 — 승리/패배 · 왕관 · 내 덱과 상대 덱 · 몇 분 전인지를 최근 20경기까지 보여줘요', '상대 이름을 누르면 「프로필 보기」와 「덱 복사」 버튼이 떠요. 덱 복사는 진화·영웅 칸 순서에 맞춰 새 덱으로 저장하고, 없는 카드는 빠져요', '프로필 보기: 그 사람의 승·패·무와 전투 기록을 볼 수 있어요 (그 기록 속 상대 이름도 눌러서 이어서 볼 수 있어요)', '소셜에서 친구 이름을 누르면 온라인·오프라인 상관없이 「프로필 보기」 버튼이 떠요', '온라인 대전은 상대 계정과 덱이 기록돼요 · AI 대전은 AI 덱이 기록돼요 (이 업데이트 이전 경기는 덱 없이 결과만 남아 있어요)'] },
@@ -2560,11 +2569,15 @@ const PATCHES = [
   { d: '이전', t: '게임 기본 기능', l: ['로그인 계정 · 소셜(친선·트로피전) · 순위표 · 로얄패스', '상자 · 쿠폰 · 진화 · 영웅 카드', '1대1 · 2대2 · AI 난이도 쉬움/보통/어려움'] }
 ];
 let NW = 'patch';
+const patchSig = () => PATCHES[0].d + '|' + PATCHES[0].t;   // 가장 위(최신) 패치가 바뀌면 안 읽은 패치예요
+function newsDot() { const un = P.pseen !== patchSig(); for (const id of ['nb-pd', 'nb-id']) { const e = $(id); if (e) e.style.display = un ? 'block' : 'none'; } }
+function openNews(t) { NW = t; showMenu('news'); }
 function newsTab(t) { NW = t; drawNews(); }
 function drawNews() {
   document.querySelectorAll('#nw-tabs .ptab').forEach(b => b.classList.toggle('on', b.dataset.t === NW));
   const B = $('nw-body'); if (!B) return;
   if (NW === 'sug') { sugDraw(); return; }
+  if (P.pseen !== patchSig()) { P.pseen = patchSig(); saveP(); newsDot(); }   // 패치내역을 열면 읽음 처리
   B.innerHTML = PATCHES.map((p, i) => `<details class="pn"${i === 0 ? ' open' : ''}><summary>${esc(p.t)}${p.n ? '<span class="nw">NEW</span>' : ''}<i>${esc(p.d)}</i></summary><ul>${p.l.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`).join('');
 }
 const sgFv = f => ({ s: k => (f[k] && f[k].stringValue) || '', n: k => f[k] && f[k].integerValue ? +f[k].integerValue : 0, b: k => !!(f[k] && f[k].booleanValue) });
