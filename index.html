@@ -675,7 +675,7 @@ const HERO = {   // 능력은 전장에 나온 뒤 버튼으로 사용 (엘릭�
   giant: { ab: 'guard', cost: 1, uses: 1, name: '수호의 방패', desc: '6초 동안 방어막(체력의 40%)이 생기고 받는 피해가 30% 줄어요' },
   wizard: { ab: 'nova', cost: 2, uses: 1, name: '화염 폭발', desc: '주변 적에게 큰 피해를 주고 0.8초 동안 기절시켜요' },
   ice_wizard: { ab: 'frost', cost: 2, uses: 1, name: '서리 폭풍', desc: '주변 적에게 피해를 주고 2초 동안 얼려요' },
-  ice_golem: { ab: 'blizzard', cost: 2, uses: 1, name: '눈보라', desc: '반지름 3칸 적에게 피해(69)를 주고 2초 동안 느리게 해요' },
+  ice_golem: { ab: 'blizzard', cost: 2, uses: 1, name: '눈보라', desc: '누른 자리에 반지름 3칸 눈보라 장판을 설치해요 · 처음 피해(69) + 5초 동안 안의 적을 50% 느리게 하고 조금씩 피해를 줘요 · 영웅이 죽어도 장판은 남아요' },
   golem: { ab: 'golemites', cost: 2, uses: 1, name: '베이비 골렘 투입', desc: '베이비 골렘 2마리를 바로 불러요' },
   bowler: { ab: 'swish', cost: 2, uses: 1, name: '돌 굴리기', desc: '앞쪽 넓은 범위에 큰 피해(384)를 주고 밀어내요' },
   magic_archer: { ab: 'decoy', cost: 2, uses: 1, name: '세 갈래 위협', desc: '분신을 남기고 뒤로 순간이동해 가까운 적 3명에게 화살 (138)' },
@@ -700,6 +700,7 @@ function mkVariants() {
   for (const [b, v] of Object.entries(HERO)) { const c = CARDS[b]; if (!c) continue;
     CARDS['hero_' + b] = { ...c, id: 'hero_' + b, name: '영웅 ' + c.name, heroOf: b, ab: v.ab, abCost: v.cost, desc: '능력 「' + v.name + '」 (엘릭서 ' + v.cost + ') · ' + v.desc }; }
   for (const [b, v] of Object.entries(CHAMP)) { const c = CARDS[b]; if (c) c.desc = '능력 「' + v.name + '」 (엘릭서 ' + v.cost + ') · ' + v.desc; }
+  CARDS.hero_blizzard = { id: 'hero_blizzard', name: '눈보라 장판', initial: '눈', color: '#a8e6ff', type: 'spell', cost: 0, damage: 15, radius: 3, delay: 0.05, targets: 'air_ground', towerDamage: 5, towerRatio: 5 / 15, waves: 10, waveGap: 0.5, dot: 1, slow: { k: 0.5, t: 0.8 }, hidden: true };   // 영웅 얼음 골렘: 누른 자리에 5초 동안 남는 장판 (영웅이 죽어도 유지)
   CARDS.hero_turret = { id: 'hero_turret', name: '믿음직한 포탑', initial: '포', color: '#9fb4c8', type: 'building', cost: 0, count: 1, hp: 520, damage: 120, hitSpeed: 0.8, firstHit: 0.4, range: 6, speed: 0, sight: 6, targets: 'air_ground', flying: false, mass: 1000, radius: 0.5, deployTime: 0.4, splash: 0, projSpeed: 16, canJumpRiver: false, lifetime: 10, hidden: true };
 }
 const COLL = () => Object.keys(CARDS).filter(i => !CARDS[i].hidden && !CARDS[i].evoOf && !CARDS[i].heroOf);   // 컬렉션 = 기본 카드만 (진화·영웅은 칸에 두면 적용)
@@ -1300,7 +1301,7 @@ function cardInfo(id) {
   if (c.combo) ft.push('매 ' + c.combo.n + '번째 공격은 ' + c.combo.x + '배 피해'); if (c.bmult) ft.push('건물에는 ' + c.bmult + '배 피해'); if (c.life) ft.push('소환 후 ' + c.life + '초 뒤 사라져요');
   if (CHAMP[id]) ft.push('★ 챔피언 능력 「' + CHAMP[id].name + '」 엘릭서 ' + CHAMP[id].cost + ' · 재사용 ' + CHAMP[id].cdn + '초 · ' + CHAMP[id].desc + ' (덱에 1장만)');
   if (c.buff && c.type === 'spell') ft.push('🟣 놓은 자리에 ' + c.buff.t + '초 동안 분노 장판이 남아요 · 안에 있는 아군 유닛은 이동·공격 속도 +' + Math.round(c.buff.k * 100) + '%, 건물·타워는 공격·소환 속도 +' + Math.round(c.buff.k * 100) + '% · 벗어나도 ' + (c.buff.lin || 1) + '초 더 유지 · 마법 카드는 영향 없음');
-  if (c.death) { const d = c.death, p = []; if (d.r) p.push((d.delay ? d.delay + '초 뒤 ' : '') + '반지름 ' + d.r + '칸에 ' + n(d.dmg * m) + ' 피해' + (d.slow ? ' + 둔화' : '')); if (d.spawn) p.push(CARDS[d.spawn].name + ' ' + d.n + '마리'); if (d.buff) p.push('그 자리에 분노 마법 (' + d.buff.t + '초 · 반지름 ' + d.buff.r + '칸)'); if (d.elx) p.push('상대 엘릭서 +' + d.elx); if (p.length) ft.push('죽으면 ' + p.join(' + ')); }
+  if (c.death) { const d = c.death, p = []; if (d.r) p.push((d.delay ? d.delay + '초 뒤 ' : '') + '반지름 ' + d.r + '칸에 ' + n(d.dmg * m) + ' 피해' + (d.slow ? ' + 둔화' : '')); if (d.spawn) p.push(CARDS[d.spawn].name + ' ' + d.n + '마리'); if (d.buff) p.push('그 자리에 분노 카드 (피해 ' + n(CARDS.rage.damage * m) + ' · 아군 가속 ' + CARDS.rage.buff.t + '초 · 반지름 ' + CARDS.rage.radius + '칸)'); if (d.elx) p.push('상대 엘릭서 +' + d.elx); if (p.length) ft.push('죽으면 ' + p.join(' + ')); }
   if (c.charge) ft.push(c.charge.lunge ? '💨 적이 ' + c.charge.dist + '~' + (c.charge.max || 6) + '칸 거리에 있으면 돌진 · 돌진하는 동안 무적 (기절·밀치기도 안 먹어요) · 첫 공격 ' + c.charge.dmgMult + '배 피해' : '돌진: ' + c.charge.dist + '칸 달리면 빨라지고 첫 공격은 ' + c.charge.dmgMult + '배 피해 · 기절·밀치기·끌려감을 당하면 돌진이 풀려요'); if (c.stealth && c.pop) ft.push('🌿 은신: 평소엔 적 유닛·타워의 목표가 안 돼요 (피해를 받으면 바로 사라지고 ' + CARDS[c.death.spawn].name + ' ' + c.death.n + '마리가 나와요)'); if (c.suicide) ft.push('적에 닿으면 자폭'); if (c.canJumpRiver) ft.push('강을 뛰어넘음'); if (c.lifetime) ft.push('지속 시간 ' + c.lifetime + '초'); if (EVO[id]) ft.push('★ 진화 ' + (have('evo_' + id) ? '(보유)' : '(보석 ' + EVOP + ')') + ': ' + EVO[id].desc + ' · ' + EVO[id].cy + '번 낸 뒤부터');
   if (HERO[id]) ft.push('★ 영웅 ' + (have('hero_' + id) ? '(보유)' : '(보석 ' + HEROP + ')') + ': 「' + HERO[id].name + '」 엘릭서 ' + HERO[id].cost + ' · ' + HERO[id].desc);
   $('ci-head').innerHTML = `<div class="cic" style="background:${c.color}">${c.initial}</div><div><b>${c.name}<span class="rchip r${rarOf(id)}">${RARN[rarOf(id)]}</span></b><small>${SPCT(c)}</small></div><i class="cic2">${c.cost}</i>`;
@@ -2316,7 +2317,7 @@ function heroDo(team, uid) {   // 호스트/싱글에서 실제 능력 발동 (u
   else if (h.ab === 'nova') { area(e.x, e.y, 3.5, 420 * e.m, team, { targets: 'air_ground', stun: 0.8 }, 0.35); blastFx(e.x, e.y, 3.5); sfx('boom'); }
   else if (h.ab === 'frost') { area(e.x, e.y, 3.5, 90 * e.m, team, { targets: 'air_ground', stun: 2 }, 0.3); blastFx(e.x, e.y, 3.5); sfx('boom'); }
   else if (h.ab === 'pancake') { e.max *= 1.1; e.hp = Math.min(e.max, e.hp * 1.1 + e.max * 0.05); e.m *= 1.1; }
-  else if (h.ab === 'blizzard') { area(e.x, e.y, 3, 69 * m, tm, { targets: 'air_ground', slow: { k: 0.5, t: 2 } }, 0.35); blastFx(e.x, e.y, 3); sfx('boom'); }
+  else if (h.ab === 'blizzard') { area(e.x, e.y, 3, 69 * m, tm, { targets: 'air_ground', slow: { k: 0.5, t: 2 } }, 0.35); blastFx(e.x, e.y, 3); sfx('boom'); G.fx.push({ x: e.x, y: e.y, r: 3, t: 0.05, max: 0.05, c: CARDS.hero_blizzard, team: tm, m, left: CARDS.hero_blizzard.waves, fl: 0 }); }   // 누른 순간 그 자리에 장판을 설치 → 히어로가 죽어도 5초 동안 남아요
   else if (h.ab === 'golemites') sub('golemite', 2, tm, e.x, e.y - fw, e.lane);
   else if (h.ab === 'swish') { const px = e.x, py = Math.min(H - 1, Math.max(1, e.y + fw * 4)); area(px, py, 3.5, 384 * m, tm, { targets: 'air_ground', push: 1.5 }, 0.5); blastFx(px, py, 3.5); sfx('boom'); }
   else if (h.ab === 'decoy') {
@@ -2431,7 +2432,7 @@ function deaths() {   // 사망 시 효과 (벌룬 폭탄 · 골렘 분열). 연
       const d = e.card.death; if (!d) continue; any = 1;
       if (d.r && !(e.sui && d.noSui)) { const ex = e.x, ey = e.y, dm = d.dmg * e.m, tm = e.team, bc = d.slow ? { targets: 'air_ground', slow: d.slow } : AGC, go = () => { area(ex, ey, d.r, dm, tm, bc, 0.5); blastFx(ex, ey, d.r); }; if (d.delay) G.later.push({ t: d.delay, f: go }); else go(); }
       if (d.spawn) sub(d.spawn, d.n, e.team, e.x, e.y, e.lane);
-      if (d.buff) { rageZone(e.x, e.y, d.buff.r, e.team, d.buff); G.fx.push({ x: e.x, y: e.y, r: d.buff.r, t: 0.7, max: 0.7, vis: 11, team: e.team }); sfx('elixir'); }   // 나무꾼: 죽은 자리에 분노 마법을 떨어트려요
+      if (d.buff) { const rc = CARDS.rage; G.fx.push({ x: e.x, y: e.y, r: rc.radius, t: rc.delay, max: rc.delay, c: rc, team: e.team, m: e.m, left: 1, fl: 0 }); }   // 나무꾼: 죽은 자리에 진짜 '분노' 카드를 떨어트려요 (적 피해 + 아군 가속 장판)
       if (d.elx) elGive(1 - e.team, d.elx);                                                                                                                                                 // 엘릭서 골렘: 상대에게 엘릭서
     }
     if (!any) break;
@@ -2532,6 +2533,7 @@ async function cpGo(px = 'cp') {   // px: 'cp' = 팝업 창, 'hcp' = 메인 화�
 
 // ---------- 공지: 패치내역 · 건의사항 (Firestore suggestions/<자동ID>: 보낸 사람이 쓰고, ssiv 계정이 읽어요) ----------
 const PATCHES = [
+  { d: '11/27', t: '나무꾼 분노 카드 · 영웅 얼음 골렘 눈보라 장판', n: 1, l: ['나무꾼이 죽으면 그 자리에 진짜 「분노」 카드가 떨어져요 — 적에게 피해(179)도 주고, 아군은 4.5초 동안 빨라져요', '영웅 얼음 골렘의 「눈보라」는 누른 자리에 5초 동안 남는 장판이 돼요 · 안의 적을 느리게 하고 조금씩 피해를 줘요 · 영웅이 죽어도 장판은 사라지지 않아요', '영웅 머스킷 포탑·마법 아처 분신·마녀 해골·골렘 베이비·챔피언 폭탄/수호 기사처럼 설치되는 능력은 모두 영웅이 죽어도 남는 걸 확인했어요'] },
   { d: '11/27', t: '메인 화면에 패치내역 · 건의사항 버튼', l: ['메인 화면 왼쪽 위(프로필 아래)에 「패치내역」과 「건의사항」 버튼이 생겼어요', '아직 안 읽은 새 패치가 있으면 패치내역 버튼에 빨간 점이 떠요 · 열어서 보면 사라져요'] },
   { d: '11/26', t: '방어막 규칙 수정', n: 1, l: ['다크 프린스·로얄 훈련병·근위병 같은 방어막 유닛이 방어막보다 큰 피해(로켓 등)를 한 번에 받으면, 방어막만 깨지고 본체 체력은 그대로예요 (남는 피해는 사라져요) — 클로처럼요', '챔피언 능력으로 생기는 방어막도 같은 규칙이에요'] },
   { d: '11/26', t: '분노 마법 · 나무꾼 분노 떨어트리기', n: 1, l: ['분노 마법이 놓은 자리에 4.5초 동안 보랏빛 장판으로 남아요 — 안에 있는 아군 유닛은 이동·공격 속도 +30%, 건물·타워는 공격 속도와 소환 속도 +30%, 장판을 벗어나도 1초 더 유지돼요 (마법 카드는 영향 없음)', '분노 마법 크라운 타워 피해 54 (레벨 11)', '나무꾼이 죽으면 그 자리에 분노 마법이 떨어져 4.5초 장판이 남고 주변 아군이 빨라져요'] },
@@ -3064,6 +3066,11 @@ function drawZone(f) {
     const g = cx.createRadialGradient(f.x, f.y, R * 0.1, f.x, f.y, R); g.addColorStop(0, 'rgba(120,210,70,.38)'); g.addColorStop(0.8, 'rgba(90,180,50,.3)'); g.addColorStop(1, 'rgba(90,180,50,.1)'); cx.fillStyle = g; dot(f.x, f.y, R);
     cx.strokeStyle = 'rgba(150,230,90,.9)'; cx.lineWidth = 0.1; cx.setLineDash([0.4, 0.25]); cx.lineDashOffset = -nowT / 300; cx.beginPath(); cx.arc(f.x, f.y, R - 0.05, 0, 7); cx.stroke(); cx.setLineDash([]);
     for (let i = 0; i < 9; i++) { const q = (ph * 0.8 + rd()) % 1, an = rd() * TAU, d = Math.sqrt(rd()) * R * 0.85; cx.globalAlpha = Math.sin(q * 3.1416) * 0.85; cx.fillStyle = i % 3 ? '#b9f27a' : '#d8ffa0'; dot(f.x + Math.cos(an) * d, f.y + Math.sin(an) * d * 0.8 - q, 0.1 + 0.12 * rd()); }
+  } else if (id === 'hero_blizzard') {   // 눈보라 장판: 푸른 안개 + 도는 점선 + 흩날리는 눈송이
+    const fade = Math.min(1, f.t / 0.5 + 0.4);
+    cx.globalAlpha = fade; const g = cx.createRadialGradient(f.x, f.y, R * 0.1, f.x, f.y, R); g.addColorStop(0, 'rgba(200,240,255,.38)'); g.addColorStop(0.8, 'rgba(140,210,255,.28)'); g.addColorStop(1, 'rgba(140,210,255,.1)'); cx.fillStyle = g; dot(f.x, f.y, R);
+    cx.strokeStyle = 'rgba(210,245,255,.95)'; cx.lineWidth = 0.1; cx.setLineDash([0.4, 0.25]); cx.lineDashOffset = nowT / 300; cx.beginPath(); cx.arc(f.x, f.y, R - 0.05, 0, 7); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle = '#ffffff'; for (let i = 0; i < 14; i++) { const q = (ph * 0.7 + rd()) % 1, an = rd() * TAU, dd = Math.sqrt(rd()) * R * 0.9; cx.globalAlpha = fade * Math.sin(q * 3.1416) * 0.9; dot(f.x + Math.cos(an) * dd + Math.sin(ph * 2 + i) * 0.12, f.y + Math.sin(an) * dd * 0.8 - 0.6 + q * 1.2, 0.07 + 0.07 * rd()); }
   } else if (id === 'earthquake') {
     cx.fillStyle = 'rgba(120,85,45,.25)'; dot(f.x, f.y, R); cx.strokeStyle = 'rgba(60,38,18,.85)'; cx.lineWidth = 0.1;
     for (let k = 0; k < 7; k++) { let an = k * TAU / 7 + rd() * 0.5, x = f.x, y = f.y; cx.beginPath(); cx.moveTo(x, y); for (let j = 1; j <= 5; j++) { an += (rd() - 0.5) * 0.9; x += Math.cos(an) * R * 0.2; y += Math.sin(an) * R * 0.2; cx.lineTo(x, y); } cx.stroke(); }
@@ -3554,7 +3561,7 @@ function render(a) {
     if (f.c && f.c.roll) { drawRoll(f); continue; }
     if (f.c && f.c.dig) { if (f.fl) drawDig(f); continue; }
     if (f.vis > 1) { drawBurst(f); continue; }
-    if (f.c && !f.fl && (f.c.dot || f.c.id === 'graveyard' || (f.c.buff && f.max > 1))) { drawZone(f); continue; }   // 독 · 지진 · 토네이도 · 보이드 · 무덤: 머무는 장판
+    if (f.c && !f.fl && (f.c.dot || f.c.id === 'graveyard' || (f.c.buff && f.max > 1) || f.c.id === 'hero_blizzard')) { drawZone(f); continue; }   // 독 · 지진 · 토네이도 · 보이드 · 무덤: 머무는 장판
     cx.globalAlpha = f.vis ? f.t / f.max * 0.5 : 0.35; cx.fillStyle = f.vis ? '#fff' : (f.c.color || '#f80');
     cx.beginPath(); cx.arc(f.x, f.y, f.r, 0, 7); cx.fill(); cx.globalAlpha = 1;
     if (f.fl && f.c && f.c.fly) drawFly(f);
